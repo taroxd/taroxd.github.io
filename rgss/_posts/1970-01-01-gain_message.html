@@ -1,0 +1,173 @@
+---
+title: 得失物品提示
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">gain_message</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">得失物品提示</span></a>
+<span class="k">module</span> <span class="nn">Taroxd::GainMessage</span>
+
+  <span class="c1"># 信息格式</span>
+
+  <span class="c1"># 转义符：</span>
+  <span class="c1"># \name    代表物品名称 / 金钱单位</span>
+  <span class="c1"># \value   代表获得 / 失去的物品 / 金钱数量</span>
+  <span class="c1"># \icon    绘制物品 / 金钱的图标</span>
+  <span class="c1"># \action  代表“获得”或者“失去”。可在下面修改。</span>
+  <span class="c1"># 支持“显示文字”中的所有转义符。</span>
+  <span class="no">ITEM_FORMAT</span>  <span class="o">=</span> <span class="s1">'\action了 \name * \value'</span>
+  <span class="no">GOLD_FORMAT</span>  <span class="o">=</span> <span class="s1">'\action了 \value \name'</span>
+  <span class="no">ACTION_GAIN</span>  <span class="o">=</span> <span class="s1">'获得'</span>
+  <span class="no">ACTION_LOSE</span>  <span class="o">=</span> <span class="s1">'失去'</span>
+  <span class="no">GOLD_ICON_INDEX</span> <span class="o">=</span> <span class="mi">361</span>           <span class="c1"># 金钱图标的索引</span>
+
+  <span class="no">BACKGROUND</span>   <span class="o">=</span> <span class="mi">1</span>                <span class="c1"># 窗口背景（0/1/2）</span>
+  <span class="no">POSITION</span>     <span class="o">=</span> <span class="mi">1</span>                <span class="c1"># 显示位置（0/1/2）</span>
+
+  <span class="c1"># 音效（不需要的话可以直接删去对应的行）</span>
+  <span class="no">GAIN_GOLD_SE</span> <span class="o">=</span> <span class="s1">'Shop'</span>           <span class="c1"># 获得金钱</span>
+  <span class="no">LOSE_GOLD_SE</span> <span class="o">=</span> <span class="s1">'Blow2'</span>          <span class="c1"># 失去金钱</span>
+  <span class="no">GAIN_ITEM_SE</span> <span class="o">=</span> <span class="s1">'Item1'</span>          <span class="c1"># 获得物品</span>
+  <span class="no">LOSE_ITEM_SE</span> <span class="o">=</span> <span class="no">LOSE_GOLD_SE</span>     <span class="c1"># 失去物品</span>
+
+  <span class="c1"># 功能是否启用。</span>
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">enabled?</span>
+    <span class="kp">true</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 显示提示信息。获得金钱时将 item 设为 nil。</span>
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">show</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+    <span class="vi">@item</span> <span class="o">=</span> <span class="n">item</span>
+    <span class="vi">@value</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="vg">$game_message</span><span class="p">.</span><span class="nf">background</span> <span class="o">=</span> <span class="no">BACKGROUND</span>
+    <span class="vg">$game_message</span><span class="p">.</span><span class="nf">position</span> <span class="o">=</span> <span class="no">POSITION</span>
+    <span class="vg">$game_message</span><span class="p">.</span><span class="nf">add</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+    <span class="n">play_se</span>
+  <span class="k">end</span>
+
+  <span class="kp">private</span>
+
+  <span class="c1"># 获取提示的消息</span>
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">message</span>
+    <span class="k">if</span> <span class="vi">@item</span>
+      <span class="nb">format</span> <span class="o">=</span> <span class="no">ITEM_FORMAT</span>
+      <span class="n">icon_index</span> <span class="o">=</span> <span class="vi">@item</span><span class="p">.</span><span class="nf">icon_index</span>
+      <span class="nb">name</span> <span class="o">=</span> <span class="vi">@item</span><span class="p">.</span><span class="nf">name</span>
+    <span class="k">else</span>
+      <span class="nb">format</span> <span class="o">=</span> <span class="no">GOLD_FORMAT</span>
+      <span class="n">icon_index</span> <span class="o">=</span> <span class="no">GOLD_ICON_INDEX</span>
+      <span class="nb">name</span> <span class="o">=</span> <span class="no">Vocab</span><span class="p">.</span><span class="nf">currency_unit</span>
+    <span class="k">end</span>
+
+    <span class="nb">gsub</span> <span class="o">=</span> <span class="p">{</span>
+      <span class="s1">'\action'</span> <span class="o">=&gt;</span> <span class="vi">@value</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">?</span> <span class="no">ACTION_GAIN</span> <span class="p">:</span> <span class="no">ACTION_LOSE</span><span class="p">,</span>
+      <span class="s1">'\value'</span>  <span class="o">=&gt;</span> <span class="vi">@value</span><span class="p">.</span><span class="nf">abs</span><span class="p">,</span>
+      <span class="s1">'\icon'</span>   <span class="o">=&gt;</span> <span class="s2">"</span><span class="se">\\</span><span class="s2">I[</span><span class="si">#{</span><span class="n">icon_index</span><span class="si">}</span><span class="s2">]"</span><span class="p">,</span>
+      <span class="s1">'\name'</span>   <span class="o">=&gt;</span> <span class="nb">name</span>
+    <span class="p">}</span>
+
+    <span class="nb">format</span><span class="p">.</span><span class="nf">gsub</span><span class="p">(</span><span class="no">Regexp</span><span class="p">.</span><span class="nf">union</span><span class="p">(</span><span class="nb">gsub</span><span class="p">.</span><span class="nf">keys</span><span class="p">),</span> <span class="nb">gsub</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">play_se</span>
+    <span class="n">const</span> <span class="o">=</span> <span class="ss">:"</span><span class="si">#{</span><span class="vi">@value</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">?</span> <span class="s1">'GAIN'</span> <span class="p">:</span> <span class="s1">'LOSE'</span><span class="si">}</span><span class="ss">_</span><span class="si">#{</span><span class="vi">@item</span> <span class="p">?</span> <span class="s1">'ITEM'</span> <span class="p">:</span> <span class="s1">'GOLD'</span><span class="si">}</span><span class="ss">_SE"</span>
+    <span class="n">se</span> <span class="o">=</span> <span class="nb">const_defined?</span><span class="p">(</span><span class="n">const</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nb">const_get</span><span class="p">(</span><span class="n">const</span><span class="p">)</span>
+    <span class="no">Audio</span><span class="p">.</span><span class="nf">se_play</span><span class="p">(</span><span class="s1">'Audio/SE/'</span> <span class="o">+</span> <span class="n">se</span><span class="p">)</span> <span class="k">if</span> <span class="n">se</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Party</span> <span class="o">&lt;</span> <span class="no">Game_Unit</span>
+  <span class="c1"># 获取道具总数（包括装备）</span>
+  <span class="k">def</span> <span class="nf">item_number_with_equip</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+    <span class="n">members</span><span class="p">.</span><span class="nf">inject</span><span class="p">(</span><span class="n">item_number</span><span class="p">(</span><span class="n">item</span><span class="p">))</span> <span class="p">{</span> <span class="o">|</span><span class="n">a</span><span class="p">,</span> <span class="n">e</span><span class="o">|</span> <span class="n">a</span> <span class="o">+</span> <span class="n">e</span><span class="p">.</span><span class="nf">equips</span><span class="p">.</span><span class="nf">count</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="p">}</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Interpreter</span>
+
+  <span class="no">GainMessage</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">GainMessage</span>
+
+  <span class="c1"># 显示提示窗口</span>
+  <span class="k">def</span> <span class="nf">show_gain_message</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">item</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
+    <span class="k">return</span> <span class="k">if</span> <span class="n">value</span><span class="p">.</span><span class="nf">zero?</span>
+    <span class="no">GainMessage</span><span class="p">.</span><span class="nf">show</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+    <span class="n">wait_for_message</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 增减金钱</span>
+  <span class="n">def_chain</span> <span class="ss">:command_125</span> <span class="k">do</span> <span class="o">|</span><span class="n">old</span><span class="o">|</span>
+    <span class="k">return</span> <span class="n">old</span><span class="p">.</span><span class="nf">call</span> <span class="k">unless</span> <span class="no">GainMessage</span><span class="p">.</span><span class="nf">enabled?</span>
+    <span class="n">last_gold</span> <span class="o">=</span> <span class="vg">$game_party</span><span class="p">.</span><span class="nf">gold</span>
+    <span class="n">old</span><span class="p">.</span><span class="nf">call</span>
+    <span class="n">show_gain_message</span><span class="p">(</span><span class="vg">$game_party</span><span class="p">.</span><span class="nf">gold</span> <span class="o">-</span> <span class="n">last_gold</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 增减物品</span>
+  <span class="n">def_chain</span> <span class="ss">:command_126</span> <span class="k">do</span> <span class="o">|</span><span class="n">old</span><span class="o">|</span>
+    <span class="k">return</span> <span class="n">old</span><span class="p">.</span><span class="nf">call</span> <span class="k">unless</span> <span class="no">GainMessage</span><span class="p">.</span><span class="nf">enabled?</span>
+    <span class="n">item</span> <span class="o">=</span> <span class="vg">$data_items</span><span class="p">[</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+    <span class="n">last_num</span> <span class="o">=</span> <span class="vg">$game_party</span><span class="p">.</span><span class="nf">item_number</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+    <span class="n">old</span><span class="p">.</span><span class="nf">call</span>
+    <span class="n">show_gain_message</span><span class="p">(</span><span class="vg">$game_party</span><span class="p">.</span><span class="nf">item_number</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">-</span> <span class="n">last_num</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 增减武器</span>
+  <span class="n">def_chain</span> <span class="ss">:command_127</span> <span class="k">do</span> <span class="o">|</span><span class="n">old</span><span class="o">|</span>
+    <span class="k">return</span> <span class="n">old</span><span class="p">.</span><span class="nf">call</span> <span class="k">unless</span> <span class="no">GainMessage</span><span class="p">.</span><span class="nf">enabled?</span>
+    <span class="n">item</span> <span class="o">=</span> <span class="vg">$data_weapons</span><span class="p">[</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+    <span class="n">last_num</span> <span class="o">=</span> <span class="vg">$game_party</span><span class="p">.</span><span class="nf">item_number_with_equip</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+    <span class="n">old</span><span class="p">.</span><span class="nf">call</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="vg">$game_party</span><span class="p">.</span><span class="nf">item_number_with_equip</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">-</span> <span class="n">last_num</span>
+    <span class="n">show_gain_message</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 增减护甲</span>
+  <span class="n">def_chain</span> <span class="ss">:command_128</span> <span class="k">do</span> <span class="o">|</span><span class="n">old</span><span class="o">|</span>
+    <span class="k">return</span> <span class="n">old</span><span class="p">.</span><span class="nf">call</span> <span class="k">unless</span> <span class="no">GainMessage</span><span class="p">.</span><span class="nf">enabled?</span>
+    <span class="n">item</span> <span class="o">=</span> <span class="vg">$data_armors</span><span class="p">[</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+    <span class="n">last_num</span> <span class="o">=</span> <span class="vg">$game_party</span><span class="p">.</span><span class="nf">item_number_with_equip</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+    <span class="n">old</span><span class="p">.</span><span class="nf">call</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="vg">$game_party</span><span class="p">.</span><span class="nf">item_number_with_equip</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">-</span> <span class="n">last_num</span>
+    <span class="n">show_gain_message</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Taroxd</span><span class="o">::</span><span class="no">EventTranscompiler</span>
+  <span class="k">def</span> <span class="nf">command_125</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">operate_value</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+    <span class="s2">"if GainMessage.enabled?
+      @params = $game_party.item_number(item)
+      $game_party.gain_gold(</span><span class="si">#{</span><span class="n">value</span><span class="si">}</span><span class="s2">)
+      show_gain_message($game_party.gold - @params)
+    else
+      $game_party.gain_gold(</span><span class="si">#{</span><span class="n">value</span><span class="si">}</span><span class="s2">)
+    end"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># database: :items, :weapons, :equips</span>
+  <span class="k">def</span> <span class="nf">show_message_gain_item</span><span class="p">(</span><span class="n">database</span><span class="p">)</span>
+    <span class="n">item_number</span> <span class="o">=</span> <span class="n">database</span> <span class="o">==</span> <span class="ss">:item</span> <span class="p">?</span> <span class="p">:</span><span class="n">item_number</span> <span class="p">:</span> <span class="ss">:item_number_with_equip</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">operate_value</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+    <span class="n">item</span> <span class="o">=</span> <span class="s2">"$data_</span><span class="si">#{</span><span class="n">database</span><span class="si">}</span><span class="s2">[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">]"</span>
+    <span class="s2">"if GainMessage.enabled?
+      @params = $game_party.</span><span class="si">#{</span><span class="n">item_number</span><span class="si">}</span><span class="s2">(</span><span class="si">#{</span><span class="n">item</span><span class="si">}</span><span class="s2">)
+      $game_party.gain_item(</span><span class="si">#{</span><span class="n">item</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="n">value</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">)
+      show_gain_message($game_party.</span><span class="si">#{</span><span class="n">item_number</span><span class="si">}</span><span class="s2">(</span><span class="si">#{</span><span class="n">item</span><span class="si">}</span><span class="s2">) - @params, </span><span class="si">#{</span><span class="n">item</span><span class="si">}</span><span class="s2">)
+    else
+      $game_party.gain_item(</span><span class="si">#{</span><span class="n">item</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="n">value</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">)
+    end"</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">command_126</span>
+    <span class="n">show_message_gain_item</span><span class="p">(</span><span class="ss">:items</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">command_127</span>
+    <span class="n">show_message_gain_item</span><span class="p">(</span><span class="ss">:weapons</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">command_128</span>
+    <span class="n">show_message_gain_item</span><span class="p">(</span><span class="ss">:armors</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="p">.</span><span class="nf">const_defined?</span><span class="p">(</span><span class="ss">:EventTranscompiler</span><span class="p">)</span>
+</code></pre></div>

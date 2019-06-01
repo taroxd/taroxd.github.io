@@ -1,0 +1,33 @@
+---
+title: 普通攻防技能的扩展
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">普通攻防技能的扩展</span></a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">attack_skill</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1"></span></a>
+<span class="c1">#</span>
+<span class="c1">#    使用方法：</span>
+<span class="c1">#      在装备/技能/角色/职业/敌人上备注 &lt;attackskill x&gt; / &lt;guardskill x&gt;</span>
+<span class="c1">#      建议与“战斗指令优化”配合使用。</span>
+
+<span class="no">Taroxd</span><span class="o">::</span><span class="no">AttackSkill</span> <span class="o">=</span> <span class="kp">true</span>
+
+<span class="k">class</span> <span class="nc">RPG</span><span class="o">::</span><span class="no">BaseItem</span>
+  <span class="n">note_i</span> <span class="ss">:attack_skill</span><span class="p">,</span> <span class="kp">false</span>
+  <span class="n">note_i</span> <span class="ss">:guard_skill</span><span class="p">,</span>  <span class="kp">false</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_BattlerBase</span>
+
+  <span class="n">def_chain</span> <span class="ss">:attack_skill_id</span> <span class="k">do</span> <span class="o">|</span><span class="n">old</span><span class="o">|</span>
+    <span class="n">note_objects</span> <span class="p">{</span> <span class="o">|</span><span class="n">item</span><span class="o">|</span> <span class="k">return</span> <span class="n">item</span><span class="p">.</span><span class="nf">attack_skill</span> <span class="k">if</span> <span class="n">item</span><span class="p">.</span><span class="nf">attack_skill</span> <span class="p">}</span>
+    <span class="n">old</span><span class="p">.</span><span class="nf">call</span>
+  <span class="k">end</span>
+
+  <span class="n">def_chain</span> <span class="ss">:guard_skill_id</span> <span class="k">do</span> <span class="o">|</span><span class="n">old</span><span class="o">|</span>
+    <span class="n">note_objects</span> <span class="p">{</span> <span class="o">|</span><span class="n">item</span><span class="o">|</span> <span class="k">return</span> <span class="n">item</span><span class="p">.</span><span class="nf">guard_skill</span> <span class="k">if</span> <span class="n">item</span><span class="p">.</span><span class="nf">guard_skill</span> <span class="p">}</span>
+    <span class="n">old</span><span class="p">.</span><span class="nf">call</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>

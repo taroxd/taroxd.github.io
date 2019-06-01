@@ -1,0 +1,15 @@
+<footer>
+
+  <div class="wrapper">
+
+    <div class="left">
+      {{ site.description }}
+    </div>
+
+    <div class="right">
+      © 2014-{{ site.time | date: "%Y" }} <a href="{{ site.baseurl }}/">{{ site.author }}</a><br>
+     Last updated on {{ site.time | date: site.date_format }}
+    </div>
+  </div>
+
+</footer>

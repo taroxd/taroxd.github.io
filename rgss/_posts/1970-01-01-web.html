@@ -1,0 +1,17 @@
+---
+title: 打开网页
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">web</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">打开网页</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1">增加打开网页的功能。</span></a>
+<span class="k">module</span> <span class="nn">Taroxd::Web</span>
+  <span class="no">API</span> <span class="o">=</span> <span class="no">Win32API</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="s1">'shell32.dll'</span><span class="p">,</span> <span class="s1">'ShellExecuteA'</span><span class="p">,</span> <span class="s1">'pppppi'</span><span class="p">,</span> <span class="s1">'i'</span><span class="p">)</span>
+  <span class="kp">module_function</span>
+
+  <span class="c1"># 打开网页</span>
+  <span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span>
+    <span class="no">API</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">'open'</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre></div>

@@ -1,0 +1,19 @@
+---
+title: Shift 功能反转
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">shift_reverse</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">Shift 功能反转</span></a>
+<span class="k">module</span> <span class="nn">Taroxd</span>
+  <span class="no">ShiftReverse</span> <span class="o">=</span> <span class="kp">true</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Player</span> <span class="o">&lt;</span> <span class="no">Game_Character</span>
+
+  <span class="k">def</span> <span class="nf">dash?</span>
+    <span class="o">!</span><span class="vi">@move_route_forcing</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="vg">$game_map</span><span class="p">.</span><span class="nf">disable_dash?</span> <span class="o">&amp;&amp;</span>
+      <span class="o">!</span><span class="n">vehicle</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="no">Input</span><span class="p">.</span><span class="nf">press?</span><span class="p">(</span><span class="ss">:A</span><span class="p">)</span>
+  <span class="k">end</span>
+
+<span class="k">end</span></code></pre></div>

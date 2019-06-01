@@ -1,0 +1,39 @@
+---
+title: 坐标类
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">坐标类</span></a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">point</span></a>
+<span class="c1">#</span>
+<span class="c1"># 该类的作用是表示一个地图上的点的坐标</span>
+<span class="c1"># 可以伪装成 Game_Character 的对象传给一些接受 character 参数的方法。</span>
+
+
+<span class="k">module</span> <span class="nn">Taroxd</span>
+  <span class="no">Point</span> <span class="o">=</span> <span class="no">Struct</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="ss">:x</span><span class="p">,</span> <span class="ss">:y</span><span class="p">)</span> <span class="k">do</span>
+
+    <span class="kp">alias_method</span> <span class="ss">:real_x</span><span class="p">,</span> <span class="ss">:x</span>
+    <span class="kp">alias_method</span> <span class="ss">:real_y</span><span class="p">,</span> <span class="ss">:y</span>
+
+    <span class="k">def</span> <span class="nf">moveto</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+      <span class="nb">self</span><span class="p">.</span><span class="nf">x</span> <span class="o">=</span> <span class="n">x</span>
+      <span class="nb">self</span><span class="p">.</span><span class="nf">y</span> <span class="o">=</span> <span class="n">y</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">pos?</span><span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">)</span>
+      <span class="n">x</span> <span class="o">==</span> <span class="n">x2</span> <span class="o">&amp;&amp;</span> <span class="n">y</span> <span class="o">==</span> <span class="n">y2</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">same_pos?</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+      <span class="n">x</span> <span class="o">==</span> <span class="n">other</span><span class="p">.</span><span class="nf">x</span> <span class="o">&amp;&amp;</span> <span class="n">y</span> <span class="o">==</span> <span class="n">other</span><span class="p">.</span><span class="nf">y</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">screen_x</span>
+      <span class="vg">$game_map</span><span class="p">.</span><span class="nf">adjust_x</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="mi">32</span> <span class="o">+</span> <span class="mi">16</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">screen_y</span>
+      <span class="vg">$game_map</span><span class="p">.</span><span class="nf">adjust_y</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">*</span> <span class="mi">32</span> <span class="o">+</span> <span class="mi">32</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre></div>

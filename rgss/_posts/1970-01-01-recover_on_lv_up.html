@@ -1,0 +1,10 @@
+---
+title: 升级时满血满蓝
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">recover_on_lv_up</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">升级时满血满蓝</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="no">Taroxd</span><span class="o">::</span><span class="no">RecoverOnLvUP</span> <span class="o">=</span> <span class="kp">true</span>
+
+<span class="no">Game_Actor</span><span class="p">.</span><span class="nf">send</span> <span class="ss">:def_after</span><span class="p">,</span> <span class="ss">:level_up</span><span class="p">,</span> <span class="ss">:recover_all</span></code></pre></div>

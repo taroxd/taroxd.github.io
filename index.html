@@ -1,0 +1,40 @@
+---
+layout: default
+---
+
+{% for post in paginator.posts %}
+{% assign seconds = post.date | date: "%s" | plus: 0 %}
+<div class="post">
+  <a class="post-link" href="{{ post.url }}">{{ post.title }}</a>
+  {% if seconds > 0 %}
+  <div class="post-meta">{{ post.date | date: site.date_format }}</div>
+  {% endif %}
+  {{ post.content }}
+</div>
+{% endfor %}
+
+{% if paginator.total_pages > 1 %}
+<nav class="pagination">
+  {% if paginator.previous_page %}
+    <a href="{{ paginator.previous_page_path }}">&laquo; Prev</a>
+  {% else %}
+    <span>&laquo; Prev</span>
+  {% endif %}
+
+  {% for page in (1..paginator.total_pages) %}
+    {% if page == paginator.page %}
+      <span>{{ page }}</span>
+    {% elsif page == 1 %}
+      <a href="{{ '/' }}">{{ page }}</a>
+    {% else %}
+      <a href="{{ site.paginate_path | replace: ':num', page }}">{{ page }}</a>
+    {% endif %}
+  {% endfor %}
+
+  {% if paginator.next_page %}
+    <a href="{{ paginator.next_page_path }}">Next &raquo;</a>
+  {% else %}
+    <span>Next &raquo;</span>
+  {% endif %}
+</nav>
+{% endif %}

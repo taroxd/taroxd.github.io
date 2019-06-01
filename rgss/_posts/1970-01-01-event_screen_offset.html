@@ -1,0 +1,34 @@
+---
+title: 调整事件位置
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/point.html">point</a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">event_screen_offset</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">调整事件位置</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1"></span></a>
+
+<span class="k">module</span> <span class="nn">Taroxd</span>
+  <span class="no">EventScreenOffset</span> <span class="o">=</span> <span class="sr">/&lt;offset\s*(\d+)\s+(\d+)/i</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">RPG</span><span class="o">::</span><span class="no">Event</span>
+  <span class="k">def</span> <span class="nf">screen_offset</span>
+    <span class="k">return</span> <span class="vi">@screen_offset</span> <span class="k">unless</span> <span class="vi">@screen_offset</span><span class="p">.</span><span class="nf">nil?</span>
+    <span class="k">if</span> <span class="nb">name</span> <span class="o">=~</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">EventScreenOffset</span>
+      <span class="vi">@screen_offset</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Point</span><span class="p">[</span><span class="vg">$1</span><span class="p">.</span><span class="nf">to_i</span><span class="p">,</span> <span class="vg">$2</span><span class="p">.</span><span class="nf">to_i</span><span class="p">]</span>
+    <span class="k">else</span>
+      <span class="vi">@screen_offset</span> <span class="o">=</span> <span class="kp">false</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Event</span> <span class="o">&lt;</span> <span class="no">Game_Character</span>
+  <span class="n">def_with</span> <span class="ss">:screen_x</span> <span class="k">do</span> <span class="o">|</span><span class="n">old</span><span class="o">|</span>
+    <span class="vi">@event</span><span class="p">.</span><span class="nf">screen_offset</span> <span class="p">?</span> <span class="n">old</span> <span class="o">+</span> <span class="vi">@event</span><span class="p">.</span><span class="nf">screen_offset</span><span class="p">.</span><span class="nf">x</span> <span class="p">:</span> <span class="n">old</span>
+  <span class="k">end</span>
+
+  <span class="n">def_with</span> <span class="ss">:screen_y</span> <span class="k">do</span> <span class="o">|</span><span class="n">old</span><span class="o">|</span>
+    <span class="vi">@event</span><span class="p">.</span><span class="nf">screen_offset</span> <span class="p">?</span> <span class="n">old</span> <span class="o">+</span> <span class="vi">@event</span><span class="p">.</span><span class="nf">screen_offset</span><span class="p">.</span><span class="nf">y</span> <span class="p">:</span> <span class="n">old</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre></div>

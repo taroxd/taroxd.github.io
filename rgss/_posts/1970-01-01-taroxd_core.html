@@ -1,0 +1,620 @@
+---
+title: Taroxd 基础设置
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">Taroxd 基础设置</span></a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">taroxd_core</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1"></span></a>
+<span class="c1">#</span>
+<span class="c1"># 模块或类</span>
+<span class="c1">#   方法名(参数) { block } / 别名 -&gt; 返回值的类型或介绍</span>
+<span class="c1">#     方法的介绍。</span>
+<span class="c1">#     如果返回值没有给出，表明返回值无意义或没有确定的类型。</span>
+<span class="c1">#</span>
+<span class="c1"># Module</span>
+<span class="c1">#   get_access_control(method_name) -&gt; Symbol or nil</span>
+<span class="c1">#     获取方法的访问控制。返回 :public, :protected, :private 或 nil（未定义）</span>
+<span class="c1">#     method_name 为字符串或符号（Symbol），下同。</span>
+<span class="c1">#</span>
+<span class="c1">#   def_after(method_name) { |args| block } -&gt; method_name</span>
+<span class="c1">#   def_after(method_name, hook) -&gt; method_name</span>
+<span class="c1">#     重定义方法 method_name。</span>
+<span class="c1">#     第一种形式中，将 block 定义为方法，在原方法之后调用。</span>
+<span class="c1">#     第二种形式中，</span>
+<span class="c1">#     * 如果 hook 为符号或字符串，那么会在原方法之后调用对应的方法。</span>
+<span class="c1">#     * 如果 hook 可以响应方法 call，那么会在原方法之后调用 call。</span>
+<span class="c1">#     * 如果 hook 是 UnboundMethod，那么会将 hook 绑定到对象后调用。</span>
+<span class="c1">#</span>
+<span class="c1">#     不改变原方法的返回值和访问控制。</span>
+<span class="c1">#     无论哪种调用，参数都和原来的参数相同。</span>
+<span class="c1">#     以下 def_* 的所有方法均有这两种形式。为了方便起见只写出第一种。</span>
+<span class="c1">#</span>
+<span class="c1">#     例：</span>
+<span class="c1">#     class Game_Actor &lt; Game_Battler</span>
+<span class="c1">#       def_after :initialize do |actor_id|</span>
+<span class="c1">#         @my_attribute = actor_id</span>
+<span class="c1">#       end</span>
+<span class="c1">#     end</span>
+<span class="c1">#</span>
+<span class="c1">#   def_after!(method_name) { |args| block } -&gt; method_name</span>
+<span class="c1">#     与 def_after 类似，但改变原方法的返回值。</span>
+<span class="c1">#</span>
+<span class="c1">#   def_before(method_name) { |args| block } -&gt; method_name</span>
+<span class="c1">#     与 def_after 类似，但在原方法之前调用。</span>
+<span class="c1">#</span>
+<span class="c1">#   def_with(method_name) { |old, args| block } -&gt; method_name</span>
+<span class="c1">#     与 def_after! 类似，但参数不同。old 参数是原方法的返回值。</span>
+<span class="c1">#</span>
+<span class="c1">#   def_chain(method_name) { |old, args| block } -&gt; method_name</span>
+<span class="c1">#     与 def_with 类似，但 old 参数为对应原方法的一个 Method 对象。</span>
+<span class="c1">#</span>
+<span class="c1">#   def_and(method_name) { |args| block } -&gt; method_name</span>
+<span class="c1">#     与 def_after 类似，但仅当原方法的返回值为真时调用。</span>
+<span class="c1">#     仅当原方法的返回值为真时，才会改变原方法的返回值。</span>
+<span class="c1">#</span>
+<span class="c1">#   def_or(method_name) { |args| block } -&gt; method_name</span>
+<span class="c1">#     与 def_after 类似，但仅当原方法的返回值为伪时调用。</span>
+<span class="c1">#     仅当原方法的返回值为假时，才会改变原方法的返回值。</span>
+<span class="c1">#</span>
+<span class="c1">#   def_if(method_name) { |args| block } -&gt; method_name</span>
+<span class="c1">#     与 def_before 类似，但仅当调用结果为真时调用原方法。</span>
+<span class="c1">#     仅当调用的结果为假时，改变原方法的返回值为 nil。</span>
+<span class="c1">#</span>
+<span class="c1">#   def_unless(method_name) { |args| block } -&gt; method_name</span>
+<span class="c1">#     与 def_before 类似，但仅当调用结果为假时调用原方法。</span>
+<span class="c1">#     仅当调用的结果为真时，改变原方法的返回值为 nil。</span>
+<span class="c1">#</span>
+<span class="c1"># Taroxd::ReadNote</span>
+<span class="c1">#   该模块由以下类 extend。</span>
+<span class="c1">#   RPG::BaseItem</span>
+<span class="c1">#   RPG::Map</span>
+<span class="c1">#   RPG::Event（将事件名称作为备注）</span>
+<span class="c1">#   RPG::Tileset</span>
+<span class="c1">#   RPG::Class::Learning</span>
+<span class="c1">#</span>
+<span class="c1">#   note_i(method_name, default = 0)</span>
+<span class="c1">#     定义方法 method_name，读取备注中 &lt;method_name x&gt; 形式的内容。其中 x 为整数。</span>
+<span class="c1">#     读取到的话，定义的方法会返回读取到的整数值，否则返回 default。</span>
+<span class="c1">#</span>
+<span class="c1">#   例：RPG::UsableItem.note_i :item_cost</span>
+<span class="c1">#</span>
+<span class="c1">#   note_f(method_name, default = 0.0)</span>
+<span class="c1">#     与 note_i 类似，但读取的是实数。</span>
+<span class="c1">#</span>
+<span class="c1">#   note_s(method_name, default = '')</span>
+<span class="c1">#     与 note_i 类似，但读取的是字符串。</span>
+<span class="c1">#</span>
+<span class="c1">#   note_bool(method_name)</span>
+<span class="c1">#     定义 method_name 方法，判断备注中是否存在 &lt;method_name&gt; 子字符串。</span>
+<span class="c1">#     特别地，若 method_name 以问号或感叹号结尾，读取内容中不需要包含问号、感叹号。</span>
+<span class="c1">#     （上面几个方法也是一样）</span>
+<span class="c1">#</span>
+<span class="c1"># Taroxd::DisposeBitmap</span>
+<span class="c1">#   dispose</span>
+<span class="c1">#     释放位图后调用父类的 dispose 方法。</span>
+<span class="c1">#</span>
+<span class="c1"># Spriteset_Map / Spriteset_Battle</span>
+<span class="c1">#   self.use_sprite(SpriteClass)</span>
+<span class="c1">#   self.use_sprite(SpriteClass) { block }</span>
+<span class="c1">#     在 Spriteset 中使用一个 SpriteClass 的精灵。</span>
+<span class="c1">#     如果给出 block，则生成精灵使用的参数是 block 在 Spriteset 的上下文中执行后的返回值。</span>
+<span class="c1">#     自动管理精灵的生成、更新、释放。</span>
+<span class="c1">#</span>
+<span class="c1">#    例：Spriteset_Map.use_sprite(Sprite_OnMap) { @viewport1 }</span>
+<span class="c1">#</span>
+<span class="c1"># Fixnum</span>
+<span class="c1">#   id -&gt; self</span>
+<span class="c1">#     返回 self。这使得之后一些方法的参数既可以用数据库的数据，也可以用整数。</span>
+<span class="c1">#</span>
+<span class="c1"># Enumerable</span>
+<span class="c1">#   sum(base = 0) { |element| block }</span>
+<span class="c1">#     对所有元素 yield 后求和。base 为初始值。</span>
+<span class="c1">#     没有 block 参数时，对所有元素求和。</span>
+<span class="c1">#</span>
+<span class="c1">#   例：</span>
+<span class="c1">#   class Game_Unit</span>
+<span class="c1">#     def tgr_sum</span>
+<span class="c1">#       alive_members.sum(&amp;:tgr)</span>
+<span class="c1">#     end</span>
+<span class="c1">#   end</span>
+<span class="c1">#</span>
+<span class="c1">#   pi(base = 1) { |element| block }</span>
+<span class="c1">#     与 sum 类似，但对所有元素求积。</span>
+<span class="c1">#</span>
+<span class="c1"># Game_BaseItem</span>
+<span class="c1">#   id / item_id -&gt; Fixnum</span>
+<span class="c1">#     返回物品 id。</span>
+<span class="c1">#</span>
+<span class="c1"># Game_BattlerBase</span>
+<span class="c1">#   mtp -&gt; Numeric</span>
+<span class="c1">#     返回 max_tp。</span>
+<span class="c1">#</span>
+<span class="c1">#   initialized? -&gt; true</span>
+<span class="c1">#     返回 true。</span>
+<span class="c1">#</span>
+<span class="c1"># Game_Battler</span>
+<span class="c1">#   note_objects -&gt; Enumerator</span>
+<span class="c1">#   note_objects { |obj| ... } -&gt; self</span>
+<span class="c1">#     迭代战斗者拥有的所有带有备注的对象。</span>
+<span class="c1">#    （角色、职业、装备、技能、敌人、状态等）</span>
+<span class="c1">#     没有 block 给出时，返回 Enumerator 对象。</span>
+<span class="c1">#</span>
+<span class="c1">#   note -&gt; String</span>
+<span class="c1">#     返回数据库对象的备注。</span>
+<span class="c1">#</span>
+<span class="c1">#   equips / weapons / armors -&gt; []</span>
+<span class="c1">#     返回空数组。</span>
+<span class="c1">#</span>
+<span class="c1">#   skill?(skill) -&gt; true / false</span>
+<span class="c1">#     判断是否拥有技能。skill 可以为技能 ID，也可以为 RPG::Skill 的实例。</span>
+<span class="c1">#</span>
+<span class="c1">#   skill_learn?(skill) -&gt; true / false</span>
+<span class="c1">#     判断是否习得技能。skill 可以为技能 ID，也可以为 RPG::Skill 的实例。</span>
+<span class="c1">#</span>
+<span class="c1"># Game_Actor</span>
+<span class="c1">#   data_object -&gt; RPG::Actor</span>
+<span class="c1">#     返回数据库对象，等价于 actor。</span>
+<span class="c1">#</span>
+<span class="c1">#   weapon?(item) / armor?(item) -&gt; true / false</span>
+<span class="c1">#     检测是否装备对应的物品。item 可以为装备 ID，也可以为 RPG::EquipItem 的实例。</span>
+<span class="c1">#</span>
+<span class="c1">#   initialized? -&gt; true / false</span>
+<span class="c1">#     判断角色是否已经初始化。</span>
+<span class="c1">#</span>
+<span class="c1"># Game_Enemy</span>
+<span class="c1">#   id -&gt; Fixnum</span>
+<span class="c1">#     返回敌人 id。</span>
+<span class="c1">#</span>
+<span class="c1">#   data_object -&gt; RPG::Enemy</span>
+<span class="c1">#     返回数据库对象，等价于 enemy。</span>
+<span class="c1">#</span>
+<span class="c1">#   skills -&gt; Array</span>
+<span class="c1">#     返回敌人的所有技能实例的数组。</span>
+<span class="c1">#     skill? 方法判断是否拥有技能与该数组有关。</span>
+<span class="c1">#</span>
+<span class="c1">#   basic_skills -&gt; Array</span>
+<span class="c1">#     返回敌人行动列表中的技能 ID 的数组（元素可以重复）。</span>
+<span class="c1">#     skill_learn? 方法判断是否学会技能与该数组有关。</span>
+<span class="c1">#</span>
+<span class="c1"># Game_Actors</span>
+<span class="c1">#   include Enumerable</span>
+<span class="c1">#</span>
+<span class="c1">#   each -&gt; Enumerator</span>
+<span class="c1">#   each { |actor| block } -&gt; self</span>
+<span class="c1">#     迭代已经初始化的每个角色。</span>
+<span class="c1">#     如果没有给出 block，返回一个 Enumerator 对象。</span>
+<span class="c1">#</span>
+<span class="c1">#   include?(actor)</span>
+<span class="c1">#     角色是否已经初始化。actor 可以为 Game_Actor / RPG::Actor 的对象或 ID。</span>
+<span class="c1">#</span>
+<span class="c1"># Game_Unit</span>
+<span class="c1">#   include Enumerable</span>
+<span class="c1">#</span>
+<span class="c1">#   each -&gt; Enumerator</span>
+<span class="c1">#   each { |battler| block } -&gt; self</span>
+<span class="c1">#     迭代队伍中的每个成员。</span>
+<span class="c1">#     如果没有给出 block，返回一个 Enumerator 对象。</span>
+<span class="c1">#     等价于 members.each。</span>
+<span class="c1">#</span>
+<span class="c1">#   each_member -&gt; Enumerator / self</span>
+<span class="c1">#     each 的别名。</span>
+<span class="c1">#</span>
+<span class="c1">#   self[*args] / slice(*args) -&gt; Game_Actor / Array / nil</span>
+<span class="c1">#     等价于 members[*args]</span>
+<span class="c1">#</span>
+<span class="c1">#   empty? -&gt; true / false</span>
+<span class="c1">#     判断队伍是否为空。</span>
+<span class="c1">#</span>
+<span class="c1">#   size / length -&gt; Integer</span>
+<span class="c1">#     返回队伍人数。</span>
+<span class="c1">#</span>
+<span class="c1"># Game_Party</span>
+<span class="c1">#   include?(actor) -&gt; true / false</span>
+<span class="c1">#     队伍中是否存在角色。actor 可以为 Game_Actor / RPG::Actor 的对象或 ID。</span>
+<span class="c1">#</span>
+<span class="c1"># Game_Map</span>
+<span class="c1">#   id -&gt; Fixnum</span>
+<span class="c1">#     返回地图 ID。</span>
+<span class="c1">#</span>
+<span class="c1">#   data_object -&gt; RPG::Map</span>
+<span class="c1">#     返回数据库对象。</span>
+<span class="c1">#</span>
+<span class="c1">#   note -&gt; String</span>
+<span class="c1">#     返回备注内容。</span>
+<span class="c1">#</span>
+<span class="c1"># Game_CharacterBase</span>
+<span class="c1">#   same_pos?(character) -&gt; true / false</span>
+<span class="c1">#     判定是否处在相同位置。</span>
+<span class="c1">#     character 是任意能够响应方法 x 和 y 的对象。</span>
+<span class="c1">#     仅作为点(x, y)进行比较，不考虑 Game_Vehicle 的地图 ID 等问题。</span>
+
+<span class="k">module</span> <span class="nn">Taroxd</span> <span class="k">end</span>
+
+<span class="k">module</span> <span class="nn">Taroxd::Def</span>
+
+  <span class="no">Singleton</span> <span class="o">=</span> <span class="no">Module</span><span class="p">.</span><span class="nf">new</span> <span class="p">{</span> <span class="no">Object</span><span class="p">.</span><span class="nf">send</span> <span class="ss">:include</span><span class="p">,</span> <span class="nb">self</span> <span class="p">}</span>
+  <span class="no">Module</span><span class="p">.</span><span class="nf">send</span> <span class="ss">:include</span><span class="p">,</span> <span class="nb">self</span>
+
+  <span class="k">def</span> <span class="nf">get_access_control</span><span class="p">(</span><span class="n">sym</span><span class="p">)</span>
+    <span class="k">return</span> <span class="ss">:public</span>    <span class="k">if</span> <span class="nb">public_method_defined?</span>    <span class="n">sym</span>
+    <span class="k">return</span> <span class="ss">:protected</span> <span class="k">if</span> <span class="nb">protected_method_defined?</span> <span class="n">sym</span>
+    <span class="k">return</span> <span class="ss">:private</span>   <span class="k">if</span> <span class="nb">private_method_defined?</span>   <span class="n">sym</span>
+    <span class="kp">nil</span>
+  <span class="k">end</span>
+
+  <span class="n">template</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="k">do</span> <span class="o">|</span><span class="n">singleton</span><span class="o">|</span>
+    <span class="k">if</span> <span class="n">singleton</span>
+      <span class="n">klass</span> <span class="o">=</span> <span class="s1">'singleton_class'</span>
+      <span class="n">get_method</span> <span class="o">=</span> <span class="s1">'method'</span>
+      <span class="n">define</span> <span class="o">=</span> <span class="s1">'define_singleton_method'</span>
+    <span class="k">else</span>
+      <span class="n">klass</span> <span class="o">=</span> <span class="s1">'self'</span>
+      <span class="n">get_method</span> <span class="o">=</span> <span class="s1">'instance_method'</span>
+      <span class="n">define</span> <span class="o">=</span> <span class="s1">'define_method'</span>
+    <span class="k">end</span>
+    <span class="sx">%(
+      def &lt;name&gt;(sym, hook = nil, &amp;b)
+        access = #{klass}.get_access_control sym
+        old = #{get_method} sym
+        if b
+          #{define} sym, &amp;b
+          hook = #{get_method} sym
+        end
+        if hook.respond_to? :to_sym
+          hook = hook.to_sym
+          #{define} sym do |*args, &amp;block|
+            &lt;pattern_sym&gt;
+          end
+        elsif hook.respond_to? :call
+          #{define} sym do |*args, &amp;block|
+            &lt;pattern_call&gt;
+          end
+        elsif hook.kind_of? UnboundMethod
+          #{define} sym do |*args, &amp;block|
+            &lt;pattern_unbound&gt;
+          end
+        end
+        #{klass}.__send__ access, sym
+        sym
+      end
+    )</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 保存模板和替换 'hook(' 字符串的字符</span>
+  <span class="n">template</span> <span class="o">=</span> <span class="p">{</span><span class="kp">false</span> <span class="o">=&gt;</span> <span class="n">template</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="kp">false</span><span class="p">),</span> <span class="kp">true</span> <span class="o">=&gt;</span> <span class="n">template</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="kp">true</span><span class="p">)}</span>
+
+  <span class="c1"># 替换掉 pattern 中的语法</span>
+  <span class="n">gsub_pattern</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="k">do</span> <span class="o">|</span><span class="n">pattern</span><span class="p">,</span> <span class="n">singleton</span><span class="o">|</span>
+    <span class="n">old</span> <span class="o">=</span> <span class="n">singleton</span> <span class="p">?</span> <span class="s1">'old'</span> <span class="p">:</span> <span class="s1">'old.bind(self)'</span>
+    <span class="n">pattern</span><span class="p">.</span><span class="nf">gsub</span><span class="p">(</span><span class="s1">'*'</span><span class="p">,</span> <span class="s1">'*args, &amp;block'</span><span class="p">)</span>
+           <span class="p">.</span><span class="nf">gsub</span><span class="p">(</span><span class="sr">/old(\()?/</span><span class="p">)</span> <span class="p">{</span> <span class="vg">$1</span> <span class="p">?</span> <span class="s2">"</span><span class="si">#{</span><span class="n">old</span><span class="si">}</span><span class="s2">.call("</span> <span class="p">:</span> <span class="n">old</span> <span class="p">}</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 存入代替 "hook(" 的字符串</span>
+  <span class="n">template</span><span class="p">[</span><span class="s1">'sym'</span><span class="p">]</span>     <span class="o">=</span> <span class="s1">'__send__(hook, '</span>
+  <span class="n">template</span><span class="p">[</span><span class="s1">'call'</span><span class="p">]</span>    <span class="o">=</span> <span class="s1">'hook.call('</span>
+  <span class="n">template</span><span class="p">[</span><span class="s1">'unbound'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'hook.bind(self).call('</span>
+
+  <span class="c1"># 获取定义方法内容的字符串</span>
+  <span class="c1"># 得到的代码较长，请输出查看</span>
+  <span class="n">code</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="k">do</span> <span class="o">|</span><span class="nb">name</span><span class="p">,</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">singleton</span><span class="o">|</span>
+    <span class="n">pattern</span> <span class="o">=</span> <span class="n">gsub_pattern</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">singleton</span><span class="p">)</span>
+    <span class="n">template</span><span class="p">[</span><span class="n">singleton</span><span class="p">]</span>
+      <span class="p">.</span><span class="nf">sub</span><span class="p">(</span><span class="s1">'&lt;name&gt;'</span><span class="p">,</span> <span class="nb">name</span><span class="p">)</span>
+      <span class="p">.</span><span class="nf">gsub</span><span class="p">(</span><span class="sr">/&lt;pattern_(\w+?)&gt;/</span><span class="p">)</span> <span class="p">{</span> <span class="n">pattern</span><span class="p">.</span><span class="nf">gsub</span><span class="p">(</span><span class="s1">'hook('</span><span class="p">,</span> <span class="n">template</span><span class="p">[</span><span class="vg">$1</span><span class="p">])</span> <span class="p">}</span>
+  <span class="k">end</span>
+
+  <span class="n">main</span> <span class="o">=</span> <span class="no">TOPLEVEL_BINDING</span><span class="p">.</span><span class="nf">eval</span><span class="p">(</span><span class="s1">'self'</span><span class="p">)</span>
+
+  <span class="c1"># 定义 def_ 系列方法的方法</span>
+  <span class="n">define_singleton_method</span> <span class="ss">:def_</span> <span class="k">do</span> <span class="o">|</span><span class="nb">name</span><span class="p">,</span> <span class="n">pattern</span><span class="o">|</span>
+    <span class="nb">name</span> <span class="o">=</span> <span class="s2">"</span><span class="si">#{</span><span class="n">__method__</span><span class="si">}#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">"</span>
+    <span class="nb">module_eval</span> <span class="n">code</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">pattern</span><span class="p">,</span> <span class="kp">false</span><span class="p">)</span>
+    <span class="no">Singleton</span><span class="p">.</span><span class="nf">module_eval</span> <span class="n">code</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="s2">"singleton_</span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">pattern</span><span class="p">,</span> <span class="kp">true</span><span class="p">)</span>
+    <span class="n">main</span><span class="p">.</span><span class="nf">define_singleton_method</span> <span class="nb">name</span><span class="p">,</span> <span class="o">&amp;</span><span class="no">Kernel</span><span class="p">.</span><span class="nf">method</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 实际定义 def_ 系列的方法</span>
+  <span class="n">def_</span> <span class="ss">:after</span><span class="p">,</span>  <span class="s1">'ret = old(*); hook(*); ret'</span>
+  <span class="n">def_</span> <span class="ss">:after!</span><span class="p">,</span> <span class="s1">'old(*); hook(*)'</span>
+  <span class="n">def_</span> <span class="ss">:before</span><span class="p">,</span> <span class="s1">'hook(*); old(*)'</span>
+  <span class="n">def_</span> <span class="ss">:with</span><span class="p">,</span>   <span class="s1">'hook(old(*), *)'</span>
+  <span class="n">def_</span> <span class="ss">:chain</span><span class="p">,</span>  <span class="s1">'hook(old, *)'</span>
+  <span class="n">def_</span> <span class="ss">:and</span><span class="p">,</span>    <span class="s1">'old(*) &amp;&amp; hook(*)'</span>
+  <span class="n">def_</span> <span class="ss">:or</span><span class="p">,</span>     <span class="s1">'old(*) || hook(*)'</span>
+  <span class="n">def_</span> <span class="ss">:if</span><span class="p">,</span>     <span class="s1">'old(*) if hook(*)'</span>
+  <span class="n">def_</span> <span class="ss">:unless</span><span class="p">,</span> <span class="s1">'old(*) unless hook(*)'</span>
+<span class="k">end</span>
+
+<span class="k">module</span> <span class="nn">Taroxd::ReadNote</span>
+
+  <span class="kp">include</span> <span class="no">RPG</span>
+  <span class="no">BaseItem</span><span class="p">.</span><span class="nf">extend</span>        <span class="nb">self</span>
+  <span class="no">Map</span><span class="p">.</span><span class="nf">extend</span>             <span class="nb">self</span>
+  <span class="no">Event</span><span class="p">.</span><span class="nf">extend</span>           <span class="nb">self</span>
+  <span class="no">Tileset</span><span class="p">.</span><span class="nf">extend</span>         <span class="nb">self</span>
+  <span class="no">Class</span><span class="o">::</span><span class="no">Learning</span><span class="p">.</span><span class="nf">extend</span> <span class="nb">self</span>
+
+  <span class="c1"># 获取 note 的方法</span>
+  <span class="k">def</span> <span class="nf">note_method</span>
+    <span class="ss">:note</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 事件名称作为备注</span>
+  <span class="k">def</span> <span class="nc">Event</span><span class="o">.</span><span class="nf">note_method</span>
+    <span class="ss">:name</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 备注模板</span>
+  <span class="k">def</span> <span class="nf">note_any</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">default</span><span class="p">,</span> <span class="n">re</span><span class="p">,</span> <span class="n">capture</span><span class="p">)</span>
+    <span class="nb">name</span> <span class="o">=</span> <span class="nb">name</span><span class="p">.</span><span class="nf">to_s</span>
+    <span class="n">mark</span> <span class="o">=</span> <span class="nb">name</span><span class="p">.</span><span class="nf">slice!</span><span class="p">(</span><span class="sr">/[?!]\Z/</span><span class="p">)</span>
+    <span class="n">re</span> <span class="o">=</span> <span class="n">re</span><span class="p">.</span><span class="nf">source</span> <span class="k">if</span> <span class="n">re</span><span class="p">.</span><span class="nf">kind_of?</span><span class="p">(</span><span class="no">Regexp</span><span class="p">)</span>
+    <span class="n">re</span> <span class="o">=</span> <span class="s2">"/&lt;</span><span class="si">#{</span><span class="nb">name</span><span class="p">.</span><span class="nf">gsub</span><span class="p">(</span><span class="s1">'_'</span><span class="p">,</span> <span class="s1">'\s*'</span><span class="p">)</span><span class="si">}#{</span><span class="n">re</span><span class="si">}</span><span class="s2">&gt;/i"</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="n">default</span><span class="p">.</span><span class="nf">inspect</span>
+    <span class="nb">class_eval</span> <span class="sx">%{
+      def #{name}
+        return @#{name} if instance_variable_defined? :@#{name}
+        @#{name} = #{note_method} =~ #{re} ? (#{capture}) : (#{default})
+      end
+    }</span><span class="p">,</span> <span class="kp">__FILE__</span><span class="p">,</span> <span class="kp">__LINE__</span>
+    <span class="kp">alias_method</span> <span class="nb">name</span> <span class="o">+</span> <span class="n">mark</span><span class="p">,</span> <span class="nb">name</span> <span class="k">if</span> <span class="n">mark</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">note_i</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">default</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">note_any</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">default</span><span class="p">,</span> <span class="s1">'\s*(-?\d+)'</span><span class="p">,</span> <span class="s1">'$1.to_i'</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">note_f</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">default</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">note_any</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">default</span><span class="p">,</span> <span class="s1">'\s*(-?\d+(?:\.\d+)?)'</span><span class="p">,</span> <span class="s1">'$1.to_f'</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">note_s</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">default</span> <span class="o">=</span> <span class="s1">''</span><span class="p">)</span>
+    <span class="n">note_any</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">default</span><span class="p">,</span> <span class="s1">'\s*(\S.*)'</span><span class="p">,</span> <span class="s1">'$1'</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">note_bool</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+    <span class="n">note_any</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="kp">false</span><span class="p">,</span> <span class="s1">''</span><span class="p">,</span> <span class="s1">'true'</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">module</span> <span class="nn">Taroxd::DisposeBitmap</span>
+  <span class="k">def</span> <span class="nf">dispose</span>
+    <span class="n">bitmap</span><span class="p">.</span><span class="nf">dispose</span> <span class="k">if</span> <span class="n">bitmap</span>
+    <span class="k">super</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">module</span> <span class="nn">Taroxd::SpritesetDSL</span>
+
+  <span class="c1"># 方法名</span>
+  <span class="no">CREATE_METHOD_NAME</span>  <span class="o">=</span> <span class="ss">:create_taroxd_sprites</span>
+  <span class="no">UPDATE_METHOD_NAME</span>  <span class="o">=</span> <span class="ss">:update_taroxd_sprites</span>
+  <span class="no">DISPOSE_METHOD_NAME</span> <span class="o">=</span> <span class="ss">:dispose_taroxd_sprites</span>
+
+  <span class="c1"># 定义管理精灵的方法</span>
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">extended</span><span class="p">(</span><span class="n">klass</span><span class="p">)</span>
+    <span class="n">klass</span><span class="p">.</span><span class="nf">class_eval</span> <span class="k">do</span>
+      <span class="n">sprites</span> <span class="o">=</span> <span class="kp">nil</span>
+
+      <span class="n">define_method</span> <span class="no">CREATE_METHOD_NAME</span> <span class="k">do</span>
+        <span class="n">sprites</span> <span class="o">=</span> <span class="n">klass</span><span class="p">.</span><span class="nf">sprite_list</span><span class="p">.</span><span class="nf">map</span> <span class="k">do</span> <span class="o">|</span><span class="n">sprite_class</span><span class="p">,</span> <span class="n">get_args</span><span class="o">|</span>
+          <span class="k">if</span> <span class="n">get_args</span>
+            <span class="n">sprite_class</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="o">*</span><span class="nb">instance_eval</span><span class="p">(</span><span class="o">&amp;</span><span class="n">get_args</span><span class="p">))</span>
+          <span class="k">else</span>
+            <span class="n">sprite_class</span><span class="p">.</span><span class="nf">new</span>
+          <span class="k">end</span>
+        <span class="k">end</span>
+      <span class="k">end</span>
+
+      <span class="n">define_method</span><span class="p">(</span><span class="no">UPDATE_METHOD_NAME</span><span class="p">)</span>  <span class="p">{</span> <span class="n">sprites</span><span class="p">.</span><span class="nf">each</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:update</span><span class="p">)</span>  <span class="p">}</span>
+      <span class="n">define_method</span><span class="p">(</span><span class="no">DISPOSE_METHOD_NAME</span><span class="p">)</span> <span class="p">{</span> <span class="n">sprites</span><span class="p">.</span><span class="nf">each</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:dispose</span><span class="p">)</span> <span class="p">}</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">use_sprite</span><span class="p">(</span><span class="n">klass</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">get_args</span><span class="p">)</span>
+    <span class="n">sprite_list</span><span class="p">.</span><span class="nf">push</span> <span class="p">[</span><span class="n">klass</span><span class="p">,</span> <span class="n">get_args</span><span class="p">]</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">sprite_list</span>
+    <span class="vi">@_taroxd_use_sprite</span> <span class="o">||=</span> <span class="p">[]</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 在一系列方法上触发钩子</span>
+  <span class="k">def</span> <span class="nf">sprite_method_hook</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+    <span class="n">def_after</span> <span class="ss">:"create_</span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="ss">"</span><span class="p">,</span>  <span class="no">CREATE_METHOD_NAME</span>
+    <span class="n">def_after</span> <span class="ss">:"update_</span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="ss">"</span><span class="p">,</span>  <span class="no">UPDATE_METHOD_NAME</span>
+    <span class="n">def_after</span> <span class="ss">:"dispose_</span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="ss">"</span><span class="p">,</span> <span class="no">DISPOSE_METHOD_NAME</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Fixnum</span> <span class="o">&lt;</span> <span class="no">Integer</span>
+  <span class="kp">alias_method</span> <span class="ss">:id</span><span class="p">,</span> <span class="ss">:to_int</span>
+<span class="k">end</span>
+
+<span class="k">module</span> <span class="nn">Enumerable</span>
+  <span class="k">def</span> <span class="nf">sum</span><span class="p">(</span><span class="n">base</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="nb">block_given?</span> <span class="p">?</span> <span class="n">inject</span><span class="p">(</span><span class="n">base</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">a</span><span class="p">,</span> <span class="n">e</span><span class="o">|</span> <span class="n">a</span> <span class="o">+</span> <span class="k">yield</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="p">}</span> <span class="p">:</span> <span class="n">inject</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="p">:</span><span class="o">+</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">pi</span><span class="p">(</span><span class="n">base</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="nb">block_given?</span> <span class="p">?</span> <span class="n">inject</span><span class="p">(</span><span class="n">base</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">a</span><span class="p">,</span> <span class="n">e</span><span class="o">|</span> <span class="n">a</span> <span class="o">*</span> <span class="k">yield</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="p">}</span> <span class="p">:</span> <span class="n">inject</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="p">:</span><span class="o">*</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_BaseItem</span>
+  <span class="nb">attr_reader</span> <span class="ss">:item_id</span>
+  <span class="kp">alias_method</span> <span class="ss">:id</span><span class="p">,</span> <span class="ss">:item_id</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_BattlerBase</span>
+
+  <span class="k">def</span> <span class="nf">initialized?</span>
+    <span class="kp">true</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">mtp</span>
+    <span class="n">max_tp</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Battler</span> <span class="o">&lt;</span> <span class="no">Game_BattlerBase</span>
+
+  <span class="c1"># 迭代拥有备注的对象</span>
+  <span class="k">def</span> <span class="nf">note_objects</span>
+    <span class="k">return</span> <span class="n">to_enum</span><span class="p">(</span><span class="n">__method__</span><span class="p">)</span> <span class="k">unless</span> <span class="nb">block_given?</span>
+    <span class="n">states</span><span class="p">.</span><span class="nf">each</span> <span class="p">{</span> <span class="o">|</span><span class="n">e</span><span class="o">|</span> <span class="k">yield</span> <span class="n">e</span> <span class="p">}</span>
+    <span class="n">equips</span><span class="p">.</span><span class="nf">each</span> <span class="p">{</span> <span class="o">|</span><span class="n">e</span><span class="o">|</span> <span class="k">yield</span> <span class="n">e</span> <span class="k">if</span> <span class="n">e</span> <span class="p">}</span>
+    <span class="n">skills</span><span class="p">.</span><span class="nf">each</span> <span class="p">{</span> <span class="o">|</span><span class="n">e</span><span class="o">|</span> <span class="k">yield</span> <span class="n">e</span> <span class="p">}</span>
+    <span class="k">yield</span> <span class="n">data_object</span>
+    <span class="k">yield</span> <span class="nb">self</span><span class="p">.</span><span class="nf">class</span> <span class="k">if</span> <span class="n">actor?</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">regenerate_tp</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">tp</span> <span class="o">+=</span> <span class="n">max_tp</span> <span class="o">*</span> <span class="n">trg</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">data_object</span>
+    <span class="k">raise</span> <span class="no">NotImplementedError</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">note</span>
+    <span class="n">data_object</span><span class="p">.</span><span class="nf">note</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">id</span>
+    <span class="n">data_object</span><span class="p">.</span><span class="nf">id</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">skills</span>
+    <span class="p">(</span><span class="n">basic_skills</span> <span class="o">|</span> <span class="n">added_skills</span><span class="p">).</span><span class="nf">sort</span><span class="p">.</span><span class="nf">map</span> <span class="p">{</span> <span class="o">|</span><span class="nb">id</span><span class="o">|</span> <span class="vg">$data_skills</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="p">}</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">equips</span>
+    <span class="p">[]</span>
+  <span class="k">end</span>
+  <span class="kp">alias_method</span> <span class="ss">:weapons</span><span class="p">,</span> <span class="ss">:equips</span>
+  <span class="kp">alias_method</span> <span class="ss">:armors</span><span class="p">,</span>  <span class="ss">:equips</span>
+  <span class="kp">alias_method</span> <span class="ss">:basic_skills</span><span class="p">,</span> <span class="ss">:equips</span>
+
+  <span class="k">def</span> <span class="nf">skill?</span><span class="p">(</span><span class="n">skill</span><span class="p">)</span>
+    <span class="n">basic_skills</span><span class="p">.</span><span class="nf">include?</span><span class="p">(</span><span class="n">skill</span><span class="p">.</span><span class="nf">id</span><span class="p">)</span> <span class="o">||</span> <span class="n">added_skills</span><span class="p">.</span><span class="nf">include?</span><span class="p">(</span><span class="n">skill</span><span class="p">.</span><span class="nf">id</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">skill_learn?</span><span class="p">(</span><span class="n">skill</span><span class="p">)</span>
+    <span class="n">basic_skills</span><span class="p">.</span><span class="nf">include?</span><span class="p">(</span><span class="n">skill</span><span class="p">.</span><span class="nf">id</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Actor</span> <span class="o">&lt;</span> <span class="no">Game_Battler</span>
+
+  <span class="kp">alias_method</span> <span class="ss">:data_object</span><span class="p">,</span> <span class="ss">:actor</span>
+
+  <span class="k">def</span> <span class="nf">weapon?</span><span class="p">(</span><span class="n">weapon</span><span class="p">)</span>
+    <span class="vi">@equips</span><span class="p">.</span><span class="nf">any?</span> <span class="p">{</span> <span class="o">|</span><span class="n">item</span><span class="o">|</span> <span class="n">item</span><span class="p">.</span><span class="nf">id</span> <span class="o">==</span> <span class="n">weapon</span><span class="p">.</span><span class="nf">id</span> <span class="o">&amp;&amp;</span> <span class="n">item</span><span class="p">.</span><span class="nf">is_weapon?</span> <span class="p">}</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">armor?</span><span class="p">(</span><span class="n">armor</span><span class="p">)</span>
+    <span class="vi">@equips</span><span class="p">.</span><span class="nf">any?</span> <span class="p">{</span> <span class="o">|</span><span class="n">item</span><span class="o">|</span> <span class="n">item</span><span class="p">.</span><span class="nf">id</span> <span class="o">==</span> <span class="n">armor</span><span class="p">.</span><span class="nf">id</span> <span class="o">&amp;&amp;</span> <span class="n">item</span><span class="p">.</span><span class="nf">is_armor?</span> <span class="p">}</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">initialized?</span>
+    <span class="vg">$game_actors</span><span class="p">.</span><span class="nf">include?</span><span class="p">(</span><span class="nb">self</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="kp">private</span>
+
+  <span class="k">def</span> <span class="nf">basic_skills</span>
+    <span class="vi">@skills</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Enemy</span> <span class="o">&lt;</span> <span class="no">Game_Battler</span>
+
+  <span class="kp">alias_method</span> <span class="ss">:data_object</span><span class="p">,</span> <span class="ss">:enemy</span>
+  <span class="kp">alias_method</span> <span class="ss">:id</span><span class="p">,</span> <span class="ss">:enemy_id</span>
+
+  <span class="k">def</span> <span class="nf">basic_skills</span>
+    <span class="n">enemy</span><span class="p">.</span><span class="nf">actions</span><span class="p">.</span><span class="nf">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:skill_id</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Actors</span>
+
+  <span class="kp">include</span> <span class="no">Enumerable</span>
+
+  <span class="k">def</span> <span class="nf">each</span>
+    <span class="k">return</span> <span class="n">to_enum</span><span class="p">(</span><span class="n">__method__</span><span class="p">)</span> <span class="k">unless</span> <span class="nb">block_given?</span>
+    <span class="vi">@data</span><span class="p">.</span><span class="nf">each</span> <span class="p">{</span> <span class="o">|</span><span class="n">actor</span><span class="o">|</span> <span class="k">yield</span> <span class="n">actor</span> <span class="k">if</span> <span class="n">actor</span> <span class="p">}</span>
+    <span class="nb">self</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">include?</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span>
+    <span class="vi">@data</span><span class="p">[</span><span class="n">actor</span><span class="p">.</span><span class="nf">id</span><span class="p">]</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Unit</span>
+
+  <span class="kp">include</span> <span class="no">Enumerable</span>
+
+  <span class="k">def</span> <span class="nf">to_a</span>
+    <span class="n">members</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">each</span>
+    <span class="k">return</span> <span class="n">to_enum</span><span class="p">(</span><span class="n">__method__</span><span class="p">)</span> <span class="k">unless</span> <span class="nb">block_given?</span>
+    <span class="n">members</span><span class="p">.</span><span class="nf">each</span> <span class="p">{</span> <span class="o">|</span><span class="n">battler</span><span class="o">|</span> <span class="k">yield</span> <span class="n">battler</span> <span class="p">}</span>
+    <span class="nb">self</span>
+  <span class="k">end</span>
+  <span class="kp">alias_method</span> <span class="ss">:each_member</span><span class="p">,</span> <span class="ss">:each</span>
+
+  <span class="k">def</span> <span class="nf">[]</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">members</span><span class="p">[</span><span class="o">*</span><span class="n">args</span><span class="p">]</span>
+  <span class="k">end</span>
+  <span class="kp">alias_method</span> <span class="ss">:slice</span><span class="p">,</span> <span class="ss">:[]</span>
+
+  <span class="k">def</span> <span class="nf">empty?</span>
+    <span class="n">members</span><span class="p">.</span><span class="nf">empty?</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">size</span>
+    <span class="n">members</span><span class="p">.</span><span class="nf">size</span>
+  <span class="k">end</span>
+  <span class="kp">alias_method</span> <span class="ss">:length</span><span class="p">,</span> <span class="ss">:size</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Party</span> <span class="o">&lt;</span> <span class="no">Game_Unit</span>
+  <span class="k">def</span> <span class="nf">include?</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span>
+    <span class="vi">@actors</span><span class="p">.</span><span class="nf">include?</span><span class="p">(</span><span class="n">actor</span><span class="p">.</span><span class="nf">id</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Map</span>
+
+  <span class="kp">alias_method</span> <span class="ss">:id</span><span class="p">,</span> <span class="ss">:map_id</span>
+
+  <span class="k">def</span> <span class="nf">data_object</span>
+    <span class="vi">@map</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">note</span>
+    <span class="vi">@map</span><span class="p">.</span><span class="nf">note</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_CharacterBase</span>
+  <span class="k">def</span> <span class="nf">same_pos?</span><span class="p">(</span><span class="n">character</span><span class="p">)</span>
+    <span class="vi">@x</span> <span class="o">==</span> <span class="n">character</span><span class="p">.</span><span class="nf">x</span> <span class="o">&amp;&amp;</span> <span class="vi">@y</span> <span class="o">==</span> <span class="n">character</span><span class="p">.</span><span class="nf">y</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Spriteset_Map</span>
+  <span class="kp">extend</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">SpritesetDSL</span>
+  <span class="n">sprite_method_hook</span> <span class="ss">:timer</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Spriteset_Battle</span>
+  <span class="kp">extend</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">SpritesetDSL</span>
+  <span class="n">sprite_method_hook</span> <span class="ss">:timer</span>
+<span class="k">end</span></code></pre></div>

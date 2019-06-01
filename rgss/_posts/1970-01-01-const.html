@@ -1,0 +1,159 @@
+---
+title: 游戏常数设置
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">游戏常数设置</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">const</span></a>
+<span class="k">module</span> <span class="nn">Taroxd::Const</span>
+
+  <span class="c1"># 游戏常数设置区域（如果要用默认值，可以设置为 false 或直接删除）</span>
+
+  <span class="no">SAVEFILE_MAX</span> <span class="o">=</span> <span class="mi">16</span>               <span class="c1"># 存档文件的最大个数</span>
+  <span class="no">ESCAPE_RATIO_UP</span> <span class="o">=</span> <span class="mf">0.1</span>           <span class="c1"># 撤退失败后，撤退成功率提升值</span>
+  <span class="no">MAX_TP</span> <span class="o">=</span> <span class="mi">100</span>                    <span class="c1"># TP 的最大值</span>
+  <span class="no">ATTACK_SKILL_ID</span> <span class="o">=</span> <span class="mi">1</span>             <span class="c1"># 默认攻击技能 ID</span>
+  <span class="no">GUARD_SKILL_ID</span> <span class="o">=</span> <span class="mi">2</span>              <span class="c1"># 默认防御技能 ID</span>
+  <span class="no">DEATH_STATE_ID</span> <span class="o">=</span> <span class="mi">1</span>              <span class="c1"># 默认死亡状态 ID</span>
+  <span class="no">PARAM_LIMIT</span> <span class="o">=</span> <span class="mi">999999</span>            <span class="c1"># 能力值的最大值</span>
+  <span class="no">PRESERVE_TP</span> <span class="o">=</span> <span class="kp">false</span>             <span class="c1"># 是否永远特技专注</span>
+  <span class="no">LUK_EFFECT_RATE</span> <span class="o">=</span> <span class="mf">0.001</span>         <span class="c1"># 幸运值影响程度</span>
+  <span class="no">CRITICAL_RATE</span> <span class="o">=</span> <span class="mi">3</span>               <span class="c1"># 关键一击伤害倍率</span>
+  <span class="no">STEPS_FOR_RUN</span> <span class="o">=</span> <span class="mi">20</span>              <span class="c1"># 地图上多少步等于一回合</span>
+  <span class="no">BASIC_FLOOR_DAMAGE</span> <span class="o">=</span> <span class="mi">10</span>         <span class="c1"># 地形伤害的基础值</span>
+  <span class="no">MAX_BATTLE_MEMBERS</span> <span class="o">=</span> <span class="mi">4</span>          <span class="c1"># 参战角色的最大数</span>
+  <span class="no">MAX_GOLD</span> <span class="o">=</span> <span class="mi">99999999</span>             <span class="c1"># 持有金钱的最大值</span>
+  <span class="no">MAX_ITEM_NUMBER</span> <span class="o">=</span> <span class="mi">99</span>            <span class="c1"># 物品的最大持有数</span>
+  <span class="no">BUSH_DEPTH</span> <span class="o">=</span> <span class="mi">8</span>                  <span class="c1"># 流体地形的深度</span>
+  <span class="no">BUSH_OPACITY</span> <span class="o">=</span> <span class="mi">128</span>              <span class="c1"># 流体地形的不透明度</span>
+  <span class="no">PLAYER_INITIAL_DIRECTION</span> <span class="o">=</span> <span class="mi">2</span>    <span class="c1"># 角色初始朝向</span>
+  <span class="no">SUBSTITUTE_HP_RATE</span> <span class="o">=</span> <span class="mf">0.25</span>       <span class="c1"># HP 比率达到多少以下会触发保护弱者</span>
+  <span class="no">Font</span><span class="p">.</span><span class="nf">default_name</span> <span class="o">=</span> <span class="s1">'nsimsun'</span>   <span class="c1"># 默认字体名称</span>
+  <span class="no">Font</span><span class="p">.</span><span class="nf">default_size</span> <span class="o">=</span> <span class="mi">24</span>          <span class="c1"># 默认字体大小</span>
+
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">[]</span><span class="p">(</span><span class="n">sym</span><span class="p">)</span>
+    <span class="nb">const_defined?</span><span class="p">(</span><span class="n">sym</span><span class="p">,</span> <span class="kp">false</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nb">const_get</span><span class="p">(</span><span class="n">sym</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">def</span> <span class="nc">DataManager</span><span class="o">.</span><span class="nf">savefile_max</span>
+  <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="o">::</span><span class="no">SAVEFILE_MAX</span>
+<span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="p">[</span><span class="ss">:SAVEFILE_MAX</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nc">BattleManager</span><span class="o">.</span><span class="nf">process_escape</span>
+  <span class="vg">$game_message</span><span class="p">.</span><span class="nf">add</span><span class="p">(</span><span class="nb">sprintf</span><span class="p">(</span><span class="no">Vocab</span><span class="o">::</span><span class="no">EscapeStart</span><span class="p">,</span> <span class="vg">$game_party</span><span class="p">.</span><span class="nf">name</span><span class="p">))</span>
+  <span class="n">success</span> <span class="o">=</span> <span class="vi">@preemptive</span> <span class="p">?</span> <span class="kp">true</span> <span class="p">:</span> <span class="p">(</span><span class="nb">rand</span> <span class="o">&lt;</span> <span class="vi">@escape_ratio</span><span class="p">)</span>
+  <span class="no">Sound</span><span class="p">.</span><span class="nf">play_escape</span>
+  <span class="k">if</span> <span class="n">success</span>
+    <span class="n">process_abort</span>
+  <span class="k">else</span>
+    <span class="vi">@escape_ratio</span> <span class="o">+=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="o">::</span><span class="no">ESCAPE_RATIO_UP</span>
+    <span class="vg">$game_message</span><span class="p">.</span><span class="nf">add</span><span class="p">(</span><span class="s1">'\.'</span> <span class="o">+</span> <span class="no">Vocab</span><span class="o">::</span><span class="no">EscapeFailure</span><span class="p">)</span>
+    <span class="vg">$game_party</span><span class="p">.</span><span class="nf">clear_actions</span>
+  <span class="k">end</span>
+  <span class="n">wait_for_message</span>
+  <span class="n">success</span>
+<span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="p">[</span><span class="ss">:ESCAPE_RATIO_UP</span><span class="p">]</span>
+
+<span class="k">class</span> <span class="nc">Game_BattlerBase</span>
+
+  <span class="k">def</span> <span class="nf">max_tp</span>
+    <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="o">::</span><span class="no">MAX_TP</span>
+  <span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="p">[</span><span class="ss">:MAX_TP</span><span class="p">]</span>
+
+  <span class="k">def</span> <span class="nf">attack_skill_id</span>
+    <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="o">::</span><span class="no">ATTACK_SKILL_ID</span>
+  <span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="p">[</span><span class="ss">:ATTACK_SKILL_ID</span><span class="p">]</span>
+
+  <span class="k">def</span> <span class="nf">guard_skill_id</span>
+    <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="o">::</span><span class="no">GUARD_SKILL_ID</span>
+  <span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="p">[</span><span class="ss">:GUARD_SKILL_ID</span><span class="p">]</span>
+
+  <span class="k">def</span> <span class="nf">death_state_id</span>
+    <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="o">::</span><span class="no">DEATH_STATE_ID</span>
+  <span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="p">[</span><span class="ss">:DEATH_STATE_ID</span><span class="p">]</span>
+
+  <span class="k">def</span> <span class="nf">param_min</span><span class="p">(</span><span class="n">_</span><span class="p">)</span>
+    <span class="mi">0</span>
+  <span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="p">[</span><span class="ss">:PARAM_LIMIT</span><span class="p">]</span>
+
+  <span class="k">def</span> <span class="nf">param_max</span><span class="p">(</span><span class="n">_</span><span class="p">)</span>
+    <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="o">::</span><span class="no">PARAM_LIMIT</span>
+  <span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="p">[</span><span class="ss">:PARAM_LIMIT</span><span class="p">]</span>
+
+  <span class="k">def</span> <span class="nf">preserve_tp?</span>
+    <span class="kp">true</span>
+  <span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="p">[</span><span class="ss">:PRESERVE_TP</span><span class="p">]</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Battler</span> <span class="o">&lt;</span> <span class="no">Game_BattlerBase</span>
+
+  <span class="k">def</span> <span class="nf">luk_effect_rate</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+    <span class="p">[</span><span class="mf">1.0</span> <span class="o">+</span> <span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="nf">luk</span> <span class="o">-</span> <span class="n">luk</span><span class="p">)</span> <span class="o">*</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="o">::</span><span class="no">LUK_EFFECT_RATE</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">].</span><span class="nf">max</span>
+  <span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="p">[</span><span class="ss">:LUK_EFFECT_RATE</span><span class="p">]</span>
+
+  <span class="k">def</span> <span class="nf">apply_critical</span><span class="p">(</span><span class="n">damage</span><span class="p">)</span>
+    <span class="n">damage</span> <span class="o">*</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="o">::</span><span class="no">CRITICAL_RATE</span>
+  <span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="p">[</span><span class="ss">:CRITICAL_RATE</span><span class="p">]</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Actor</span> <span class="o">&lt;</span> <span class="no">Game_Battler</span>
+
+  <span class="n">remove_method</span> <span class="ss">:param_max</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="p">[</span><span class="ss">:PARAM_LIMIT</span><span class="p">]</span>
+
+  <span class="k">def</span> <span class="nf">steps_for_turn</span>
+    <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="o">::</span><span class="no">STEPS_FOR_RUN</span>
+  <span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="p">[</span><span class="ss">:STEPS_FOR_RUN</span><span class="p">]</span>
+
+  <span class="k">def</span> <span class="nf">basic_floor_damage</span>
+    <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="o">::</span><span class="no">BASIC_FLOOR_DAMAGE</span>
+  <span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="p">[</span><span class="ss">:BASIC_FLOOR_DAMAGE</span><span class="p">]</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Party</span> <span class="o">&lt;</span> <span class="no">Game_Unit</span>
+
+  <span class="k">def</span> <span class="nf">max_battle_members</span>
+    <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="o">::</span><span class="no">MAX_BATTLE_MEMBERS</span>
+  <span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="p">[</span><span class="ss">:MAX_BATTLE_MEMBERS</span><span class="p">]</span>
+
+  <span class="k">def</span> <span class="nf">max_gold</span>
+    <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="o">::</span><span class="no">MAX_GOLD</span>
+  <span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="p">[</span><span class="ss">:MAX_GOLD</span><span class="p">]</span>
+
+  <span class="k">def</span> <span class="nf">max_item_number</span><span class="p">(</span><span class="n">_</span><span class="p">)</span>
+    <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="o">::</span><span class="no">MAX_ITEM_NUMBER</span>
+  <span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="p">[</span><span class="ss">:MAX_ITEM_NUMBER</span><span class="p">]</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_CharacterBase</span>
+
+  <span class="k">def</span> <span class="nf">update_bush_depth</span>
+    <span class="k">if</span> <span class="n">normal_priority?</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">object_character?</span> <span class="o">&amp;&amp;</span> <span class="n">bush?</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">jumping?</span>
+      <span class="vi">@bush_depth</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="o">::</span><span class="no">BUSH_DEPTH</span> <span class="k">unless</span> <span class="n">moving?</span>
+    <span class="k">else</span>
+      <span class="vi">@bush_depth</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">end</span>
+  <span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="p">[</span><span class="ss">:BUSH_DEPTH</span><span class="p">]</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Sprite_Character</span> <span class="o">&lt;</span> <span class="no">Sprite_Base</span>
+
+  <span class="n">def_after</span> <span class="ss">:initialize</span> <span class="k">do</span> <span class="o">|</span><span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="kp">nil</span><span class="o">|</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">bush_opacity</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="o">::</span><span class="no">BUSH_OPACITY</span>
+  <span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="p">[</span><span class="ss">:BUSH_OPACITY</span><span class="p">]</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Player</span> <span class="o">&lt;</span> <span class="no">Game_Character</span>
+
+  <span class="n">def_after</span> <span class="ss">:initialize</span> <span class="k">do</span>
+    <span class="vi">@direction</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="o">::</span><span class="no">PLAYER_INITIAL_DIRECTION</span>
+  <span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="p">[</span><span class="ss">:PLAYER_INITIAL_DIRECTION</span><span class="p">]</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Scene_Battle</span> <span class="o">&lt;</span> <span class="no">Scene_Base</span>
+
+  <span class="k">def</span> <span class="nf">check_substitute</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+    <span class="n">target</span><span class="p">.</span><span class="nf">hp_rate</span> <span class="o">&lt;</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="o">::</span><span class="no">SUBSTITUTE_HP_RATE</span> <span class="o">&amp;&amp;</span>
+      <span class="p">(</span><span class="o">!</span><span class="n">item</span> <span class="o">||</span> <span class="o">!</span><span class="n">item</span><span class="p">.</span><span class="nf">certain?</span><span class="p">)</span>
+  <span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Const</span><span class="p">[</span><span class="ss">:SUBSTITUTE_HP_RATE</span><span class="p">]</span>
+<span class="k">end</span></code></pre></div>

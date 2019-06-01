@@ -1,0 +1,98 @@
+---
+title: 快进游戏
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">fast_forward</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">快进游戏</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1"></span></a>
+<span class="c1">#      跳过 frame 帧。keys 为这 frame 帧按下的按键。</span>
+<span class="c1">#      每一帧都视为重新按下按键。</span>
+<span class="c1">#</span>
+<span class="c1">#    示例：</span>
+<span class="c1">#      Taroxd::FastForward.call(999, :C)</span>
+<span class="c1">#        跳过 999 帧。每帧都视为重新按下确定键。</span>
+
+<span class="k">module</span> <span class="nn">Taroxd</span>
+
+  <span class="n">dirs</span> <span class="o">=</span> <span class="p">{</span><span class="no">DOWN</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="no">LEFT</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="no">RIGHT</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span> <span class="no">UP</span><span class="p">:</span> <span class="mi">8</span><span class="p">}</span>
+
+  <span class="c1"># 获取 dir4, dir8。</span>
+  <span class="n">dir_4_8</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="k">do</span> <span class="o">|</span><span class="n">keys</span><span class="o">|</span>
+    <span class="n">dir8</span> <span class="o">=</span> <span class="n">dirs</span><span class="p">.</span><span class="nf">inject</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">dir</span><span class="p">,</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span><span class="o">|</span>
+      <span class="n">keys</span><span class="p">.</span><span class="nf">include?</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="p">?</span> <span class="n">dir</span> <span class="o">+</span> <span class="n">value</span> <span class="o">-</span> <span class="mi">5</span> <span class="p">:</span> <span class="n">dir</span>
+    <span class="k">end</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">dir8</span> <span class="o">==</span> <span class="mi">5</span>
+    <span class="k">return</span> <span class="n">dir8</span><span class="p">,</span> <span class="n">dir8</span> <span class="k">if</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">].</span><span class="nf">include?</span><span class="p">(</span><span class="n">dir8</span><span class="p">)</span>
+    <span class="n">keys</span><span class="p">.</span><span class="nf">reverse_each</span> <span class="p">{</span> <span class="o">|</span><span class="n">key</span><span class="o">|</span> <span class="k">return</span> <span class="n">dirs</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">dir8</span> <span class="k">if</span> <span class="n">dirs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="p">}</span>
+    <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="c1"># 理论上不会执行</span>
+  <span class="k">end</span>
+
+  <span class="no">FastForward</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="k">do</span> <span class="o">|</span><span class="n">frame</span><span class="p">,</span> <span class="o">*</span><span class="n">keys</span><span class="o">|</span>
+    <span class="c1"># 保留原方法的哈希表</span>
+    <span class="c1"># 方法名（Symbol）为键，method 对象为值</span>
+    <span class="n">graphics_methods</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">input_methods</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># 重定义 Graphics 的方法</span>
+    <span class="n">define_graphics_method</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="k">do</span> <span class="o">|</span><span class="nb">name</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="o">|</span>
+      <span class="n">graphics_methods</span><span class="p">[</span><span class="nb">name</span><span class="p">]</span> <span class="o">=</span> <span class="no">Graphics</span><span class="p">.</span><span class="nf">method</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+      <span class="no">Graphics</span><span class="p">.</span><span class="nf">define_singleton_method</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">block</span><span class="p">)</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 重定义 Input 的方法</span>
+    <span class="n">define_input_method</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="k">do</span> <span class="o">|</span><span class="nb">name</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="o">|</span>
+      <span class="n">input_methods</span><span class="p">[</span><span class="nb">name</span><span class="p">]</span> <span class="o">=</span> <span class="no">Input</span><span class="p">.</span><span class="nf">method</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
+      <span class="no">Input</span><span class="p">.</span><span class="nf">define_singleton_method</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">block</span><span class="p">)</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 将方法恢复到原先的状态</span>
+    <span class="n">restore</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="k">do</span>
+      <span class="n">input_methods</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="nb">name</span><span class="p">,</span> <span class="nb">method</span><span class="o">|</span>
+        <span class="no">Input</span><span class="p">.</span><span class="nf">define_singleton_method</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="nb">method</span><span class="p">)</span>
+      <span class="k">end</span>
+      <span class="n">graphics_methods</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="nb">name</span><span class="p">,</span> <span class="nb">method</span><span class="o">|</span>
+        <span class="no">Graphics</span><span class="p">.</span><span class="nf">define_singleton_method</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="nb">method</span><span class="p">)</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 重定义 dir4, dir8 方法。value：方法的返回值</span>
+    <span class="n">define_dir_method</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="k">do</span> <span class="o">|</span><span class="nb">name</span><span class="p">,</span> <span class="n">value</span><span class="o">|</span>
+      <span class="n">define_input_method</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span> <span class="p">{</span> <span class="n">value</span> <span class="p">}</span> <span class="k">unless</span> <span class="n">value</span> <span class="o">==</span> <span class="mi">5</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 重定义持续一段时间的 Graphics 模块方法。effect：该方法的副作用</span>
+    <span class="n">define_duration_method</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="k">do</span> <span class="o">|</span><span class="nb">name</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">effect</span><span class="o">|</span>
+      <span class="n">define_graphics_method</span><span class="p">.</span><span class="nf">call</span> <span class="nb">name</span> <span class="k">do</span> <span class="o">|*</span><span class="n">args</span><span class="o">|</span>
+        <span class="n">duration</span> <span class="o">=</span> <span class="n">args</span><span class="p">.</span><span class="nf">first</span> <span class="o">||</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">frame</span> <span class="o">&lt;</span> <span class="n">duration</span>
+          <span class="n">restore</span><span class="p">.</span><span class="nf">call</span>
+          <span class="nb">send</span> <span class="nb">name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span>
+        <span class="k">else</span>
+          <span class="n">frame</span> <span class="o">-=</span> <span class="n">duration</span>
+          <span class="n">effect</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="k">if</span> <span class="n">effect</span>
+          <span class="kp">nil</span>
+        <span class="k">end</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+    <span class="k">unless</span> <span class="n">keys</span><span class="p">.</span><span class="nf">empty?</span>
+      <span class="p">[</span><span class="ss">:trigger?</span><span class="p">,</span> <span class="ss">:press?</span><span class="p">,</span> <span class="ss">:repeat?</span><span class="p">].</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="nb">name</span><span class="o">|</span>
+        <span class="n">define_input_method</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">key</span><span class="o">|</span> <span class="n">keys</span><span class="p">.</span><span class="nf">include?</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="p">}</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+    <span class="n">dir4</span><span class="p">,</span> <span class="n">dir8</span> <span class="o">=</span> <span class="n">dir_4_8</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
+    <span class="n">define_dir_method</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="ss">:dir4</span><span class="p">,</span> <span class="n">dir4</span><span class="p">)</span>
+    <span class="n">define_dir_method</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="ss">:dir8</span><span class="p">,</span> <span class="n">dir8</span><span class="p">)</span>
+    <span class="n">define_graphics_method</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="ss">:freeze</span><span class="p">)</span> <span class="p">{}</span>
+    <span class="n">define_duration_method</span><span class="p">.</span><span class="nf">call</span> <span class="ss">:update</span>
+    <span class="n">define_duration_method</span><span class="p">.</span><span class="nf">call</span> <span class="ss">:wait</span>
+    <span class="n">define_duration_method</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="ss">:fadeout</span><span class="p">)</span> <span class="p">{</span> <span class="nb">self</span><span class="p">.</span><span class="nf">brightness</span> <span class="o">=</span> <span class="mi">0</span> <span class="p">}</span>
+    <span class="n">define_duration_method</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="ss">:fadein</span><span class="p">)</span> <span class="p">{</span> <span class="nb">self</span><span class="p">.</span><span class="nf">brightness</span> <span class="o">=</span> <span class="mi">255</span> <span class="p">}</span>
+    <span class="n">define_duration_method</span><span class="p">.</span><span class="nf">call</span> <span class="ss">:transition</span> <span class="k">do</span>
+      <span class="n">graphics_methods</span><span class="p">[</span><span class="ss">:transition</span><span class="p">].</span><span class="nf">call</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>

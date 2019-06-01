@@ -1,0 +1,208 @@
+---
+title: 按键事件
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">按键事件</span></a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">input_event</span></a>
+<span class="k">class</span> <span class="o">&lt;&lt;</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">InputEvent</span> <span class="o">=</span> <span class="no">Module</span><span class="p">.</span><span class="nf">new</span>
+  <span class="nb">attr_accessor</span> <span class="ss">:event</span> <span class="c1"># 当前事件，作用类似于全局变量</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Taroxd</span><span class="o">::</span><span class="no">InputEvent</span><span class="o">::</span><span class="no">Base</span>
+  <span class="c1"># 各属性与默认值列表</span>
+  <span class="vi">@options</span> <span class="o">=</span> <span class="p">{}</span>
+  <span class="vi">@option_blocks</span> <span class="o">=</span> <span class="p">{}</span>
+
+  <span class="c1"># 事件是否成功</span>
+  <span class="nb">attr_accessor</span> <span class="ss">:result</span>
+
+  <span class="c1"># 建立简单的事件，返回事件的结果</span>
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">main</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+    <span class="no">Taroxd</span><span class="o">::</span><span class="no">InputEvent</span><span class="p">.</span><span class="nf">event</span> <span class="o">=</span> <span class="n">event</span> <span class="o">=</span> <span class="n">new</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">event</span><span class="p">.</span><span class="nf">main</span>
+    <span class="no">Taroxd</span><span class="o">::</span><span class="no">InputEvent</span><span class="p">.</span><span class="nf">event</span> <span class="o">=</span> <span class="kp">nil</span>
+    <span class="n">event</span><span class="p">.</span><span class="nf">result</span>
+  <span class="k">end</span>
+
+  <span class="c1"># option opt1: default1, opt2: default2, ...</span>
+  <span class="c1"># option(:opt) { |option_name| value }</span>
+  <span class="c1">#</span>
+  <span class="c1"># 定义属性。</span>
+  <span class="c1"># 该属性会在实例生成时定义一个名称对应的实例变量，值为默认的值。</span>
+  <span class="c1"># 在调用可以通过 InputEvent.new(option: value) 的形式进行覆盖。</span>
+  <span class="c1"># 该方法包含了 attr_reader 的效果。</span>
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">option</span><span class="p">(</span><span class="n">name_pair</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">block</span>
+      <span class="nb">attr_reader</span> <span class="n">name_pair</span>
+      <span class="n">option_blocks</span><span class="p">[</span><span class="n">name_pair</span><span class="p">]</span> <span class="o">=</span> <span class="n">block</span>
+    <span class="k">else</span>
+      <span class="nb">attr_reader</span><span class="p">(</span><span class="o">*</span><span class="n">name_pair</span><span class="p">.</span><span class="nf">keys</span><span class="p">)</span>
+      <span class="n">options</span><span class="p">.</span><span class="nf">merge!</span><span class="p">(</span><span class="n">name_pair</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 获取属性列表（默认值）</span>
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">options</span>
+    <span class="vi">@options</span> <span class="o">||=</span> <span class="n">superclass</span><span class="p">.</span><span class="nf">options</span><span class="p">.</span><span class="nf">dup</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 获取属性列表（default_proc）</span>
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">option_blocks</span>
+    <span class="vi">@option_blocks</span> <span class="o">||=</span> <span class="n">superclass</span><span class="p">.</span><span class="nf">option_blocks</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 要按下的键</span>
+  <span class="n">option</span> <span class="ss">key: :C</span>
+
+  <span class="c1"># 值槽被填充的比例</span>
+  <span class="n">option</span> <span class="ss">rate: </span><span class="mi">0</span>
+
+  <span class="c1"># 是否显示</span>
+  <span class="n">option</span> <span class="ss">visible: </span><span class="kp">true</span>
+
+  <span class="c1"># 显示位置（当然，你一定想要重定义）</span>
+  <span class="n">option</span> <span class="ss">x: </span><span class="mi">0</span><span class="p">,</span> <span class="ss">y: </span><span class="mi">0</span><span class="p">,</span> <span class="ss">z: </span><span class="mi">0</span><span class="p">,</span> <span class="ss">width: </span><span class="no">Graphics</span><span class="p">.</span><span class="nf">width</span><span class="p">,</span> <span class="ss">height: </span><span class="no">Graphics</span><span class="p">.</span><span class="nf">height</span>
+
+  <span class="c1"># 值槽方向</span>
+  <span class="n">option</span> <span class="ss">vertical: </span><span class="kp">false</span>
+
+  <span class="c1"># 填充颜色</span>
+  <span class="n">option</span> <span class="ss">color: </span><span class="no">Color</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span>
+
+  <span class="c1"># InputEventClass.new([opt1: value1, opt2: value2, ... ]) -&gt; event</span>
+  <span class="c1">#</span>
+  <span class="c1"># 生成实例。可选的 options 参数可以覆盖默认的设置。</span>
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">options</span> <span class="o">=</span> <span class="p">{})</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">class</span><span class="p">.</span><span class="nf">options</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="nb">name</span><span class="p">,</span> <span class="n">default</span><span class="o">|</span>
+      <span class="nb">instance_variable_set</span> <span class="ss">:"@</span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="ss">"</span><span class="p">,</span> <span class="n">options</span><span class="p">.</span><span class="nf">fetch</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
+    <span class="k">end</span>
+
+    <span class="nb">self</span><span class="p">.</span><span class="nf">class</span><span class="p">.</span><span class="nf">option_blocks</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="nb">name</span><span class="p">,</span> <span class="n">default</span><span class="o">|</span>
+      <span class="nb">instance_variable_set</span> <span class="ss">:"@</span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="ss">"</span><span class="p">,</span> <span class="n">options</span><span class="p">.</span><span class="nf">fetch</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">default</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 暂时以该事件的主逻辑代替场景</span>
+  <span class="k">def</span> <span class="nf">main</span>
+    <span class="n">update_scene</span> <span class="k">while</span> <span class="n">update</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 更新事件。如果事件结束，返回 false，否则返回 true。</span>
+  <span class="k">def</span> <span class="nf">update</span>
+    <span class="n">hit?</span> <span class="p">?</span> <span class="n">on_hit</span> <span class="p">:</span> <span class="n">on_not_hit</span>
+    <span class="n">update_common</span>
+    <span class="vi">@result</span><span class="p">.</span><span class="nf">nil?</span>
+  <span class="k">end</span>
+
+  <span class="kp">private</span>
+
+  <span class="c1"># 事件调用 main 时，更新场景的方式。</span>
+  <span class="k">def</span> <span class="nf">update_scene</span>
+    <span class="no">SceneManager</span><span class="p">.</span><span class="nf">scene</span><span class="p">.</span><span class="nf">update_for_input_event</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 是否按下按键。</span>
+  <span class="k">def</span> <span class="nf">hit?</span>
+    <span class="no">Input</span><span class="p">.</span><span class="nf">trigger?</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 更新方式。在子类定义。</span>
+  <span class="k">def</span> <span class="nf">on_hit</span><span class="p">;</span> <span class="k">end</span>
+  <span class="kp">alias_method</span> <span class="ss">:on_not_hit</span><span class="p">,</span> <span class="ss">:on_hit</span>
+  <span class="kp">alias_method</span> <span class="ss">:update_common</span><span class="p">,</span> <span class="ss">:on_hit</span>
+
+  <span class="c1"># 终止事件，并返回结果。</span>
+  <span class="kp">alias_method</span> <span class="ss">:terminate</span><span class="p">,</span> <span class="ss">:result</span><span class="o">=</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Taroxd</span><span class="o">::</span><span class="no">InputEvent</span><span class="o">::</span><span class="no">Sprite</span> <span class="o">&lt;</span> <span class="no">Sprite</span>
+
+  <span class="kp">include</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">DisposeBitmap</span>
+
+  <span class="c1"># 更新</span>
+  <span class="k">def</span> <span class="nf">update</span>
+    <span class="n">update_event_change</span>
+    <span class="n">update_property</span> <span class="k">if</span> <span class="vi">@event</span>
+  <span class="k">end</span>
+
+  <span class="kp">private</span>
+
+  <span class="c1"># 获取当前事件</span>
+  <span class="k">def</span> <span class="nf">event</span>
+    <span class="no">Taroxd</span><span class="o">::</span><span class="no">InputEvent</span><span class="p">.</span><span class="nf">event</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 判断事件改变</span>
+  <span class="k">def</span> <span class="nf">update_event_change</span>
+    <span class="k">return</span> <span class="k">if</span> <span class="vi">@event</span><span class="p">.</span><span class="nf">equal?</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+    <span class="vi">@event</span> <span class="o">=</span> <span class="n">event</span>
+    <span class="n">update_bitmap</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 事件改变时的刷新</span>
+  <span class="k">def</span> <span class="nf">update_bitmap</span>
+    <span class="n">bitmap</span><span class="p">.</span><span class="nf">dispose</span> <span class="k">if</span> <span class="n">bitmap</span>
+    <span class="k">return</span> <span class="k">unless</span> <span class="vi">@event</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">bitmap</span> <span class="o">=</span> <span class="no">Bitmap</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span>
+    <span class="n">bitmap</span><span class="p">.</span><span class="nf">fill_rect</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="vi">@event</span><span class="p">.</span><span class="nf">color</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 更新属性</span>
+  <span class="k">def</span> <span class="nf">update_property</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">visible</span> <span class="o">=</span> <span class="vi">@event</span><span class="p">.</span><span class="nf">visible</span>
+    <span class="n">update_position</span>
+    <span class="n">update_src_rect</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 更新位置</span>
+  <span class="k">def</span> <span class="nf">update_position</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">x</span> <span class="o">=</span> <span class="vi">@event</span><span class="p">.</span><span class="nf">x</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">y</span> <span class="o">=</span> <span class="vi">@event</span><span class="p">.</span><span class="nf">y</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">z</span> <span class="o">=</span> <span class="vi">@event</span><span class="p">.</span><span class="nf">z</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 更新值槽</span>
+  <span class="k">def</span> <span class="nf">update_src_rect</span>
+    <span class="k">if</span> <span class="vi">@event</span><span class="p">.</span><span class="nf">vertical</span>
+      <span class="n">src_rect</span><span class="p">.</span><span class="nf">y</span> <span class="o">=</span> <span class="n">height</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">rate</span><span class="p">)</span>
+      <span class="n">src_rect</span><span class="p">.</span><span class="nf">height</span> <span class="o">=</span> <span class="n">height</span> <span class="o">*</span> <span class="n">rate</span>
+    <span class="k">else</span>
+      <span class="n">src_rect</span><span class="p">.</span><span class="nf">width</span> <span class="o">=</span> <span class="n">width</span> <span class="o">*</span> <span class="n">rate</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 总宽度。覆盖了父类的方法！</span>
+  <span class="k">def</span> <span class="nf">width</span>
+    <span class="vi">@event</span><span class="p">.</span><span class="nf">width</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 总高度</span>
+  <span class="k">def</span> <span class="nf">height</span>
+    <span class="vi">@event</span><span class="p">.</span><span class="nf">height</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 值槽填充程度</span>
+  <span class="k">def</span> <span class="nf">rate</span>
+    <span class="vi">@event</span><span class="p">.</span><span class="nf">rate</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Scene_Base</span>
+  <span class="c1"># 对事件调用 main 时，场景的更新方式</span>
+  <span class="k">def</span> <span class="nf">update_for_input_event</span>
+    <span class="n">update_basic</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Scene_Map</span> <span class="o">&lt;</span> <span class="no">Scene_Base</span>
+  <span class="c1"># 对事件调用 main 时，场景的更新方式</span>
+  <span class="k">def</span> <span class="nf">update_for_input_event</span>
+    <span class="n">update_basic</span>
+    <span class="vi">@spriteset</span><span class="p">.</span><span class="nf">update</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="c1"># 导入 Spriteset_Map</span>
+<span class="no">Spriteset_Map</span><span class="p">.</span><span class="nf">use_sprite</span><span class="p">(</span><span class="no">Taroxd</span><span class="o">::</span><span class="no">InputEvent</span><span class="o">::</span><span class="no">Sprite</span><span class="p">)</span> <span class="p">{</span> <span class="vi">@viewport2</span> <span class="p">}</span>
+</code></pre></div>

@@ -1,0 +1,57 @@
+---
+title: 战斗指令优化
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">战斗指令优化</span></a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">battle_command_ext</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1"></span></a>
+<span class="c1">#     攻击指令无需选择目标时，跳过目标选择。</span>
+<span class="c1">#     防御指令需要选择目标时，添加目标选择。</span>
+<span class="c1">#     攻击、防御的指令名变为对应的技能名。（“用语”中的设置将会无效）</span>
+
+<span class="no">Taroxd</span><span class="o">::</span><span class="no">BattleCommandExt</span> <span class="o">=</span> <span class="kp">true</span>
+
+<span class="k">class</span> <span class="nc">Scene_Battle</span> <span class="o">&lt;</span> <span class="no">Scene_Base</span>
+
+  <span class="c1"># 普通攻击无需选择目标的情况</span>
+  <span class="n">def_chain</span> <span class="ss">:command_attack</span> <span class="k">do</span> <span class="o">|</span><span class="n">old</span><span class="o">|</span>
+    <span class="n">skill</span> <span class="o">=</span> <span class="vg">$data_skills</span><span class="p">[</span><span class="no">BattleManager</span><span class="p">.</span><span class="nf">actor</span><span class="p">.</span><span class="nf">attack_skill_id</span><span class="p">]</span>
+    <span class="k">if</span> <span class="o">!</span><span class="n">skill</span><span class="p">.</span><span class="nf">need_selection?</span>
+      <span class="no">BattleManager</span><span class="p">.</span><span class="nf">actor</span><span class="p">.</span><span class="nf">input</span><span class="p">.</span><span class="nf">set_attack</span>
+      <span class="n">next_command</span>
+    <span class="k">elsif</span> <span class="n">skill</span><span class="p">.</span><span class="nf">for_opponent?</span>
+      <span class="n">old</span><span class="p">.</span><span class="nf">call</span>
+    <span class="k">else</span>
+      <span class="no">BattleManager</span><span class="p">.</span><span class="nf">actor</span><span class="p">.</span><span class="nf">input</span><span class="p">.</span><span class="nf">set_attack</span>
+      <span class="n">select_actor_selection</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 防御需要选择目标的情况</span>
+  <span class="n">def_chain</span> <span class="ss">:command_guard</span> <span class="k">do</span> <span class="o">|</span><span class="n">old</span><span class="o">|</span>
+    <span class="n">skill</span> <span class="o">=</span> <span class="vg">$data_skills</span><span class="p">[</span><span class="no">BattleManager</span><span class="p">.</span><span class="nf">actor</span><span class="p">.</span><span class="nf">guard_skill_id</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">skill</span><span class="p">.</span><span class="nf">need_selection?</span>
+      <span class="no">BattleManager</span><span class="p">.</span><span class="nf">actor</span><span class="p">.</span><span class="nf">input</span><span class="p">.</span><span class="nf">set_guard</span>
+      <span class="n">skill</span><span class="p">.</span><span class="nf">for_opponent?</span> <span class="p">?</span> <span class="n">select_enemy_selection</span> <span class="p">:</span> <span class="n">select_actor_selection</span>
+    <span class="k">else</span>
+      <span class="n">old</span><span class="p">.</span><span class="nf">call</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Window_ActorCommand</span> <span class="o">&lt;</span> <span class="no">Window_Command</span>
+
+  <span class="c1"># 更改攻击指令名称</span>
+  <span class="k">def</span> <span class="nf">add_attack_command</span>
+    <span class="nb">name</span> <span class="o">=</span> <span class="vg">$data_skills</span><span class="p">[</span><span class="vi">@actor</span><span class="p">.</span><span class="nf">attack_skill_id</span><span class="p">].</span><span class="nf">name</span>
+    <span class="n">add_command</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="ss">:attack</span><span class="p">,</span> <span class="vi">@actor</span><span class="p">.</span><span class="nf">attack_usable?</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 更改防御指令名称</span>
+  <span class="k">def</span> <span class="nf">add_guard_command</span>
+    <span class="nb">name</span> <span class="o">=</span> <span class="vg">$data_skills</span><span class="p">[</span><span class="vi">@actor</span><span class="p">.</span><span class="nf">guard_skill_id</span><span class="p">].</span><span class="nf">name</span>
+    <span class="n">add_command</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="ss">:guard</span><span class="p">,</span> <span class="vi">@actor</span><span class="p">.</span><span class="nf">guard_usable?</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>

@@ -1,0 +1,38 @@
+---
+title: 属性修正的扩展
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">属性修正的扩展</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">element_effect</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1"></span></a>
+<span class="c1">#             表示该角色/该职业/习得技能后/装上装备后/该敌人/获得状态后，</span>
+<span class="c1">#             战斗者使用第 id 号属性的技能时，效果乘以 rate</span>
+
+<span class="no">Taroxd</span><span class="o">::</span><span class="no">ElementEffect</span> <span class="o">=</span> <span class="kp">true</span>
+
+<span class="k">class</span> <span class="nc">RPG</span><span class="o">::</span><span class="no">BaseItem</span>
+  <span class="c1"># 属性效果构成的 hash，属性ID =&gt; 效果</span>
+  <span class="k">def</span> <span class="nf">element_effect</span>
+    <span class="vi">@element_effect</span> <span class="o">||=</span> <span class="vi">@note</span><span class="p">.</span><span class="nf">scan</span><span class="p">(</span><span class="sr">/&lt;ELEMENT\s+(\d+)\s+(\d+(?:\.\d+)?)&gt;/i</span><span class="p">)</span>
+      <span class="p">.</span><span class="nf">each_with_object</span><span class="p">(</span><span class="no">Hash</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mf">1.0</span><span class="p">))</span> <span class="p">{</span> <span class="o">|</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">rate</span><span class="p">),</span> <span class="nb">hash</span><span class="o">|</span>
+        <span class="nb">hash</span><span class="p">[</span><span class="nb">id</span><span class="p">.</span><span class="nf">to_i</span><span class="p">]</span> <span class="o">*=</span> <span class="n">rate</span><span class="p">.</span><span class="nf">to_f</span> <span class="p">}</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Battler</span> <span class="o">&lt;</span> <span class="no">Game_BattlerBase</span>
+  <span class="k">def</span> <span class="nf">element_effect</span>
+    <span class="n">note_objects</span><span class="p">.</span><span class="nf">each_with_object</span><span class="p">(</span><span class="no">Hash</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mf">1.0</span><span class="p">))</span> <span class="k">do</span> <span class="o">|</span><span class="n">e</span><span class="p">,</span> <span class="n">h</span><span class="o">|</span>
+      <span class="n">h</span><span class="p">.</span><span class="nf">merge!</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="nf">element_effect</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">_</span><span class="p">,</span> <span class="n">r1</span><span class="p">,</span> <span class="n">r2</span><span class="o">|</span> <span class="n">r1</span> <span class="o">*</span> <span class="n">r2</span> <span class="p">}</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="n">calc_new_rate</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="k">do</span> <span class="o">|</span><span class="n">old</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">item</span><span class="o">|</span>
+    <span class="k">if</span> <span class="n">item</span><span class="p">.</span><span class="nf">damage</span><span class="p">.</span><span class="nf">element_id</span> <span class="o">&lt;</span> <span class="mi">0</span>
+      <span class="n">user</span><span class="p">.</span><span class="nf">atk_elements</span><span class="p">.</span><span class="nf">pi</span><span class="p">(</span><span class="n">old</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="nb">id</span><span class="o">|</span> <span class="n">user</span><span class="p">.</span><span class="nf">element_effect</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="p">}</span>
+    <span class="k">else</span>
+      <span class="n">old</span> <span class="o">*</span> <span class="n">user</span><span class="p">.</span><span class="nf">element_effect</span><span class="p">[</span><span class="n">item</span><span class="p">.</span><span class="nf">damage</span><span class="p">.</span><span class="nf">element_id</span><span class="p">]</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+  <span class="n">def_with</span> <span class="ss">:item_element_rate</span><span class="p">,</span> <span class="n">calc_new_rate</span>
+<span class="k">end</span></code></pre></div>

@@ -1,0 +1,64 @@
+
+title: taroxd's Blog
+author: taroxd
+email: taroxd@outlook.com
+description: >-
+  姑且算是个博客吧……
+baseurl: ""
+url: "https://taroxd.github.io"
+date_format: "%Y.%m.%d"
+
+permalink: none
+excerpt_separator: ""
+markdown: kramdown
+
+paginate: 3
+paginate_path: "/:num/"
+
+sass:
+  style: compressed
+
+plugins:
+  - jemoji
+  - jekyll-sitemap
+  - jekyll-paginate
+
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - Rakefile
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: post
+  - scope:
+      path: rgss
+    values:
+      layout: simple
+  - scope:
+      path: rpgmv-plugins
+    values:
+      layout: simple
+
+links:
+  local:
+    - title: RGSS3 脚本素材
+      url: /rgss/
+    - title: RPGMV 插件
+      url: /rpgmv-plugins/
+    - title: 心得笔记
+      url: /note/
+    - title: 未分类
+      url: /default/
+  global:
+    - title: 碎碎念
+      url: https://taroxd.mist.so/
+    - title: XLuke
+      url: https://blog.xlk.me/
+    - title: xDroid
+      url: http://blog.xdrd.me/
+    - title: Momokoi
+      url: https://esphas.github.io/

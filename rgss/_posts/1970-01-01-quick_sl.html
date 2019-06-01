@@ -1,0 +1,81 @@
+---
+title: 快速存读档
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/keyboard.html">keyboard</a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">quick_sl</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">快速存读档</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1"></span></a>
+<span class="c1">#</span>
+<span class="c1">#    使用方法：按下下方设置的按键可以快速存档读档。</span>
+<span class="c1">#    事件脚本中调用：</span>
+<span class="c1">#      quick_save 快速存档</span>
+<span class="c1">#      quick_load 快速读档</span>
+<span class="c1">#      quick_save_quiet 存档（无音效）</span>
+
+<span class="k">module</span> <span class="nn">Taroxd::QuickSL</span>
+
+  <span class="kp">module_function</span>
+
+  <span class="c1"># 存档位置</span>
+  <span class="k">def</span> <span class="nf">quick_save_index</span>
+    <span class="mi">0</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 是否按下了存档键</span>
+  <span class="k">def</span> <span class="nf">trigger_save?</span>
+    <span class="no">Keyboard</span><span class="p">.</span><span class="nf">trigger?</span><span class="p">(</span><span class="no">Keyboard</span><span class="o">::</span><span class="no">S</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 是否按下了读档键</span>
+  <span class="k">def</span> <span class="nf">trigger_load?</span>
+    <span class="no">Keyboard</span><span class="p">.</span><span class="nf">trigger?</span><span class="p">(</span><span class="no">Keyboard</span><span class="o">::</span><span class="no">L</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">quick_save_quiet</span>
+    <span class="no">DataManager</span><span class="p">.</span><span class="nf">save_game</span><span class="p">(</span><span class="n">quick_save_index</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">quick_save</span>
+    <span class="n">quick_save_quiet</span> <span class="p">?</span> <span class="no">Sound</span><span class="p">.</span><span class="nf">play_save</span> <span class="p">:</span> <span class="no">Sound</span><span class="p">.</span><span class="nf">play_buzzer</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">quick_load</span>
+    <span class="k">if</span> <span class="no">DataManager</span><span class="p">.</span><span class="nf">load_game</span><span class="p">(</span><span class="n">quick_save_index</span><span class="p">)</span>
+      <span class="no">Sound</span><span class="p">.</span><span class="nf">play_load</span>
+      <span class="no">SceneManager</span><span class="p">.</span><span class="nf">scene</span><span class="p">.</span><span class="nf">fadeout_all</span>
+      <span class="vg">$game_system</span><span class="p">.</span><span class="nf">on_after_load</span>
+      <span class="no">SceneManager</span><span class="p">.</span><span class="nf">goto</span><span class="p">(</span><span class="no">Scene_Map</span><span class="p">)</span>
+    <span class="k">else</span>
+      <span class="no">Sound</span><span class="p">.</span><span class="nf">play_buzzer</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">update_call_quick_save</span>
+    <span class="n">quick_save</span> <span class="k">if</span> <span class="o">!</span><span class="vg">$game_system</span><span class="p">.</span><span class="nf">save_disabled</span> <span class="o">&amp;&amp;</span> <span class="n">trigger_save?</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">update_call_quick_load</span>
+    <span class="n">quick_load</span> <span class="k">if</span> <span class="n">trigger_load?</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">update_call_quickSL</span>
+    <span class="n">update_call_quick_save</span>
+    <span class="n">update_call_quick_load</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Scene_Map</span> <span class="o">&lt;</span> <span class="no">Scene_Base</span>
+  <span class="kp">include</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">QuickSL</span>
+  <span class="n">def_after</span><span class="p">(</span><span class="ss">:update_scene</span><span class="p">)</span> <span class="p">{</span> <span class="n">update_call_quickSL</span> <span class="k">unless</span> <span class="n">scene_changing?</span> <span class="p">}</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Scene_Title</span> <span class="o">&lt;</span> <span class="no">Scene_Base</span>
+  <span class="kp">include</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">QuickSL</span>
+  <span class="n">def_after</span><span class="p">(</span><span class="ss">:update</span><span class="p">)</span> <span class="p">{</span> <span class="n">update_call_quick_load</span> <span class="k">unless</span> <span class="n">scene_changing?</span> <span class="p">}</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Interpreter</span>
+  <span class="kp">include</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">QuickSL</span>
+<span class="k">end</span></code></pre></div>

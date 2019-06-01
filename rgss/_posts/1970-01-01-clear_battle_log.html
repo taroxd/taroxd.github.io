@@ -1,0 +1,14 @@
+---
+title: 清除战斗日志
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">clear_battle_log</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">清除战斗日志</span></a>
+<span class="k">module</span> <span class="nn">Taroxd</span>
+  <span class="k">class</span> <span class="nc">ClearBattleLog</span> <span class="o">&lt;</span> <span class="no">BasicObject</span>
+    <span class="o">::</span><span class="no">Object</span><span class="p">.</span><span class="nf">const_set</span> <span class="ss">:Window_BattleLog</span><span class="p">,</span> <span class="nb">self</span>
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">end</span>
+    <span class="k">def</span> <span class="nf">method_missing</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>

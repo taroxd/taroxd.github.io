@@ -1,0 +1,89 @@
+
+body, h1, h2, h3, h4, h5, h6,
+p, blockquote, pre, hr,
+dl, dd, ol, ul, figure {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: $base-font-family;
+    font-size: $base-font-size;
+    line-height: $base-line-height;
+    font-weight: 300;
+    color: $text-color;
+    background-color: $grey-color-dark;
+}
+
+h1, h2, h3, h4, h5, h6,
+p, blockquote, pre,
+ul, ol, dl, figure, hr {
+    margin-bottom: $spacing-unit / 2;
+}
+
+strong {
+    font-weight: 700;
+}
+
+img {
+    max-width: 100%;
+    vertical-align: middle;
+}
+
+figure > img {
+    display: block;
+}
+
+figcaption {
+    font-size: $small-font-size;
+}
+
+ul, ol {
+    margin-left: $spacing-unit;
+}
+
+li {
+    > ul,
+    > ol {
+         margin-bottom: 0;
+    }
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 300;
+}
+
+a {
+    color: $brand-color;
+    text-decoration: none;
+
+    &:visited { }
+
+    &:hover {
+        color: darken($brand-color, 15%);
+    }
+}
+
+blockquote {
+    color: $grey-color;
+    border-left: 0.25rem solid $grey-color-light;
+    padding-left: $spacing-unit / 2;
+    letter-spacing: -0.0625rem;
+    font-style: italic;
+
+    > :last-child {
+        margin-bottom: 0;
+    }
+}
+
+pre,
+code {
+    font-size: 0.9375rem;
+    font-family: $monospace-font-family;
+}
+
+pre {
+    padding: 0.5rem 0.75rem;
+    overflow-x: auto;
+}
+

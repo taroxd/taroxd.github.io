@@ -1,0 +1,50 @@
+---
+title: 快进对话
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">fast_message</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">快进对话</span></a>
+<span class="k">module</span> <span class="nn">Taroxd</span>
+  <span class="k">module</span> <span class="nn">FastMessage</span>
+    <span class="no">KEY</span> <span class="o">=</span> <span class="ss">:CTRL</span>      <span class="c1"># 按此键快进对话</span>
+    <span class="no">ENABLED</span> <span class="o">=</span> <span class="vg">$TEST</span>  <span class="c1"># true: 启用; $TEST: 仅测试模式; false: 不启用</span>
+    <span class="no">SPEED</span> <span class="o">=</span> <span class="mi">3</span>        <span class="c1"># 文字快进速度。可以为小数，但不能小于 1。</span>
+
+    <span class="vi">@counter</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1"># 是否在输出一个字符后等待。show_fast: 是否快进</span>
+    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">wait?</span><span class="p">(</span><span class="n">show_fast</span><span class="p">)</span>
+      <span class="o">!</span><span class="n">show_fast</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="no">Input</span><span class="p">.</span><span class="nf">press?</span><span class="p">(</span><span class="no">KEY</span><span class="p">)</span> <span class="o">||</span> <span class="p">(</span><span class="vi">@counter</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="no">SPEED</span> <span class="o">&lt;</span> <span class="mi">1</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 已经进入等待输入的情况下，是否继续等待输入</span>
+    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">keep_pause?</span>
+      <span class="p">[</span><span class="ss">:B</span><span class="p">,</span> <span class="ss">:C</span><span class="p">,</span> <span class="no">KEY</span><span class="p">].</span><span class="nf">none?</span> <span class="p">{</span> <span class="o">|</span><span class="n">k</span><span class="o">|</span> <span class="no">Input</span><span class="p">.</span><span class="nf">trigger?</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="p">}</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 尚未进入等待输入的情况下，是否跳过等待输入</span>
+    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">skip_pause?</span>
+      <span class="no">Input</span><span class="p">.</span><span class="nf">press?</span><span class="p">(</span><span class="no">KEY</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Window_Message</span> <span class="o">&lt;</span> <span class="no">Window_Base</span>
+
+  <span class="no">FastMessage</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">FastMessage</span>
+
+  <span class="k">def</span> <span class="nf">input_pause</span>
+    <span class="k">return</span> <span class="k">if</span> <span class="no">FastMessage</span><span class="p">.</span><span class="nf">skip_pause?</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">pause</span> <span class="o">=</span> <span class="kp">true</span>
+    <span class="n">wait</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+    <span class="no">Fiber</span><span class="p">.</span><span class="nf">yield</span> <span class="k">while</span> <span class="no">FastMessage</span><span class="p">.</span><span class="nf">keep_pause?</span>
+    <span class="no">Input</span><span class="p">.</span><span class="nf">update</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">pause</span> <span class="o">=</span> <span class="kp">false</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">wait_for_one_character</span>
+    <span class="n">update_show_fast</span>
+    <span class="no">Fiber</span><span class="p">.</span><span class="nf">yield</span> <span class="k">if</span> <span class="no">FastMessage</span><span class="p">.</span><span class="nf">wait?</span><span class="p">(</span><span class="vi">@show_fast</span> <span class="o">||</span> <span class="vi">@line_show_fast</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">FastMessage</span><span class="o">::</span><span class="no">ENABLED</span>
+</code></pre></div>

@@ -1,0 +1,44 @@
+---
+title: 重复设置事件
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">render_event</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">重复设置事件</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1"></span></a>
+<span class="c1">#     那么这个事件会完全被该地图中的事件 event_id 代替。</span>
+<span class="c1">#   在事件名称上备注 &lt;render event_id map_id&gt;</span>
+<span class="c1">#     那么这个事件会完全被地图 map_id 中的事件 event_id 代替。</span>
+
+<span class="k">module</span> <span class="nn">Taroxd::RenderEvent</span>
+
+  <span class="c1"># 获取地图（RPG::Map）。map_id 为 0 时获取当前地图。</span>
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">load_map</span><span class="p">(</span><span class="n">map_id</span><span class="p">)</span>
+    <span class="k">case</span> <span class="n">map_id</span>
+    <span class="k">when</span> <span class="mi">0</span><span class="p">,</span> <span class="vg">$game_map</span><span class="p">.</span><span class="nf">map_id</span>
+      <span class="vg">$game_map</span><span class="p">.</span><span class="nf">data_object</span>
+    <span class="k">when</span> <span class="vi">@last_map_id</span>
+      <span class="vi">@last_map</span>
+    <span class="k">else</span>
+      <span class="vi">@last_map_id</span> <span class="o">=</span> <span class="n">map_id</span>
+      <span class="vi">@last_map</span> <span class="o">=</span> <span class="n">load_data</span> <span class="nb">sprintf</span><span class="p">(</span><span class="s2">"Data/Map%03d.rvdata2"</span><span class="p">,</span> <span class="n">map_id</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">RPG</span><span class="o">::</span><span class="no">Event</span>
+
+  <span class="c1"># 重定义：获取事件页</span>
+  <span class="k">def</span> <span class="nf">pages</span>
+    <span class="vi">@rendered_pages</span> <span class="o">||=</span> <span class="n">rendered_pages</span>
+  <span class="k">end</span>
+
+  <span class="kp">private</span>
+
+  <span class="k">def</span> <span class="nf">rendered_pages</span>
+    <span class="k">return</span> <span class="vi">@pages</span> <span class="k">unless</span> <span class="vi">@name</span> <span class="o">=~</span> <span class="sr">/&lt;render\s+(\d+)(\s+\d+)?&gt;/i</span>
+    <span class="no">Taroxd</span><span class="o">::</span><span class="no">RenderEvent</span><span class="p">.</span><span class="nf">load_map</span><span class="p">(</span><span class="vg">$2</span><span class="p">.</span><span class="nf">to_i</span><span class="p">).</span><span class="nf">events</span><span class="p">[</span><span class="vg">$1</span><span class="p">.</span><span class="nf">to_i</span><span class="p">].</span><span class="nf">pages</span>
+  <span class="k">end</span>
+
+<span class="k">end</span>
+</code></pre></div>

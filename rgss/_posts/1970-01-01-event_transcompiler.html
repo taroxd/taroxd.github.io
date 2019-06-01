@@ -1,0 +1,1078 @@
+---
+title: 事件转译器
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">事件转译器</span></a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">event_transcompiler</span></a>
+<span class="k">module</span> <span class="nn">Taroxd</span> <span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Taroxd</span><span class="o">::</span><span class="no">EventTranscompiler</span>
+
+  <span class="c1"># 字符串中嵌入脚本的格式：&lt;%= code %&gt;</span>
+  <span class="no">EMBED_RE</span> <span class="o">=</span> <span class="sr">/&lt;%=(.+?)%&gt;/m</span>
+
+  <span class="c1"># 翻译事件指令代码。</span>
+  <span class="c1"># 代理给实例的 transcompile 方法。</span>
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">transcompile</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">new</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">).</span><span class="nf">transcompile</span>
+  <span class="k">end</span>
+
+  <span class="c1"># list：事件指令列表</span>
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">list</span><span class="p">,</span> <span class="n">map_id</span><span class="p">,</span> <span class="n">event_id</span><span class="p">)</span>
+    <span class="vi">@list</span> <span class="o">=</span> <span class="n">list</span>
+    <span class="vi">@map_id</span> <span class="o">=</span> <span class="n">map_id</span>
+    <span class="vi">@event_id</span> <span class="o">=</span> <span class="n">event_id</span>
+    <span class="vi">@index</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 翻译事件指令代码，并放入 lambda 中，以便于 return 返回。</span>
+  <span class="c1"># lambda 的参数为当前执行事件指令的 interpreter。</span>
+  <span class="c1"># 该 lambda 应该由 interpreter.instance_eval 执行。</span>
+  <span class="k">def</span> <span class="nf">transcompile</span>
+    <span class="s2">"lambda do |_|
+      </span><span class="si">#{</span><span class="n">transcompile_code</span><span class="si">}</span><span class="s2">
+    end"</span>
+  <span class="k">end</span>
+
+  <span class="kp">protected</span>
+
+  <span class="c1"># 将事件指令翻译成代码</span>
+  <span class="k">def</span> <span class="nf">transcompile_code</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="s1">''</span>
+    <span class="n">ret</span> <span class="o">&lt;&lt;</span> <span class="n">transcompile_command</span> <span class="o">&lt;&lt;</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="k">while</span> <span class="n">next_command!</span>
+    <span class="n">ret</span>
+  <span class="k">end</span>
+
+  <span class="kp">private</span>
+
+  <span class="k">def</span> <span class="nf">transcompile_command</span><span class="p">(</span><span class="n">command</span> <span class="o">=</span> <span class="vi">@command</span><span class="p">)</span>
+    <span class="vi">@params</span> <span class="o">=</span> <span class="n">command</span><span class="p">.</span><span class="nf">parameters</span>
+    <span class="n">sym</span> <span class="o">=</span> <span class="ss">:"command_</span><span class="si">#{</span><span class="vi">@command</span><span class="p">.</span><span class="nf">code</span><span class="si">}</span><span class="ss">"</span>
+    <span class="nb">respond_to?</span><span class="p">(</span><span class="n">sym</span><span class="p">,</span> <span class="kp">true</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nb">send</span><span class="p">(</span><span class="n">sym</span><span class="p">)</span> <span class="o">||</span> <span class="s1">''</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 分支。</span>
+  <span class="c1"># 方法开始时，@index 应位于分支开始之前的位置</span>
+  <span class="c1"># 方法结束后，@index 将位于分支结束之后的位置</span>
+  <span class="k">def</span> <span class="nf">transcompile_branch</span>
+    <span class="n">indent</span> <span class="o">=</span> <span class="n">current_indent</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="s1">''</span>
+    <span class="k">until</span> <span class="n">next_command!</span><span class="p">.</span><span class="nf">indent</span> <span class="o">==</span> <span class="n">indent</span>
+      <span class="n">ret</span> <span class="o">&lt;&lt;</span> <span class="n">transcompile_command</span> <span class="o">&lt;&lt;</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="k">end</span>
+    <span class="n">ret</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">current_command</span>
+    <span class="vi">@list</span><span class="p">[</span><span class="vi">@index</span><span class="p">]</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">current_params</span>
+    <span class="n">current_command</span><span class="p">.</span><span class="nf">parameters</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">current_indent</span>
+    <span class="n">current_command</span><span class="p">.</span><span class="nf">indent</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">current_code</span>
+    <span class="n">current_command</span><span class="p">.</span><span class="nf">code</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">next_command</span>
+    <span class="vi">@list</span><span class="p">[</span><span class="vi">@index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">next_command!</span>
+    <span class="vi">@index</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="vi">@command</span> <span class="o">=</span> <span class="vi">@list</span><span class="p">[</span><span class="vi">@index</span><span class="p">]</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">next_params!</span>
+    <span class="n">next_command!</span><span class="p">.</span><span class="nf">parameters</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">next_code</span>
+    <span class="n">next_command</span><span class="p">.</span><span class="nf">code</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 返回脚本中的表达形式。obj 可以为字符串或数组。</span>
+  <span class="k">def</span> <span class="nf">escape</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+    <span class="n">obj</span><span class="p">.</span><span class="nf">kind_of?</span><span class="p">(</span><span class="no">String</span><span class="p">)</span> <span class="p">?</span> <span class="n">escape_str</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="p">:</span> <span class="n">obj</span><span class="p">.</span><span class="nf">inspect</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 字符串中的 &lt;%= code %&gt; 会被替换为 #{code}</span>
+  <span class="c1"># 脚本内容不会被 escape。</span>
+  <span class="k">def</span> <span class="nf">escape_str</span><span class="p">(</span><span class="n">str</span><span class="p">)</span>
+    <span class="n">codes</span> <span class="o">=</span> <span class="n">str</span><span class="p">.</span><span class="nf">scan</span><span class="p">(</span><span class="no">EMBED_RE</span><span class="p">)</span>  <span class="c1"># 原来的脚本</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">str</span><span class="p">.</span><span class="nf">inspect</span><span class="p">.</span><span class="nf">gsub</span><span class="p">(</span><span class="no">EMBED_RE</span><span class="p">)</span> <span class="p">{</span> <span class="s2">"</span><span class="se">\#</span><span class="s2">{</span><span class="si">#{</span><span class="n">codes</span><span class="p">[</span><span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">}"</span> <span class="p">}</span>
+  <span class="k">end</span>
+
+  <span class="c1"># helper</span>
+
+  <span class="c1"># 在战斗中不执行</span>
+  <span class="k">def</span> <span class="nf">only_map</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
+    <span class="s2">"unless $game_party.in_battle
+      </span><span class="si">#{</span><span class="n">code</span><span class="si">}</span><span class="s2">
+    end</span><span class="se">\n</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">same_map?</span>
+    <span class="s2">"$game_map.map_id == </span><span class="si">#{</span><span class="vi">@map_id</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">setup_choices</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="s1">''</span>
+    <span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">s</span><span class="o">|</span>
+      <span class="n">ret</span> <span class="o">&lt;&lt;</span> <span class="s2">"$game_message.choices.push(</span><span class="si">#{</span><span class="n">escape</span> <span class="n">s</span><span class="si">}</span><span class="s2">)</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="k">end</span>
+    <span class="n">ret</span> <span class="o">&lt;&lt;</span> <span class="s2">"$game_message.choice_cancel_type = </span><span class="si">#{</span><span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">
+    $game_message.choice_proc = Proc.new { |n| @params = n }
+    Fiber.yield while $game_message.choice?
+    case @params
+    "</span>
+    <span class="n">next_command!</span>
+    <span class="k">until</span> <span class="n">current_code</span> <span class="o">==</span> <span class="mi">404</span> <span class="c1"># 选项结束</span>
+      <span class="c1"># 取消的场合为 4，否则为对应选项</span>
+      <span class="n">n</span> <span class="o">=</span> <span class="n">current_code</span> <span class="o">==</span> <span class="mi">403</span> <span class="p">?</span> <span class="mi">4</span> <span class="p">:</span> <span class="n">current_params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+      <span class="n">ret</span> <span class="o">&lt;&lt;</span> <span class="s2">"when </span><span class="si">#{</span><span class="n">n</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span> <span class="o">&lt;&lt;</span> <span class="n">transcompile_branch</span> <span class="o">&lt;&lt;</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="k">end</span>
+    <span class="n">ret</span> <span class="o">&lt;&lt;</span> <span class="s2">"end"</span> <span class="c1"># end case</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">setup_num_input</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+    <span class="s2">"$game_message.num_input_variable_id = </span><span class="si">#{</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">
+    $game_message.num_input_digits_max = </span><span class="si">#{</span><span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">setup_item_choice</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+    <span class="s2">"$game_message.item_choice_variable_id = </span><span class="si">#{</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="n">duration</span><span class="p">)</span>
+    <span class="s2">"</span><span class="si">#{</span><span class="n">duration</span><span class="si">}</span><span class="s2">.times { Fiber.yield }"</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">wait_for_message</span>
+    <span class="s1">'Fiber.yield while $game_message.busy?'</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">operate_value</span><span class="p">(</span><span class="n">operation</span><span class="p">,</span> <span class="n">operand_type</span><span class="p">,</span> <span class="n">operand</span><span class="p">)</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">operand_type</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">?</span> <span class="n">operand</span> <span class="p">:</span> <span class="s2">"$game_variables[</span><span class="si">#{</span><span class="n">operand</span><span class="si">}</span><span class="s2">]"</span>
+    <span class="s2">"</span><span class="si">#{</span><span class="s1">'-'</span> <span class="k">if</span> <span class="n">operation</span> <span class="o">==</span> <span class="mi">1</span><span class="si">}#{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">iter_actor_id</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">param</span><span class="p">.</span><span class="nf">equal?</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+      <span class="s2">"$game_party.members.each do |actor|
+        </span><span class="si">#{</span><span class="k">yield</span> <span class="s1">'actor'</span><span class="si">}</span><span class="s2">
+      end"</span>
+    <span class="k">else</span>
+      <span class="s2">"$game_actors[</span><span class="si">#{</span><span class="n">param</span><span class="si">}</span><span class="s2">].tap do |actor|
+        if actor
+          </span><span class="si">#{</span><span class="k">yield</span> <span class="s1">'actor'</span><span class="si">}</span><span class="s2">
+        end
+      end"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">iter_actor_var</span><span class="p">(</span><span class="n">param1</span><span class="p">,</span> <span class="n">param2</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">param1</span> <span class="o">==</span> <span class="mi">0</span>
+      <span class="n">iter_actor_id</span><span class="p">(</span><span class="n">param2</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+    <span class="k">else</span>
+      <span class="n">iter_actor_id</span><span class="p">(</span><span class="s2">"$game_variables[</span><span class="si">#{</span><span class="n">param2</span><span class="si">}</span><span class="s2">]"</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">iter_enemy_index</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">param</span> <span class="o">&lt;</span> <span class="mi">0</span>
+      <span class="s2">"$game_troop.members.each do |enemy|
+        </span><span class="si">#{</span><span class="k">yield</span> <span class="s1">'enemy'</span><span class="si">}</span><span class="s2">
+      end"</span>
+    <span class="k">else</span>
+      <span class="s2">"$game_troop.members[</span><span class="si">#{</span><span class="n">param</span><span class="si">}</span><span class="s2">].tap do |enemy|
+        if enemy
+          </span><span class="si">#{</span><span class="k">yield</span> <span class="s1">'enemy'</span><span class="si">}</span><span class="s2">
+        end
+      end"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">iter_battler</span><span class="p">(</span><span class="n">param1</span><span class="p">,</span> <span class="n">param2</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+    <span class="s2">"if $game_party.in_battle
+      </span><span class="si">#{</span>
+        <span class="k">if</span> <span class="n">param1</span> <span class="o">==</span> <span class="mi">0</span>
+          <span class="n">iter_enemy_index</span><span class="p">(</span><span class="n">param2</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+        <span class="k">else</span>
+          <span class="n">iter_actor_id</span><span class="p">(</span><span class="n">param2</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+        <span class="k">end</span>
+      <span class="si">}</span><span class="s2">
+    end"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 指令</span>
+  <span class="c1"># 请对照 Game_Interpreter 的定义阅读。</span>
+
+  <span class="c1"># 空指令</span>
+  <span class="k">def</span> <span class="nf">command_0</span>
+    <span class="s1">'nil'</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 显示文字</span>
+  <span class="k">def</span> <span class="nf">command_101</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="s2">"
+    </span><span class="si">#{</span><span class="n">wait_for_message</span><span class="si">}</span><span class="s2">
+    $game_message.face_name = </span><span class="si">#{</span><span class="n">escape</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">
+    $game_message.face_index = </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">
+    $game_message.background = </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">
+    $game_message.position = </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">
+    "</span>
+    <span class="k">while</span> <span class="n">next_code</span> <span class="o">==</span> <span class="mi">401</span> <span class="c1"># 文字数据</span>
+      <span class="n">ret</span> <span class="o">&lt;&lt;</span> <span class="s2">"$game_message.add(</span><span class="si">#{</span><span class="n">escape</span> <span class="n">next_params!</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">)</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="k">end</span>
+    <span class="n">ret</span> <span class="o">&lt;&lt;</span> <span class="k">case</span> <span class="n">next_code</span>
+    <span class="k">when</span> <span class="mi">102</span>  <span class="c1"># 显示选项</span>
+      <span class="n">setup_choices</span><span class="p">(</span><span class="n">next_params!</span><span class="p">)</span>
+    <span class="k">when</span> <span class="mi">103</span>  <span class="c1"># 数值输入的处理</span>
+      <span class="s2">"</span><span class="si">#{</span><span class="n">setup_num_input</span><span class="p">(</span><span class="n">next_params!</span><span class="p">)</span><span class="si">}</span><span class="s2">
+      Fiber.yield while $game_message.num_input?"</span>
+    <span class="k">when</span> <span class="mi">104</span>  <span class="c1"># 物品选择的处理</span>
+      <span class="s2">"</span><span class="si">#{</span><span class="n">setup_item_choice</span><span class="p">(</span><span class="n">next_params!</span><span class="p">)</span><span class="si">}</span><span class="s2">
+      Fiber.yield while $game_message.item_choice?"</span>
+    <span class="k">else</span>
+      <span class="n">wait_for_message</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 显示选项</span>
+  <span class="k">def</span> <span class="nf">command_102</span>
+    <span class="s2">"</span><span class="si">#{</span><span class="n">wait_for_message</span><span class="si">}</span><span class="s2">
+    </span><span class="si">#{</span><span class="n">setup_choices</span><span class="p">(</span><span class="vi">@params</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 数值输入的处理</span>
+  <span class="k">def</span> <span class="nf">command_103</span>
+    <span class="s2">"</span><span class="si">#{</span><span class="n">wait_for_message</span><span class="si">}</span><span class="s2">
+    </span><span class="si">#{</span><span class="n">setup_num_input</span><span class="p">(</span><span class="vi">@params</span><span class="p">)</span><span class="si">}</span><span class="s2">
+    Fiber.yield while $game_message.num_input?"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 物品选择的处理</span>
+  <span class="k">def</span> <span class="nf">command_104</span>
+    <span class="s2">"</span><span class="si">#{</span><span class="n">wait_for_message</span><span class="si">}</span><span class="s2">
+    </span><span class="si">#{</span><span class="n">setup_item_choice</span><span class="p">(</span><span class="vi">@params</span><span class="p">)</span><span class="si">}</span><span class="s2">
+    Fiber.yield while $game_message.item_choice?"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 显示滚动文字</span>
+  <span class="k">def</span> <span class="nf">command_105</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="s2">"
+    Fiber.yield while $game_message.visible
+    $game_message.scroll_mode = true
+    $game_message.scroll_speed = </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">
+    $game_message.scroll_no_fast = </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">
+    "</span>
+    <span class="k">while</span> <span class="n">next_code</span> <span class="o">==</span> <span class="mi">405</span>
+      <span class="n">ret</span> <span class="o">&lt;&lt;</span> <span class="s2">"$game_message.add(</span><span class="si">#{</span><span class="n">escape</span> <span class="n">next_params!</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">)</span><span class="se">\n</span><span class="s2">"</span>
+    <span class="k">end</span>
+    <span class="n">ret</span> <span class="o">&lt;&lt;</span> <span class="n">wait_for_message</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 分支条件</span>
+  <span class="k">def</span> <span class="nf">command_111</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">case</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">when</span> <span class="mi">0</span>  <span class="c1"># 开关</span>
+      <span class="s2">"</span><span class="si">#{</span><span class="s1">'!'</span> <span class="k">if</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="si">}</span><span class="s2">$game_switches[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">]"</span>
+    <span class="k">when</span> <span class="mi">1</span>  <span class="c1"># 变量</span>
+      <span class="n">value1</span> <span class="o">=</span> <span class="s2">"$game_variables[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">]"</span>
+      <span class="n">value2</span> <span class="o">=</span> <span class="k">if</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+      <span class="k">else</span>
+        <span class="s2">"$game_variables[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">]"</span>
+      <span class="k">end</span>
+      <span class="n">op</span> <span class="o">=</span> <span class="k">case</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+      <span class="k">when</span> <span class="mi">0</span> <span class="k">then</span> <span class="s1">'=='</span> <span class="c1"># 等于</span>
+      <span class="k">when</span> <span class="mi">1</span> <span class="k">then</span> <span class="s1">'&gt;='</span> <span class="c1"># 以上</span>
+      <span class="k">when</span> <span class="mi">2</span> <span class="k">then</span> <span class="s1">'&lt;='</span> <span class="c1"># 以下</span>
+      <span class="k">when</span> <span class="mi">3</span> <span class="k">then</span> <span class="s1">'&gt;'</span>  <span class="c1"># 大于</span>
+      <span class="k">when</span> <span class="mi">4</span> <span class="k">then</span> <span class="s1">'&lt;'</span>  <span class="c1"># 小于</span>
+      <span class="k">when</span> <span class="mi">5</span> <span class="k">then</span> <span class="s1">'!='</span> <span class="c1"># 不等于</span>
+      <span class="k">end</span>
+      <span class="s2">"</span><span class="si">#{</span><span class="n">value1</span><span class="si">}</span><span class="s2"> </span><span class="si">#{</span><span class="n">op</span><span class="si">}</span><span class="s2"> </span><span class="si">#{</span><span class="n">value2</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">when</span> <span class="mi">2</span>  <span class="c1"># 独立开关</span>
+      <span class="k">if</span> <span class="vi">@event_id</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="s2">"</span><span class="si">#{</span><span class="s1">'!'</span> <span class="k">if</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="si">}</span><span class="s2">"</span><span class="p">\</span>
+        <span class="s2">"$game_self_switches[[</span><span class="si">#{</span><span class="vi">@map_id</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@event_id</span><span class="si">}</span><span class="s2">, "</span><span class="p">\</span>
+        <span class="s2">"</span><span class="si">#{</span><span class="n">escape</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">]]"</span>
+      <span class="k">else</span>
+        <span class="s1">'false'</span>
+      <span class="k">end</span>
+    <span class="k">when</span> <span class="mi">3</span>  <span class="c1"># 计时器</span>
+      <span class="n">op</span> <span class="o">=</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">?</span> <span class="s1">'&gt;='</span> <span class="p">:</span> <span class="s1">'&lt;='</span>
+      <span class="s2">"$game_timer.working? &amp;&amp; $game_timer.sec </span><span class="si">#{</span><span class="n">op</span><span class="si">}</span><span class="s2"> </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">when</span> <span class="mi">4</span>  <span class="c1"># 角色</span>
+      <span class="s2">"begin
+        @params = $game_actors[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">]
+        if @params
+      "</span> <span class="o">&lt;&lt;</span> <span class="k">case</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+      <span class="k">when</span> <span class="mi">0</span>  <span class="c1"># 在队伍时</span>
+        <span class="s1">'$game_party.members.include?(@params)'</span>
+      <span class="k">when</span> <span class="mi">1</span>  <span class="c1"># 名字</span>
+        <span class="s2">"@params.name == </span><span class="si">#{</span><span class="n">escape</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+      <span class="k">when</span> <span class="mi">2</span>  <span class="c1"># 职业</span>
+        <span class="s2">"@params.class_id == </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+      <span class="k">when</span> <span class="mi">3</span>  <span class="c1"># 技能</span>
+        <span class="s2">"@params.skill_learn?($data_skills[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">])"</span>
+      <span class="k">when</span> <span class="mi">4</span>  <span class="c1"># 武器</span>
+        <span class="s2">"@params.weapons.include?($data_weapons[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">])"</span>
+      <span class="k">when</span> <span class="mi">5</span>  <span class="c1"># 护甲</span>
+        <span class="s2">"@params.armors.include?($data_armors[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">])"</span>
+      <span class="k">when</span> <span class="mi">6</span>  <span class="c1"># 状态</span>
+        <span class="s2">"@params.state?(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
+      <span class="k">end</span> <span class="o">&lt;&lt;</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">end</span><span class="se">\n</span><span class="s2">end"</span> <span class="c1"># if @params; begin</span>
+    <span class="k">when</span> <span class="mi">5</span>  <span class="c1"># 敌人</span>
+      <span class="s2">"begin
+        @params = $game_troop.members[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">]
+        if @params
+      "</span> <span class="o">&lt;&lt;</span> <span class="k">case</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+      <span class="k">when</span> <span class="mi">0</span>  <span class="c1"># 出现</span>
+        <span class="s1">'@params.alive?'</span>
+      <span class="k">when</span> <span class="mi">1</span>  <span class="c1"># 状态</span>
+        <span class="s2">"@params.state?(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
+      <span class="k">end</span> <span class="o">&lt;&lt;</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">end</span><span class="se">\n</span><span class="s2">end"</span> <span class="c1"># if @params; begin</span>
+    <span class="k">when</span> <span class="mi">6</span>  <span class="c1"># 事件</span>
+      <span class="s2">"begin
+        @params = get_character(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">)
+        if @params
+          @params.direction == </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">
+        end
+      end"</span>
+    <span class="k">when</span> <span class="mi">7</span>  <span class="c1"># 金钱</span>
+      <span class="n">op</span> <span class="o">=</span> <span class="k">case</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+      <span class="k">when</span> <span class="mi">0</span> <span class="k">then</span> <span class="s1">'&gt;='</span> <span class="c1"># 以上</span>
+      <span class="k">when</span> <span class="mi">1</span> <span class="k">then</span> <span class="s1">'&lt;='</span> <span class="c1"># 以下</span>
+      <span class="k">when</span> <span class="mi">2</span> <span class="k">then</span> <span class="s1">'&lt;'</span>  <span class="c1"># 低于</span>
+      <span class="k">end</span>
+      <span class="s2">"$game_party.gold </span><span class="si">#{</span><span class="n">op</span><span class="si">}</span><span class="s2"> </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">when</span> <span class="mi">8</span>   <span class="c1"># 物品</span>
+      <span class="s2">"$game_party.has_item?($data_items[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">])"</span>
+    <span class="k">when</span> <span class="mi">9</span>   <span class="c1"># 武器</span>
+      <span class="s2">"$game_party.has_item?($data_weapons[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">], </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">when</span> <span class="mi">10</span>  <span class="c1"># 护甲</span>
+      <span class="s2">"$game_party.has_item?($data_armors[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">], </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">when</span> <span class="mi">11</span>  <span class="c1"># 按下按钮</span>
+      <span class="s2">"Input.press?(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">when</span> <span class="mi">12</span>  <span class="c1"># 脚本</span>
+      <span class="s2">"begin
+        </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">
+      end"</span>
+    <span class="k">when</span> <span class="mi">13</span>  <span class="c1"># 载具</span>
+      <span class="s2">"$game_player.vehicle == $game_map.vehicles[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">]"</span>
+    <span class="k">end</span>
+    <span class="s2">"if </span><span class="si">#{</span><span class="n">result</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 否则</span>
+  <span class="k">def</span> <span class="nf">command_411</span>
+    <span class="s1">'else'</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 分支结束</span>
+  <span class="k">def</span> <span class="nf">command_412</span>
+    <span class="s1">'end'</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 循环</span>
+  <span class="k">def</span> <span class="nf">command_112</span>
+    <span class="s1">'while true'</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 重复</span>
+  <span class="k">def</span> <span class="nf">command_413</span>
+    <span class="s1">'end'</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 跳出循环</span>
+  <span class="k">def</span> <span class="nf">command_113</span>
+    <span class="s1">'break'</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 中止事件处理</span>
+  <span class="k">def</span> <span class="nf">command_115</span>
+    <span class="s1">'return'</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 公共事件</span>
+  <span class="k">def</span> <span class="nf">command_117</span>
+    <span class="n">event</span> <span class="o">=</span> <span class="vg">$data_common_events</span><span class="p">[</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">class</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">event</span><span class="p">.</span><span class="nf">list</span><span class="p">,</span> <span class="vi">@map_id</span><span class="p">,</span> <span class="vi">@event_id</span><span class="p">).</span><span class="nf">transcompile_code</span> <span class="k">if</span> <span class="n">event</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 转至标签</span>
+  <span class="k">def</span> <span class="nf">command_119</span>
+    <span class="k">raise</span> <span class="no">NotImplementedError</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 开关操作</span>
+  <span class="k">def</span> <span class="nf">command_121</span>
+    <span class="s2">"</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">.upto(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">) do |i|
+      $game_switches[i] = </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="si">}</span><span class="s2">
+    end"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 变量操作</span>
+  <span class="k">def</span> <span class="nf">command_122</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="k">case</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>  <span class="c1"># 操作方式</span>
+    <span class="k">when</span> <span class="mi">0</span>  <span class="c1"># 常量</span>
+      <span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+    <span class="k">when</span> <span class="mi">1</span>  <span class="c1"># 变量</span>
+    <span class="s2">"$game_variables[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">]"</span>
+    <span class="k">when</span> <span class="mi">2</span>  <span class="c1"># 随机数</span>
+      <span class="s2">"</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2"> + rand(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">-</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">when</span> <span class="mi">3</span>  <span class="c1"># 游戏数据</span>
+      <span class="s2">"game_data_operand(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">when</span> <span class="mi">4</span>  <span class="c1"># 脚本</span>
+      <span class="s2">"begin
+        </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">
+      end"</span>
+    <span class="k">end</span>
+    <span class="s2">"</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">.upto(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">) do |i|
+      operate_variable(i, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="n">value</span><span class="si">}</span><span class="s2">)
+    end"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 独立开关操作</span>
+  <span class="k">def</span> <span class="nf">command_123</span>
+    <span class="k">return</span> <span class="k">if</span> <span class="vi">@event_id</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+    <span class="s2">"$game_self_switches[[</span><span class="si">#{</span><span class="vi">@map_id</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@event_id</span><span class="si">}</span><span class="s2">, "</span><span class="p">\</span>
+    <span class="s2">"</span><span class="si">#{</span><span class="n">escape</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">]] = </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 计时器操作</span>
+  <span class="k">def</span> <span class="nf">command_124</span>
+    <span class="k">if</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>  <span class="c1"># 开始</span>
+      <span class="s2">"$game_timer.start(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="no">Graphics</span><span class="p">.</span><span class="nf">frame_rate</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">else</span>                <span class="c1"># 停止</span>
+      <span class="s1">'$game_timer.stop'</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 增减金钱</span>
+  <span class="k">def</span> <span class="nf">command_125</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">operate_value</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="s2">"$game_party.gain_gold(</span><span class="si">#{</span><span class="n">value</span><span class="si">}</span><span class="s2">)"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 增减物品</span>
+  <span class="k">def</span> <span class="nf">command_126</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">operate_value</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+    <span class="s2">"$game_party.gain_item($data_items[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">], </span><span class="si">#{</span><span class="n">value</span><span class="si">}</span><span class="s2">)"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 增减武器</span>
+  <span class="k">def</span> <span class="nf">command_127</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">operate_value</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+    <span class="s2">"$game_party.gain_item($data_weapons[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">], "</span><span class="p">\</span>
+    <span class="s2">"</span><span class="si">#{</span><span class="n">value</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 增减护甲</span>
+  <span class="k">def</span> <span class="nf">command_128</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">operate_value</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+    <span class="s2">"$game_party.gain_item($data_armors[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">], "</span><span class="p">\</span>
+    <span class="s2">"</span><span class="si">#{</span><span class="n">value</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 队伍管理</span>
+  <span class="k">def</span> <span class="nf">command_129</span>
+    <span class="k">return</span> <span class="k">unless</span> <span class="vg">$game_actors</span><span class="p">[</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="s1">''</span>
+    <span class="k">if</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>    <span class="c1"># 入队</span>
+      <span class="k">if</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>  <span class="c1"># 初始化</span>
+        <span class="n">ret</span> <span class="o">&lt;&lt;</span> <span class="s2">"$game_actors[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">].setup(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">)</span><span class="se">\n</span><span class="s2">"</span>
+      <span class="k">end</span>
+      <span class="n">ret</span> <span class="o">&lt;&lt;</span> <span class="s2">"$game_party.add_actor(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">else</span>                  <span class="c1"># 离队</span>
+      <span class="n">ret</span> <span class="o">&lt;&lt;</span> <span class="s2">"$game_party.remove_actor(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 设置禁用存档</span>
+  <span class="k">def</span> <span class="nf">command_134</span>
+    <span class="s2">"$game_system.menu_disabled = </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 设置禁用菜单</span>
+  <span class="k">def</span> <span class="nf">command_135</span>
+    <span class="s2">"$game_system.menu_disabled = </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 设置禁用遇敌</span>
+  <span class="k">def</span> <span class="nf">command_136</span>
+    <span class="s2">"$game_system.encounter_disabled = </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="si">}</span><span class="s2">
+    $game_player.make_encounter_count"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 设置禁用整队</span>
+  <span class="k">def</span> <span class="nf">command_137</span>
+    <span class="s2">"$game_system.formation_disabled = </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 场所移动</span>
+  <span class="k">def</span> <span class="nf">command_201</span>
+    <span class="k">if</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>                      <span class="c1"># 直接指定</span>
+      <span class="n">map_id</span> <span class="o">=</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+      <span class="n">x</span> <span class="o">=</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+      <span class="n">y</span> <span class="o">=</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+    <span class="k">else</span>                                    <span class="c1"># 变量指定</span>
+      <span class="n">map_id</span> <span class="o">=</span> <span class="s2">"$game_variables[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">]"</span>
+      <span class="n">x</span> <span class="o">=</span> <span class="s2">"$game_variables[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">]"</span>
+      <span class="n">y</span> <span class="o">=</span> <span class="s2">"$game_variables[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">]"</span>
+    <span class="k">end</span>
+    <span class="n">only_map</span> <span class="s2">"
+      Fiber.yield while $game_player.transfer? || $game_message.visible
+      $game_player.reserve_transfer(</span><span class="si">#{</span><span class="n">map_id</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="n">x</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="n">y</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">)
+      $game_temp.fade_type = </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">
+      Fiber.yield while $game_player.transfer?"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 设置载具位置</span>
+  <span class="k">def</span> <span class="nf">command_202</span>
+    <span class="k">if</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>                      <span class="c1"># 直接指定</span>
+      <span class="n">map_id</span> <span class="o">=</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+      <span class="n">x</span> <span class="o">=</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+      <span class="n">y</span> <span class="o">=</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+    <span class="k">else</span>                                    <span class="c1"># 变量指定</span>
+      <span class="n">map_id</span> <span class="o">=</span> <span class="s2">"$game_variables[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">]"</span>
+      <span class="n">x</span> <span class="o">=</span> <span class="s2">"$game_variables[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">]"</span>
+      <span class="n">y</span> <span class="o">=</span> <span class="s2">"$game_variables[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">]"</span>
+    <span class="k">end</span>
+    <span class="s2">"@params = $game_map.vehicles[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">]
+    @params.set_location(</span><span class="si">#{</span><span class="n">map_id</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="n">x</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="n">y</span><span class="si">}</span><span class="s2">) if @params"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 设置事件位置</span>
+  <span class="k">def</span> <span class="nf">command_203</span>
+    <span class="k">case</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">when</span> <span class="mi">0</span>
+      <span class="s2">"@params = get_character(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">)
+      @params.moveto(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">) if @params
+      </span><span class="si">#{</span><span class="s2">"@params.set_direction(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span> <span class="k">if</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">when</span> <span class="mi">1</span>
+      <span class="s2">"@params = get_character(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">)
+      @params.moveto("</span><span class="p">\</span>
+      <span class="s2">"$game_variables[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">], "</span><span class="p">\</span>
+      <span class="s2">"$game_variables[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">])
+      </span><span class="si">#{</span><span class="s2">"@params.set_direction(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span> <span class="k">if</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">when</span> <span class="mi">2</span>
+      <span class="s2">"@params = [get_character(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">), "</span><span class="p">\</span>
+      <span class="s2">"get_character(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">)]
+      @params.first.swap(@params.last) if @params.all?
+      </span><span class="si">#{</span><span class="s2">"@params.first.set_direction(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span> <span class="k">if</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 地图卷动</span>
+  <span class="k">def</span> <span class="nf">command_204</span>
+    <span class="n">only_map</span> <span class="s2">"
+      Fiber.yield while $game_map.scrolling?
+      $game_map.start_scroll(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">)
+    "</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 载具乘降</span>
+  <span class="k">def</span> <span class="nf">command_206</span>
+    <span class="s1">'$game_player.get_on_off_vehicle'</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 更改透明状态</span>
+  <span class="k">def</span> <span class="nf">command_211</span>
+    <span class="s2">"$game_player.transparent = </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 显示动画</span>
+  <span class="k">def</span> <span class="nf">command_212</span>
+    <span class="s2">"@params = get_character(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">)
+    if @params
+      @params.animation_id = </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">
+      </span><span class="si">#{</span><span class="s1">'Fiber.yield while @params.animation_id &gt; 0'</span> <span class="k">if</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">
+    end"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 显示心情图标</span>
+  <span class="k">def</span> <span class="nf">command_213</span>
+    <span class="s2">"@params = get_character(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">)
+    if @params
+      @params.balloon_id = </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">
+      </span><span class="si">#{</span><span class="s1">'Fiber.yield while @params.balloon_id &gt; 0'</span> <span class="k">if</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">
+    end"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 暂时消除事件</span>
+  <span class="k">def</span> <span class="nf">command_214</span>
+    <span class="k">return</span> <span class="k">if</span> <span class="vi">@event_id</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+    <span class="s2">"$game_map.events[</span><span class="si">#{</span><span class="vi">@event_id</span><span class="si">}</span><span class="s2">].erase if </span><span class="si">#{</span><span class="n">same_map?</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 更改队列前进</span>
+  <span class="k">def</span> <span class="nf">command_216</span>
+    <span class="s2">"$game_player.followers.visible = </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="si">}</span><span class="s2">
+    $game_player.refresh"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 集合队伍成员</span>
+  <span class="k">def</span> <span class="nf">command_217</span>
+    <span class="n">only_map</span> <span class="s1">'$game_player.followers.gather
+    Fiber.yield until $game_player.followers.gather?'</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 淡出画面</span>
+  <span class="k">def</span> <span class="nf">command_221</span>
+    <span class="s2">"Fiber.yield while $game_message.visible
+    screen.start_fadeout(30)
+    </span><span class="si">#{</span><span class="n">wait</span><span class="p">(</span><span class="mi">30</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 淡入画面</span>
+  <span class="k">def</span> <span class="nf">command_222</span>
+    <span class="s2">"Fiber.yield while $game_message.visible
+    screen.start_fadein(30)
+    </span><span class="si">#{</span><span class="n">wait</span><span class="p">(</span><span class="mi">30</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 画面震动</span>
+  <span class="k">def</span> <span class="nf">command_225</span>
+    <span class="s2">"screen.start_shake(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">)
+    </span><span class="si">#{</span><span class="n">wait</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="k">if</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 等待</span>
+  <span class="k">def</span> <span class="nf">command_230</span>
+    <span class="n">wait</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 显示图片</span>
+  <span class="k">def</span> <span class="nf">command_231</span>
+    <span class="k">if</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>    <span class="c1"># 直接指定</span>
+      <span class="n">x</span> <span class="o">=</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+      <span class="n">y</span> <span class="o">=</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span>
+    <span class="k">else</span>                  <span class="c1"># 变量指定</span>
+      <span class="n">x</span> <span class="o">=</span> <span class="s2">"$game_variables[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">]"</span>
+      <span class="n">y</span> <span class="o">=</span> <span class="s2">"$game_variables[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">]"</span>
+    <span class="k">end</span>
+    <span class="s2">"screen.pictures[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">].show(</span><span class="si">#{</span><span class="n">escape</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">, "</span><span class="p">\</span>
+    <span class="s2">"</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="n">x</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="n">y</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="si">}</span><span class="s2">, "</span><span class="p">\</span>
+    <span class="s2">"</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 移动图片</span>
+  <span class="k">def</span> <span class="nf">command_232</span>
+    <span class="k">if</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>    <span class="c1"># 直接指定</span>
+      <span class="n">x</span> <span class="o">=</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+      <span class="n">y</span> <span class="o">=</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span>
+    <span class="k">else</span>                  <span class="c1"># 变量指定</span>
+      <span class="n">x</span> <span class="o">=</span> <span class="s2">"$game_variables[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">]"</span>
+      <span class="n">y</span> <span class="o">=</span> <span class="s2">"$game_variables[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">]"</span>
+    <span class="k">end</span>
+    <span class="s2">"screen.pictures[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">].move(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="n">x</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="n">y</span><span class="si">}</span><span class="s2">, "</span><span class="p">\</span>
+    <span class="s2">"</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="si">}</span><span class="s2">, "</span><span class="p">\</span>
+    <span class="s2">"</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span><span class="si">}</span><span class="s2">)
+    </span><span class="si">#{</span><span class="n">wait</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">10</span><span class="p">])</span> <span class="k">if</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">11</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 旋转图片</span>
+  <span class="k">def</span> <span class="nf">command_233</span>
+    <span class="s2">"screen.pictures[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">].rotate(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 消除图片</span>
+  <span class="k">def</span> <span class="nf">command_235</span>
+    <span class="s2">"screen.pictures[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">].erase"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 设置天气</span>
+  <span class="k">def</span> <span class="nf">command_236</span>
+    <span class="n">only_map</span> <span class="s2">"
+      screen.change_weather(:</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">)
+      </span><span class="si">#{</span><span class="n">wait</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="k">if</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 淡出 BGM</span>
+  <span class="k">def</span> <span class="nf">command_242</span>
+    <span class="s2">"RPG::BGM.fade(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">1000</span><span class="si">}</span><span class="s2">)"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 记忆 BGM</span>
+  <span class="k">def</span> <span class="nf">command_243</span>
+    <span class="s1">'$game_system.save_bgm'</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 恢复 BGM</span>
+  <span class="k">def</span> <span class="nf">command_244</span>
+    <span class="s1">'$game_system.replay_bgm'</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 淡出 BGS</span>
+  <span class="k">def</span> <span class="nf">command_246</span>
+    <span class="s2">"RPG::BGS.fade(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">1000</span><span class="si">}</span><span class="s2">)"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 停止 SE</span>
+  <span class="k">def</span> <span class="nf">command_251</span>
+    <span class="no">RPG</span><span class="o">::</span><span class="no">SE</span><span class="p">.</span><span class="nf">stop</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 播放影像</span>
+  <span class="k">def</span> <span class="nf">command_261</span>
+    <span class="nb">name</span> <span class="o">=</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="k">if</span> <span class="nb">name</span><span class="p">.</span><span class="nf">empty?</span>
+    <span class="nb">name</span> <span class="o">=</span> <span class="n">escape</span><span class="p">(</span><span class="s1">'Movies/'</span> <span class="o">+</span> <span class="nb">name</span><span class="p">)</span>
+    <span class="s2">"Fiber.yield while $game_message.visible
+    Fiber.yield
+    Graphics.play_movie(</span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">)"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 更改地图名称显示</span>
+  <span class="k">def</span> <span class="nf">command_281</span>
+    <span class="s2">"$game_map.name_display = </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 更改图块组</span>
+  <span class="k">def</span> <span class="nf">command_282</span>
+    <span class="s2">"$game_map.change_tileset(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 更改战场背景</span>
+  <span class="k">def</span> <span class="nf">command_283</span>
+    <span class="nb">name</span> <span class="o">=</span> <span class="s2">"</span><span class="si">#{</span><span class="n">escape</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="n">escape</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span>
+    <span class="s2">"$game_map.change_battleback(</span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">)"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 更改远景</span>
+  <span class="k">def</span> <span class="nf">command_284</span>
+    <span class="s2">"$game_map.change_parallax(</span><span class="si">#{</span><span class="n">escape</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, "</span><span class="p">\</span>
+    <span class="s2">"</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 获取指定位置的信息</span>
+  <span class="k">def</span> <span class="nf">command_285</span>
+    <span class="k">if</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>      <span class="c1"># 直接指定</span>
+      <span class="n">x</span> <span class="o">=</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+      <span class="n">y</span> <span class="o">=</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+    <span class="k">else</span>                    <span class="c1"># 变量指定</span>
+      <span class="n">x</span> <span class="o">=</span> <span class="s2">"$game_variables[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">]"</span>
+      <span class="n">y</span> <span class="o">=</span> <span class="s2">"$game_variables[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">]"</span>
+    <span class="k">end</span>
+    <span class="n">value</span> <span class="o">=</span>
+    <span class="k">case</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">when</span> <span class="mi">0</span>      <span class="c1"># 地形标志</span>
+      <span class="s2">"$game_map.terrain_tag(</span><span class="si">#{</span><span class="n">x</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="n">y</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">when</span> <span class="mi">1</span>      <span class="c1"># 事件 ID</span>
+      <span class="s2">"$game_map.event_id_xy(</span><span class="si">#{</span><span class="n">x</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="n">y</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">when</span> <span class="mi">2</span><span class="o">..</span><span class="mi">4</span>   <span class="c1"># 图块 ID</span>
+      <span class="s2">"$game_map.tile_id(</span><span class="si">#{</span><span class="n">x</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="n">y</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">2</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">else</span>        <span class="c1"># 区域 ID</span>
+      <span class="s2">"$game_map.region_id(</span><span class="si">#{</span><span class="n">x</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="n">y</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">end</span>
+    <span class="s2">"$game_variables[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">] = </span><span class="si">#{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 战斗的处理</span>
+  <span class="k">def</span> <span class="nf">command_301</span>
+    <span class="n">troop_id</span> <span class="o">=</span> <span class="k">if</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>             <span class="c1"># 直接指定</span>
+      <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">elsif</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>                     <span class="c1"># 变量指定</span>
+      <span class="s2">"$game_variables[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">]"</span>
+    <span class="k">else</span>                                      <span class="c1"># 地图指定的敌群</span>
+      <span class="s1">'$game_player.make_encounter_troop_id'</span>
+    <span class="k">end</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="s2">"
+    if $data_troops[</span><span class="si">#{</span><span class="n">troop_id</span><span class="si">}</span><span class="s2">]
+      BattleManager.setup(</span><span class="si">#{</span><span class="n">troop_id</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">)
+      BattleManager.event_proc = Proc.new { |n| @params = n }
+      $game_player.make_encounter_count
+      SceneManager.call(Scene_Battle)
+    end
+    Fiber.yield
+    "</span>
+    <span class="k">if</span> <span class="n">next_code</span> <span class="o">==</span> <span class="mi">601</span> <span class="c1"># 存在分支</span>
+      <span class="n">next_command!</span>
+      <span class="n">ret</span> <span class="o">&lt;&lt;</span> <span class="s2">"case @params</span><span class="se">\n</span><span class="s2">"</span>
+      <span class="k">until</span> <span class="n">current_code</span> <span class="o">==</span> <span class="mi">604</span> <span class="c1"># 分支结束</span>
+        <span class="n">ret</span> <span class="o">&lt;&lt;</span> <span class="s2">"when </span><span class="si">#{</span><span class="n">current_code</span> <span class="o">-</span> <span class="mi">601</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span> <span class="o">&lt;&lt;</span> <span class="n">transcompile_branch</span> <span class="o">&lt;&lt;</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span>
+      <span class="k">end</span>
+      <span class="n">ret</span> <span class="o">&lt;&lt;</span> <span class="s2">"end"</span>
+    <span class="k">end</span>
+    <span class="n">only_map</span> <span class="n">ret</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 商店的处理</span>
+  <span class="k">def</span> <span class="nf">command_302</span>
+    <span class="n">goods</span> <span class="o">=</span> <span class="p">[</span><span class="vi">@params</span><span class="p">]</span>
+    <span class="k">while</span> <span class="n">next_code</span> <span class="o">==</span> <span class="mi">605</span>
+      <span class="n">goods</span><span class="p">.</span><span class="nf">push</span><span class="p">(</span><span class="n">next_params!</span><span class="p">)</span>
+    <span class="k">end</span>
+    <span class="n">only_map</span> <span class="s2">"
+      SceneManager.call(Scene_Shop)
+      SceneManager.scene.prepare(</span><span class="si">#{</span><span class="n">escape</span> <span class="n">goods</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">)
+      Fiber.yield"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 名字输入的处理</span>
+  <span class="k">def</span> <span class="nf">command_303</span>
+    <span class="k">return</span> <span class="s1">''</span> <span class="k">unless</span> <span class="vg">$data_actors</span><span class="p">[</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+    <span class="n">only_map</span> <span class="s2">"
+      SceneManager.call(Scene_Name)
+      SceneManager.scene.prepare(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">)
+      Fiber.yield"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 增减 HP</span>
+  <span class="k">def</span> <span class="nf">command_311</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">operate_value</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+    <span class="n">iter_actor_var</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">do</span> <span class="o">|</span><span class="n">actor</span><span class="o">|</span>
+      <span class="s2">"next if </span><span class="si">#{</span><span class="n">actor</span><span class="si">}</span><span class="s2">.dead?
+      </span><span class="si">#{</span><span class="n">actor</span><span class="si">}</span><span class="s2">.change_hp(</span><span class="si">#{</span><span class="n">value</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">)
+      </span><span class="si">#{</span><span class="n">actor</span><span class="si">}</span><span class="s2">.perform_collapse_effect if </span><span class="si">#{</span><span class="n">actor</span><span class="si">}</span><span class="s2">.dead?"</span>
+    <span class="k">end</span> <span class="o">&lt;&lt;</span> <span class="s1">'
+      SceneManager.goto(Scene_Gameover) if $game_party.all_dead?'</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 增减 MP</span>
+  <span class="k">def</span> <span class="nf">command_312</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">operate_value</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+    <span class="n">iter_actor_var</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">do</span> <span class="o">|</span><span class="n">actor</span><span class="o">|</span>
+      <span class="s2">"</span><span class="si">#{</span><span class="n">actor</span><span class="si">}</span><span class="s2">.mp += </span><span class="si">#{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 更改状态</span>
+  <span class="k">def</span> <span class="nf">command_313</span>
+    <span class="n">action</span> <span class="o">=</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">?</span> <span class="s1">'add_state'</span> <span class="p">:</span> <span class="s1">'remove_state'</span>
+    <span class="n">iter_actor_var</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">do</span> <span class="o">|</span><span class="n">actor</span><span class="o">|</span>
+      <span class="s2">"@params = actor.dead?
+      </span><span class="si">#{</span><span class="n">actor</span><span class="si">}</span><span class="s2">.</span><span class="si">#{</span><span class="n">action</span><span class="si">}</span><span class="s2">(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">)
+      </span><span class="si">#{</span><span class="n">actor</span><span class="si">}</span><span class="s2">.perform_collapse_effect if </span><span class="si">#{</span><span class="n">actor</span><span class="si">}</span><span class="s2">.dead? &amp;&amp; !@params"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 完全恢复</span>
+  <span class="k">def</span> <span class="nf">command_314</span>
+    <span class="n">iter_actor_var</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">do</span> <span class="o">|</span><span class="n">actor</span><span class="o">|</span>
+      <span class="s2">"</span><span class="si">#{</span><span class="n">actor</span><span class="si">}</span><span class="s2">.recover_all"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 增减经验值</span>
+  <span class="k">def</span> <span class="nf">command_315</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">operate_value</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+    <span class="n">iter_actor_var</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">do</span> <span class="o">|</span><span class="n">actor</span><span class="o">|</span>
+      <span class="s2">"</span><span class="si">#{</span><span class="n">actor</span><span class="si">}</span><span class="s2">.change_exp(</span><span class="si">#{</span><span class="n">actor</span><span class="si">}</span><span class="s2">.exp + </span><span class="si">#{</span><span class="n">value</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 增减等级</span>
+  <span class="k">def</span> <span class="nf">command_316</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">operate_value</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+    <span class="n">iter_actor_var</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">do</span> <span class="o">|</span><span class="n">actor</span><span class="o">|</span>
+      <span class="s2">"</span><span class="si">#{</span><span class="n">actor</span><span class="si">}</span><span class="s2">.change_level(</span><span class="si">#{</span><span class="n">actor</span><span class="si">}</span><span class="s2">.level + </span><span class="si">#{</span><span class="n">value</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 增减能力值</span>
+  <span class="k">def</span> <span class="nf">command_317</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">operate_value</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">5</span><span class="p">])</span>
+    <span class="n">iter_actor_var</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">do</span> <span class="o">|</span><span class="n">actor</span><span class="o">|</span>
+      <span class="s2">"</span><span class="si">#{</span><span class="n">actor</span><span class="si">}</span><span class="s2">.add_param(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="n">value</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 增减技能</span>
+  <span class="k">def</span> <span class="nf">command_318</span>
+    <span class="n">action</span> <span class="o">=</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">?</span> <span class="s1">'learn_skill'</span> <span class="p">:</span> <span class="s1">'forget_skill'</span>
+    <span class="n">iter_actor_var</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">do</span> <span class="o">|</span><span class="n">actor</span><span class="o">|</span>
+      <span class="s2">"</span><span class="si">#{</span><span class="n">actor</span><span class="si">}</span><span class="s2">.</span><span class="si">#{</span><span class="n">action</span><span class="si">}</span><span class="s2">(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 更换装备</span>
+  <span class="k">def</span> <span class="nf">command_319</span>
+    <span class="s2">"@params = $game_actors[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">]
+    @params.change_equip_by_id(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">) if @params"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 更改名字</span>
+  <span class="k">def</span> <span class="nf">command_320</span>
+    <span class="s2">"@params = $game_actors[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">]
+    @params.name = </span><span class="si">#{</span><span class="n">escape</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> if @params"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 更改职业</span>
+  <span class="k">def</span> <span class="nf">command_321</span>
+    <span class="k">return</span> <span class="s1">''</span> <span class="k">unless</span> <span class="vg">$data_classes</span><span class="p">[</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+    <span class="s2">"@params = $game_actors[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">]
+    @params.change_class(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">) if @params"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 更改角色图像</span>
+  <span class="k">def</span> <span class="nf">command_322</span>
+    <span class="k">return</span> <span class="k">unless</span> <span class="vg">$game_actors</span><span class="p">[</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+    <span class="s2">"$game_actors[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">].set_graphic("</span><span class="p">\</span>
+    <span class="s2">"</span><span class="si">#{</span><span class="n">escape</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">, "</span><span class="p">\</span>
+    <span class="s2">"</span><span class="si">#{</span><span class="n">escape</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">)
+    $game_player.refresh"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 更改载具的图像</span>
+  <span class="k">def</span> <span class="nf">command_323</span>
+    <span class="s2">"@params = $game_map.vehicles[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">]
+    @params.set_graphic(</span><span class="si">#{</span><span class="n">escape</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">) if @params"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 更改称号</span>
+  <span class="k">def</span> <span class="nf">command_324</span>
+    <span class="s2">"@params = $game_actors[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">]
+    @params.nickname = </span><span class="si">#{</span><span class="n">escape</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> if @params"</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 增减敌人 HP</span>
+  <span class="k">def</span> <span class="nf">command_331</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">operate_value</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+    <span class="n">iter_enemy_index</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">do</span> <span class="o">|</span><span class="n">enemy</span><span class="o">|</span>
+      <span class="s2">"unless </span><span class="si">#{</span><span class="n">enemy</span><span class="si">}</span><span class="s2">.dead?
+        </span><span class="si">#{</span><span class="n">enemy</span><span class="si">}</span><span class="s2">.change_hp(</span><span class="si">#{</span><span class="n">value</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s2">)
+        </span><span class="si">#{</span><span class="n">enemy</span><span class="si">}</span><span class="s2">.perform_collapse_effect if </span><span class="si">#{</span><span class="n">enemy</span><span class="si">}</span><span class="s2">.dead?
+      end"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 增减敌人的 MP</span>
+  <span class="k">def</span> <span class="nf">command_332</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">operate_value</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+    <span class="n">iter_enemy_index</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">do</span> <span class="o">|</span><span class="n">enemy</span><span class="o">|</span>
+      <span class="s2">"</span><span class="si">#{</span><span class="n">enemy</span><span class="si">}</span><span class="s2">.mp += </span><span class="si">#{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 更改敌人的状态</span>
+  <span class="k">def</span> <span class="nf">command_333</span>
+    <span class="n">action</span> <span class="o">=</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">?</span> <span class="s1">'add_state'</span> <span class="p">:</span> <span class="s1">'remove_state'</span>
+    <span class="n">iter_enemy_index</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">do</span> <span class="o">|</span><span class="n">enemy</span><span class="o">|</span>
+      <span class="s2">"@params = </span><span class="si">#{</span><span class="n">enemy</span><span class="si">}</span><span class="s2">.dead?
+      </span><span class="si">#{</span><span class="n">enemy</span><span class="si">}</span><span class="s2">.</span><span class="si">#{</span><span class="n">action</span><span class="si">}</span><span class="s2">(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">)
+      </span><span class="si">#{</span><span class="n">enemy</span><span class="si">}</span><span class="s2">.perform_collapse_effect if </span><span class="si">#{</span><span class="n">enemy</span><span class="si">}</span><span class="s2">.dead? &amp;&amp; !@params"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 敌人完全恢复</span>
+  <span class="k">def</span> <span class="nf">command_334</span>
+    <span class="n">iter_enemy_index</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">do</span> <span class="o">|</span><span class="n">enemy</span><span class="o">|</span>
+      <span class="s2">"</span><span class="si">#{</span><span class="n">enemy</span><span class="si">}</span><span class="s2">.recover_all"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 敌人出现</span>
+  <span class="k">def</span> <span class="nf">command_335</span>
+    <span class="n">iter_enemy_index</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">do</span> <span class="o">|</span><span class="n">enemy</span><span class="o">|</span>
+      <span class="s2">"</span><span class="si">#{</span><span class="n">enemy</span><span class="si">}</span><span class="s2">.appear
+      $game_troop.make_unique_names"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 敌人变身</span>
+  <span class="k">def</span> <span class="nf">command_336</span>
+    <span class="n">iter_enemy_index</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">do</span> <span class="o">|</span><span class="n">enemy</span><span class="o">|</span>
+      <span class="s2">"</span><span class="si">#{</span><span class="n">enemy</span><span class="si">}</span><span class="s2">.transform(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">)
+      $game_troop.make_unique_names"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 显示战斗动画</span>
+  <span class="k">def</span> <span class="nf">command_337</span>
+    <span class="n">iter_enemy_index</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">do</span> <span class="o">|</span><span class="n">enemy</span><span class="o">|</span>
+      <span class="s2">"</span><span class="si">#{</span><span class="n">enemy</span><span class="si">}</span><span class="s2">.animation_id = </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> if </span><span class="si">#{</span><span class="n">enemy</span><span class="si">}</span><span class="s2">.alive?"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 强制战斗行动</span>
+  <span class="k">def</span> <span class="nf">command_339</span>
+    <span class="n">iter_battler</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">do</span> <span class="o">|</span><span class="n">battler</span><span class="o">|</span>
+      <span class="s2">"next if </span><span class="si">#{</span><span class="n">battler</span><span class="si">}</span><span class="s2">.death_state?
+      </span><span class="si">#{</span><span class="n">battler</span><span class="si">}</span><span class="s2">.force_action(</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">)
+      BattleManager.force_action(</span><span class="si">#{</span><span class="n">battler</span><span class="si">}</span><span class="s2">)
+      Fiber.yield while BattleManager.action_forced?"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 中止战斗</span>
+  <span class="k">def</span> <span class="nf">command_340</span>
+    <span class="s1">'BattleManager.abort
+    Fiber.yield'</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 打开菜单画面</span>
+  <span class="k">def</span> <span class="nf">command_351</span>
+    <span class="n">only_map</span> <span class="s1">'SceneManager.call(Scene_Menu)
+    Window_MenuCommand.init_command_position
+    Fiber.yield'</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 打开存档画面</span>
+  <span class="k">def</span> <span class="nf">command_352</span>
+    <span class="n">only_map</span> <span class="s1">'SceneManager.call(Scene_Save)
+    Fiber.yield'</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 游戏结束</span>
+  <span class="k">def</span> <span class="nf">command_353</span>
+    <span class="s1">'SceneManager.goto(Scene_Gameover)
+    Fiber.yield'</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 返回标题画面</span>
+  <span class="k">def</span> <span class="nf">command_354</span>
+    <span class="s1">'SceneManager.goto(Scene_Title)
+    Fiber.yield'</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 脚本</span>
+  <span class="k">def</span> <span class="nf">command_355</span>
+    <span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 脚本数据</span>
+  <span class="kp">alias_method</span> <span class="ss">:command_655</span><span class="p">,</span> <span class="ss">:command_355</span>
+
+
+  <span class="c1"># 生成代码，将 command 直接代理给 Game_Interpreter#command_xxx</span>
+  <span class="n">delegate_command</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="k">do</span> <span class="o">|</span><span class="n">code</span><span class="o">|</span>
+    <span class="c1"># def command_233</span>
+    <span class="c1">#   "@params = ObjectSpace._id2ref(#{@params.__id__})</span>
+    <span class="c1">#   command_233"</span>
+    <span class="c1"># end</span>
+    <span class="n">set_params</span> <span class="o">=</span> <span class="s1">'@params = ObjectSpace._id2ref(#{@params.__id__})'</span>
+    <span class="sx">%{
+      def command_#{code}
+        "#{set_params}
+        command_#{code}"
+      end
+    }</span>
+  <span class="k">end</span>
+
+  <span class="nb">class_eval</span> <span class="p">[</span>
+    <span class="mi">132</span><span class="p">,</span>      <span class="c1"># 更改战斗 BGM</span>
+    <span class="mi">133</span><span class="p">,</span>      <span class="c1"># 更改战斗结束 ME</span>
+    <span class="mi">138</span><span class="p">,</span>      <span class="c1"># 更改窗口色调</span>
+    <span class="mi">205</span><span class="p">,</span>      <span class="c1"># 设置移动路径</span>
+    <span class="mi">223</span><span class="p">,</span>      <span class="c1"># 更改画面色调</span>
+    <span class="mi">224</span><span class="p">,</span>      <span class="c1"># 画面闪烁</span>
+    <span class="mi">234</span><span class="p">,</span>      <span class="c1"># 更改图片的色调</span>
+    <span class="mi">241</span><span class="p">,</span>      <span class="c1"># 播放 BGM</span>
+    <span class="mi">245</span><span class="p">,</span>      <span class="c1"># 播放 BGS</span>
+    <span class="mi">249</span><span class="p">,</span>      <span class="c1"># 播放 ME</span>
+    <span class="mi">250</span>       <span class="c1"># 播放 SE</span>
+  <span class="p">].</span><span class="nf">map</span><span class="p">(</span><span class="o">&amp;</span><span class="n">delegate_command</span><span class="p">).</span><span class="nf">join</span>
+
+<span class="k">end</span>
+</code></pre></div>

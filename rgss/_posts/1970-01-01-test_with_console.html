@@ -1,0 +1,12 @@
+---
+title: 非测试游戏的控制台
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">非测试游戏的控制台</span></a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">test_with_console</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1">在直接使用 Game.exe 打开游戏时，同时打开控制台</span></a>
+<span class="k">unless</span> <span class="vg">$TEST</span>
+  <span class="no">Win32API</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="s1">'kernel32'</span><span class="p">,</span> <span class="s1">'AllocConsole'</span><span class="p">,</span> <span class="s1">'v'</span><span class="p">,</span> <span class="s1">'v'</span><span class="p">).</span><span class="nf">call</span>
+  <span class="vg">$stdout</span> <span class="o">=</span> <span class="no">File</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="s1">'CONOUT$'</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">)</span>
+  <span class="vg">$stdin</span>  <span class="o">=</span> <span class="no">File</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="s1">'CONIN$'</span><span class="p">)</span>
+<span class="k">end</span></code></pre></div>

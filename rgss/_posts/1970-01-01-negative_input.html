@@ -1,0 +1,59 @@
+---
+title: 输入负数数值
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">negative_input</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">输入负数数值</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1">数值输入处理可以输入负数</span></a>
+<span class="k">module</span> <span class="nn">Taroxd</span>
+  <span class="no">NegativeInput</span> <span class="o">=</span> <span class="kp">true</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Window_NumberInput</span> <span class="o">&lt;</span> <span class="no">Window_Base</span>
+
+  <span class="k">def</span> <span class="nf">start</span>
+    <span class="vi">@digits_max</span> <span class="o">=</span> <span class="vg">$game_message</span><span class="p">.</span><span class="nf">num_input_digits_max</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">num</span> <span class="o">=</span> <span class="vg">$game_variables</span><span class="p">[</span><span class="vg">$game_message</span><span class="p">.</span><span class="nf">num_input_variable_id</span><span class="p">]</span>
+    <span class="n">max_num</span> <span class="o">=</span> <span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="vi">@digits_max</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">num</span> <span class="o">=</span> <span class="p">[[</span><span class="n">num</span><span class="p">,</span> <span class="n">max_num</span><span class="p">].</span><span class="nf">min</span><span class="p">,</span> <span class="o">-</span><span class="n">max_num</span><span class="p">].</span><span class="nf">max</span>
+    <span class="vi">@number</span> <span class="o">=</span> <span class="nb">sprintf</span><span class="p">(</span><span class="s1">'%+0*d'</span><span class="p">,</span> <span class="vi">@digits_max</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
+    <span class="vi">@index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">update_placement</span>
+    <span class="n">create_contents</span>
+    <span class="n">refresh</span>
+    <span class="nb">open</span>
+    <span class="n">activate</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">process_digit_change</span>
+    <span class="k">return</span> <span class="k">unless</span> <span class="n">active</span>
+    <span class="k">if</span> <span class="no">Input</span><span class="p">.</span><span class="nf">repeat?</span><span class="p">(</span><span class="ss">:UP</span><span class="p">)</span> <span class="o">||</span> <span class="no">Input</span><span class="p">.</span><span class="nf">repeat?</span><span class="p">(</span><span class="ss">:DOWN</span><span class="p">)</span>
+      <span class="no">Sound</span><span class="p">.</span><span class="nf">play_cursor</span>
+      <span class="k">if</span> <span class="vi">@index</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="vi">@number</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="vi">@number</span><span class="p">.</span><span class="nf">start_with?</span><span class="p">(</span><span class="s1">'+'</span><span class="p">)</span> <span class="p">?</span> <span class="s1">'-'</span> <span class="p">:</span> <span class="s1">'+'</span>
+      <span class="k">else</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="vi">@number</span><span class="p">[</span><span class="vi">@index</span><span class="p">].</span><span class="nf">to_i</span>
+        <span class="vi">@number</span><span class="p">[</span><span class="vi">@index</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="n">n</span> <span class="o">+</span> <span class="p">(</span><span class="no">Input</span><span class="p">.</span><span class="nf">repeat?</span><span class="p">(</span><span class="ss">:UP</span><span class="p">)</span> <span class="p">?</span> <span class="mi">1</span> <span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="o">%</span> <span class="mi">10</span><span class="p">).</span><span class="nf">to_s</span>
+      <span class="k">end</span>
+      <span class="n">refresh</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">refresh</span>
+    <span class="n">contents</span><span class="p">.</span><span class="nf">clear</span>
+    <span class="n">change_color</span><span class="p">(</span><span class="n">normal_color</span><span class="p">)</span>
+    <span class="vi">@digits_max</span><span class="p">.</span><span class="nf">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
+      <span class="n">rect</span> <span class="o">=</span> <span class="n">item_rect</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+      <span class="n">rect</span><span class="p">.</span><span class="nf">x</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="n">draw_text</span><span class="p">(</span><span class="n">rect</span><span class="p">,</span> <span class="vi">@number</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">process_ok</span>
+    <span class="no">Sound</span><span class="p">.</span><span class="nf">play_ok</span>
+    <span class="vg">$game_variables</span><span class="p">[</span><span class="vg">$game_message</span><span class="p">.</span><span class="nf">num_input_variable_id</span><span class="p">]</span> <span class="o">=</span> <span class="vi">@number</span><span class="p">.</span><span class="nf">to_i</span>
+    <span class="n">deactivate</span>
+    <span class="n">close</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>

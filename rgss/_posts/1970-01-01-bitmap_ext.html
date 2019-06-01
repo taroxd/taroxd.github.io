@@ -1,0 +1,38 @@
+---
+title: 位图功能扩展
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">位图功能扩展</span></a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">bitmap_ext</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1">需要将 rgssdll.dll 放入 System 文件夹下。</span></a>
+<span class="k">module</span> <span class="nn">Taroxd</span>
+  <span class="k">module</span> <span class="nn">BitmapExt</span>
+    <span class="no">DLL_FILE</span> <span class="o">=</span> <span class="s1">'System/rgssdll'</span>
+    <span class="no">XOR</span> <span class="o">=</span> <span class="no">Win32API</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="no">DLL_FILE</span><span class="p">,</span> <span class="s1">'bitmap_xor'</span><span class="p">,</span> <span class="s1">'LL'</span><span class="p">,</span> <span class="s1">'L'</span><span class="p">)</span>
+    <span class="no">OR</span>  <span class="o">=</span> <span class="no">Win32API</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="no">DLL_FILE</span><span class="p">,</span> <span class="s1">'bitmap_or'</span><span class="p">,</span>  <span class="s1">'LL'</span><span class="p">,</span> <span class="s1">'L'</span><span class="p">)</span>
+    <span class="no">AND</span> <span class="o">=</span> <span class="no">Win32API</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="no">DLL_FILE</span><span class="p">,</span> <span class="s1">'bitmap_and'</span><span class="p">,</span> <span class="s1">'LL'</span><span class="p">,</span> <span class="s1">'L'</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Bitmap</span>
+
+  <span class="kp">include</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">BitmapExt</span>
+
+  <span class="c1"># 对位图的每个像素做 xor 运算。</span>
+  <span class="c1"># color: 0xaarrggbb</span>
+  <span class="k">def</span> <span class="nf">xor!</span><span class="p">(</span><span class="n">color</span><span class="p">)</span>
+    <span class="no">XOR</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="nb">__id__</span><span class="p">,</span> <span class="n">color</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 对位图的每个像素做 or 运算。</span>
+  <span class="c1"># color: 0xaarrggbb</span>
+  <span class="k">def</span> <span class="nf">or!</span><span class="p">(</span><span class="n">color</span><span class="p">)</span>
+    <span class="no">OR</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="nb">__id__</span><span class="p">,</span> <span class="n">color</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 对位图的每个像素做 and 运算。</span>
+  <span class="c1"># color: 0xaarrggbb</span>
+  <span class="k">def</span> <span class="nf">and!</span><span class="p">(</span><span class="n">color</span><span class="p">)</span>
+    <span class="no">AND</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="nb">__id__</span><span class="p">,</span> <span class="n">color</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre></div>

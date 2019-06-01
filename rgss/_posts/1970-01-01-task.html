@@ -1,0 +1,106 @@
+---
+title: 简单任务系统
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">task</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">简单任务系统</span></a>
+<span class="k">class</span> <span class="nc">Taroxd</span><span class="o">::</span><span class="no">Task</span>
+
+  <span class="no">LIST</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c1"># 在此设置任务的内容。设置方式请参考 Taroxd::Task 的定义。</span>
+  <span class="p">]</span>
+  <span class="no">COMPLETED_PREFIX</span> <span class="o">=</span> <span class="s1">'\I[125]'</span>      <span class="c1"># 任务完成时的前缀，不需要可设置为 ''</span>
+  <span class="no">ONGOING_PRIFIX</span>   <span class="o">=</span> <span class="s1">'\I[126]'</span>      <span class="c1"># 任务进行中的前缀，不需要可设置为 ''</span>
+  <span class="no">COMMAND</span>          <span class="o">=</span> <span class="s1">'任务'</span>         <span class="c1"># 菜单上的指令名，不需要可设置为 nil</span>
+
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="nb">name</span><span class="p">,</span> <span class="n">description</span> <span class="o">=</span> <span class="s1">''</span><span class="p">,</span> <span class="n">goal</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="vi">@id</span><span class="p">,</span> <span class="vi">@name</span><span class="p">,</span> <span class="vi">@description</span><span class="p">,</span> <span class="vi">@goal</span> <span class="o">=</span> <span class="nb">id</span><span class="p">,</span> <span class="nb">name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">goal</span>
+  <span class="k">end</span>
+  <span class="nb">attr_reader</span> <span class="ss">:description</span>
+
+  <span class="k">def</span> <span class="nf">name</span>
+    <span class="p">(</span><span class="n">completed?</span> <span class="p">?</span> <span class="no">COMPLETED_PREFIX</span> <span class="p">:</span> <span class="no">ONGOING_PRIFIX</span><span class="p">)</span> <span class="o">+</span> <span class="vi">@name</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">started?</span>
+    <span class="vg">$game_switches</span><span class="p">[</span><span class="vi">@id</span><span class="p">]</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">completed?</span>
+    <span class="vg">$game_variables</span><span class="p">[</span><span class="vi">@id</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="vi">@goal</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 设置任务列表</span>
+  <span class="no">LIST</span><span class="p">.</span><span class="nf">map!</span> <span class="p">{</span> <span class="o">|</span><span class="n">args</span><span class="o">|</span> <span class="n">new</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="p">}</span>
+
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">list</span>
+    <span class="no">LIST</span><span class="p">.</span><span class="nf">select</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:started?</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Window_TaskList</span> <span class="o">&lt;</span> <span class="no">Window_Selectable</span>
+
+  <span class="no">Task</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Task</span>
+
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+    <span class="k">super</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="no">Graphics</span><span class="p">.</span><span class="nf">width</span><span class="p">,</span> <span class="no">Graphics</span><span class="p">.</span><span class="nf">height</span> <span class="o">-</span> <span class="n">y</span><span class="p">)</span>
+    <span class="nb">select</span> <span class="no">Task</span><span class="p">.</span><span class="nf">list</span><span class="p">.</span><span class="nf">index</span> <span class="p">{</span> <span class="o">|</span><span class="n">task</span><span class="o">|</span> <span class="o">!</span><span class="n">task</span><span class="p">.</span><span class="nf">completed?</span> <span class="p">}</span>
+    <span class="n">refresh</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">col_max</span>
+    <span class="mi">2</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">item_max</span>
+    <span class="no">Task</span><span class="p">.</span><span class="nf">list</span><span class="p">.</span><span class="nf">size</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">draw_item</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+    <span class="n">rect</span> <span class="o">=</span> <span class="n">item_rect_for_text</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+    <span class="n">draw_text_ex</span><span class="p">(</span><span class="n">rect</span><span class="p">.</span><span class="nf">x</span><span class="p">,</span> <span class="n">rect</span><span class="p">.</span><span class="nf">y</span><span class="p">,</span> <span class="no">Task</span><span class="p">.</span><span class="nf">list</span><span class="p">[</span><span class="n">index</span><span class="p">].</span><span class="nf">name</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">update_help</span>
+    <span class="vi">@help_window</span><span class="p">.</span><span class="nf">set_text</span><span class="p">(</span><span class="no">Task</span><span class="p">.</span><span class="nf">list</span><span class="p">[</span><span class="n">index</span><span class="p">].</span><span class="nf">description</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Scene_Task</span> <span class="o">&lt;</span> <span class="no">Scene_MenuBase</span>
+
+  <span class="k">def</span> <span class="nf">start</span>
+    <span class="k">super</span>
+    <span class="n">create_help_window</span>
+    <span class="n">create_list_window</span>
+  <span class="k">end</span>
+  <span class="c1"># 任务列表窗口</span>
+  <span class="k">def</span> <span class="nf">create_list_window</span>
+    <span class="vi">@list_window</span> <span class="o">=</span> <span class="no">Window_TaskList</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="vi">@help_window</span><span class="p">.</span><span class="nf">height</span><span class="p">)</span>
+    <span class="vi">@list_window</span><span class="p">.</span><span class="nf">help_window</span> <span class="o">=</span> <span class="vi">@help_window</span>
+    <span class="vi">@list_window</span><span class="p">.</span><span class="nf">set_handler</span><span class="p">(</span><span class="ss">:cancel</span><span class="p">,</span> <span class="nb">method</span><span class="p">(</span><span class="ss">:return_scene</span><span class="p">))</span>
+    <span class="vi">@list_window</span><span class="p">.</span><span class="nf">activate</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Task</span><span class="o">::</span><span class="no">COMMAND</span>
+  <span class="k">class</span> <span class="nc">Window_MenuCommand</span> <span class="o">&lt;</span> <span class="no">Window_Command</span>
+    <span class="n">task</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Task</span>
+    <span class="c1"># 指令“任务”</span>
+    <span class="n">def_after</span> <span class="ss">:add_original_commands</span> <span class="k">do</span>
+      <span class="n">add_command</span><span class="p">(</span><span class="n">task</span><span class="o">::</span><span class="no">COMMAND</span><span class="p">,</span> <span class="ss">:task</span><span class="p">,</span> <span class="o">!</span><span class="n">task</span><span class="p">.</span><span class="nf">list</span><span class="p">.</span><span class="nf">empty?</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">class</span> <span class="nc">Scene_Menu</span> <span class="o">&lt;</span> <span class="no">Scene_MenuBase</span>
+
+    <span class="n">def_after</span> <span class="ss">:create_command_window</span> <span class="k">do</span>
+      <span class="vi">@command_window</span><span class="p">.</span><span class="nf">set_handler</span><span class="p">(</span><span class="ss">:task</span><span class="p">,</span> <span class="nb">method</span><span class="p">(</span><span class="ss">:command_task</span><span class="p">))</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 指令“任务”</span>
+    <span class="k">def</span> <span class="nf">command_task</span>
+      <span class="no">SceneManager</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="no">Scene_Task</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre></div>

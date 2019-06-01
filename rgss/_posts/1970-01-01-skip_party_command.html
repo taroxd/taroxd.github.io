@@ -1,0 +1,57 @@
+---
+title: 跳过撤退指令
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">skip_party_command</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">跳过撤退指令</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1">不可撤退时，跳过“战斗/撤退”指令的选择</span></a>
+<span class="k">module</span> <span class="nn">Taroxd</span>
+  <span class="k">module</span> <span class="nn">SkipPartyCommand</span>
+    <span class="c1"># 满足此条件时，不跳过指令选择</span>
+    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">disabled?</span>
+      <span class="no">BattleManager</span><span class="p">.</span><span class="nf">can_escape?</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="c1"># 是否存在上一个指令。无副作用。</span>
+<span class="k">def</span> <span class="nc">BattleManager</span><span class="o">.</span><span class="nf">prior_command?</span>
+  <span class="n">actors</span> <span class="o">=</span> <span class="vg">$game_party</span><span class="p">.</span><span class="nf">battle_members</span><span class="p">.</span><span class="nf">first</span><span class="p">(</span><span class="vi">@actor_index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+  <span class="n">actor</span> <span class="o">=</span> <span class="n">actors</span><span class="p">.</span><span class="nf">pop</span>
+  <span class="n">actor</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">actor</span><span class="p">.</span><span class="nf">prior_command?</span> <span class="o">||</span> <span class="n">actors</span><span class="p">.</span><span class="nf">any?</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:inputable?</span><span class="p">))</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Actor</span> <span class="o">&lt;</span> <span class="no">Game_Battler</span>
+  <span class="c1"># 是否已经输入过指令</span>
+  <span class="k">def</span> <span class="nf">prior_command?</span>
+    <span class="vi">@action_input_index</span> <span class="o">&gt;</span> <span class="mi">0</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Scene_Battle</span> <span class="o">&lt;</span> <span class="no">Scene_Base</span>
+
+  <span class="k">def</span> <span class="nf">start_party_command_selection</span>
+    <span class="k">return</span> <span class="k">if</span> <span class="n">scene_changing?</span>
+    <span class="n">refresh_status</span>
+    <span class="vi">@status_window</span><span class="p">.</span><span class="nf">unselect</span>
+    <span class="vi">@status_window</span><span class="p">.</span><span class="nf">open</span>
+    <span class="k">if</span> <span class="no">BattleManager</span><span class="p">.</span><span class="nf">input_start</span>
+      <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">SkipPartyCommand</span><span class="p">.</span><span class="nf">disabled?</span>
+        <span class="vi">@actor_command_window</span><span class="p">.</span><span class="nf">close</span>
+        <span class="vi">@party_command_window</span><span class="p">.</span><span class="nf">setup</span>
+      <span class="k">else</span>
+        <span class="n">command_fight</span>
+      <span class="k">end</span>
+    <span class="k">else</span>
+      <span class="vi">@party_command_window</span><span class="p">.</span><span class="nf">deactivate</span>
+      <span class="n">turn_start</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Window_ActorCommand</span> <span class="o">&lt;</span> <span class="no">Window_Command</span>
+  <span class="k">def</span> <span class="nf">cancel_enabled?</span>
+    <span class="no">Taroxd</span><span class="o">::</span><span class="no">SkipPartyCommand</span><span class="p">.</span><span class="nf">disabled?</span> <span class="o">||</span> <span class="no">BattleManager</span><span class="p">.</span><span class="nf">prior_command?</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre></div>

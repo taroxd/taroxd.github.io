@@ -1,0 +1,27 @@
+---
+title: 全局变量存档
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">全局变量存档</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1">将 Taroxd::Global 哈希表中的对象写入存档。</span></a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">global</span></a>
+<span class="no">Taroxd</span><span class="o">::</span><span class="no">Global</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">symbol</span> <span class="o">=</span> <span class="ss">:taroxd_global</span>
+
+<span class="n">on_new_game</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Global</span><span class="p">.</span><span class="nf">method</span><span class="p">(</span><span class="ss">:clear</span><span class="p">)</span>
+
+<span class="n">on_save</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="k">do</span> <span class="o">|</span><span class="n">contents</span><span class="o">|</span>
+  <span class="n">contents</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Global</span>
+  <span class="n">contents</span>
+<span class="k">end</span>
+
+<span class="n">on_load</span> <span class="o">=</span> <span class="nb">lambda</span> <span class="k">do</span> <span class="o">|</span><span class="n">contents</span><span class="o">|</span>
+  <span class="n">data</span> <span class="o">=</span> <span class="n">contents</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span>
+  <span class="no">Taroxd</span><span class="o">::</span><span class="no">Global</span><span class="p">.</span><span class="nf">replace</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="k">if</span> <span class="n">data</span>
+<span class="k">end</span>
+
+<span class="no">DataManager</span><span class="p">.</span><span class="nf">singleton_def_before</span> <span class="ss">:setup_new_game</span><span class="p">,</span>        <span class="n">on_new_game</span>
+<span class="no">DataManager</span><span class="p">.</span><span class="nf">singleton_def_with</span>   <span class="ss">:make_save_contents</span><span class="p">,</span>    <span class="n">on_save</span>
+<span class="no">DataManager</span><span class="p">.</span><span class="nf">singleton_def_after</span>  <span class="ss">:extract_save_contents</span><span class="p">,</span> <span class="n">on_load</span>
+</code></pre></div>

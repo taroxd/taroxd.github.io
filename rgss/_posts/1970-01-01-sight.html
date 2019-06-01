@@ -1,0 +1,133 @@
+---
+title: 视野限制
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">sight</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">视野限制</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/bitmap_ext.html">bitmap_ext</a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1"></span></a>
+<span class="c1">#  使用方法：在地图上备注 &lt;sight x&gt;，则该地图限制视野。x 为无补正时的可见半径</span>
+<span class="c1">#  在角色、职业、装备、状态上备注 &lt;sight x&gt;，则可以设置角色周围 x 的视野补正</span>
+<span class="c1">#  在事件名称上备注 &lt;sight x&gt; 则可以在事件周围设置 x 的视野补正</span>
+<span class="c1">#</span>
+<span class="c1">#  可以设置 $game_map.sight 属性来调整视野范围。</span>
+<span class="c1">#  该值默认为地图上备注的数字或 nil（无备注，不限制视野）</span>
+
+<span class="k">module</span> <span class="nn">Taroxd::Sight</span>
+  <span class="no">DARKNESS</span> <span class="o">=</span> <span class="mi">32</span>    <span class="c1"># 视野限制时可见区域的暗度。</span>
+
+  <span class="c1"># 阴影的位图。纯白色，越靠近中间透明度越大。</span>
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">shadow</span>
+    <span class="k">return</span> <span class="vi">@shadow</span> <span class="k">if</span> <span class="vi">@shadow</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="vi">@shadow</span><span class="p">.</span><span class="nf">disposed?</span>
+    <span class="vi">@shadow</span> <span class="o">=</span> <span class="no">Bitmap</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">)</span>
+    <span class="vi">@shadow</span><span class="p">.</span><span class="nf">fill_rect</span><span class="p">(</span><span class="vi">@shadow</span><span class="p">.</span><span class="nf">rect</span><span class="p">,</span> <span class="no">Color</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="vi">@shadow</span><span class="p">.</span><span class="nf">width</span><span class="p">.</span><span class="nf">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+      <span class="vi">@shadow</span><span class="p">.</span><span class="nf">height</span><span class="p">.</span><span class="nf">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">y</span><span class="o">|</span>
+        <span class="n">bright</span> <span class="o">=</span> <span class="mi">4096</span> <span class="o">-</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="mi">64</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="mi">64</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+        <span class="k">next</span> <span class="k">if</span> <span class="n">bright</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+        <span class="vi">@shadow</span><span class="p">.</span><span class="nf">set_pixel</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="no">Color</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="n">bright</span> <span class="o">/</span> <span class="no">DARKNESS</span><span class="p">))</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+    <span class="vi">@shadow</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="no">RPG</span><span class="o">::</span><span class="no">Map</span><span class="p">.</span><span class="nf">note_i</span> <span class="ss">:sight</span><span class="p">,</span> <span class="kp">nil</span>
+<span class="no">RPG</span><span class="o">::</span><span class="no">BaseItem</span><span class="p">.</span><span class="nf">note_i</span> <span class="ss">:sight</span>
+<span class="no">RPG</span><span class="o">::</span><span class="no">Event</span><span class="p">.</span><span class="nf">note_i</span> <span class="ss">:sight</span>
+
+<span class="k">class</span> <span class="nc">Game_Map</span>
+  <span class="nb">attr_accessor</span> <span class="ss">:sight</span>
+  <span class="n">def_after</span><span class="p">(</span><span class="ss">:setup</span><span class="p">)</span> <span class="p">{</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span> <span class="vi">@sight</span> <span class="o">=</span> <span class="vi">@map</span><span class="p">.</span><span class="nf">sight</span> <span class="p">}</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Actor</span> <span class="o">&lt;</span> <span class="no">Game_Battler</span>
+  <span class="k">def</span> <span class="nf">sight</span>
+    <span class="n">note_objects</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:sight</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_CharacterBase</span>
+  <span class="k">def</span> <span class="nf">sight</span>
+    <span class="mi">0</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Event</span> <span class="o">&lt;</span> <span class="no">Game_Character</span>
+  <span class="k">def</span> <span class="nf">sight</span>
+    <span class="vi">@event</span><span class="p">.</span><span class="nf">sight</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Player</span> <span class="o">&lt;</span> <span class="no">Game_Character</span>
+  <span class="k">def</span> <span class="nf">sight</span>
+    <span class="k">return</span> <span class="mi">0</span> <span class="k">unless</span> <span class="vg">$game_map</span><span class="p">.</span><span class="nf">sight</span>
+    <span class="vg">$game_party</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="vg">$game_map</span><span class="p">.</span><span class="nf">sight</span><span class="p">,</span> <span class="o">&amp;</span><span class="ss">:sight</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Sprite_SightShadow</span> <span class="o">&lt;</span> <span class="no">Sprite_Base</span>
+
+  <span class="c1"># sprites: Sprite_Character 实例的数组</span>
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">viewport</span><span class="p">,</span> <span class="n">sprites</span><span class="p">)</span>
+    <span class="k">super</span><span class="p">(</span><span class="n">viewport</span><span class="p">)</span>
+    <span class="vi">@sprites</span> <span class="o">=</span> <span class="n">sprites</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">z</span> <span class="o">=</span> <span class="mi">160</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">bitmap</span> <span class="o">=</span> <span class="no">Bitmap</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="no">Graphics</span><span class="p">.</span><span class="nf">width</span><span class="p">,</span> <span class="no">Graphics</span><span class="p">.</span><span class="nf">height</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">dispose</span>
+    <span class="n">bitmap</span><span class="p">.</span><span class="nf">dispose</span>
+    <span class="k">super</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">update</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">visible</span> <span class="o">=</span> <span class="vg">$game_map</span><span class="p">.</span><span class="nf">sight</span>
+    <span class="n">refresh</span> <span class="k">if</span> <span class="n">visible</span>
+  <span class="k">end</span>
+
+  <span class="kp">private</span>
+
+  <span class="k">def</span> <span class="nf">refresh</span>
+    <span class="n">bitmap</span><span class="p">.</span><span class="nf">fill_rect</span><span class="p">(</span><span class="n">bitmap</span><span class="p">.</span><span class="nf">rect</span><span class="p">,</span> <span class="no">Color</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="vi">@sprites</span><span class="p">.</span><span class="nf">each</span> <span class="p">{</span> <span class="o">|</span><span class="n">s</span><span class="o">|</span> <span class="n">draw_shadow</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="p">}</span>
+    <span class="n">bitmap</span><span class="p">.</span><span class="nf">xor!</span><span class="p">(</span><span class="mh">0xFFFFFFFF</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">draw_shadow</span><span class="p">(</span><span class="n">sprite</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">sprite</span><span class="p">.</span><span class="nf">character</span><span class="p">.</span><span class="nf">sight</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">sprite</span><span class="p">.</span><span class="nf">x</span> <span class="o">-</span> <span class="n">sprite</span><span class="p">.</span><span class="nf">ox</span> <span class="o">+</span> <span class="n">sprite</span><span class="p">.</span><span class="nf">width</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">r</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">sprite</span><span class="p">.</span><span class="nf">y</span> <span class="o">-</span> <span class="n">sprite</span><span class="p">.</span><span class="nf">oy</span> <span class="o">+</span> <span class="n">sprite</span><span class="p">.</span><span class="nf">height</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">r</span>
+    <span class="n">bitmap</span><span class="p">.</span><span class="nf">stretch_blt</span><span class="p">(</span><span class="no">Rect</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">r</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">r</span> <span class="o">*</span> <span class="mi">2</span><span class="p">),</span> <span class="n">shadow</span><span class="p">,</span> <span class="n">shadow</span><span class="p">.</span><span class="nf">rect</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">shadow</span>
+    <span class="no">Taroxd</span><span class="o">::</span><span class="no">Sight</span><span class="p">.</span><span class="nf">shadow</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Spriteset_Map</span>
+
+  <span class="k">def</span> <span class="nf">create_sight_shadow</span>
+    <span class="n">sprites</span> <span class="o">=</span> <span class="vi">@character_sprites</span><span class="p">.</span><span class="nf">select</span> <span class="p">{</span> <span class="o">|</span><span class="n">s</span><span class="o">|</span> <span class="n">s</span><span class="p">.</span><span class="nf">character</span><span class="p">.</span><span class="nf">sight</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">}</span>
+    <span class="vi">@sight_shadow</span> <span class="o">=</span> <span class="no">Sprite_SightShadow</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="vi">@viewport2</span><span class="p">,</span> <span class="n">sprites</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">dispose_sight_shadow</span>
+    <span class="vi">@sight_shadow</span><span class="p">.</span><span class="nf">dispose</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">update_sight_shadow</span>
+    <span class="vi">@sight_shadow</span><span class="p">.</span><span class="nf">update</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">refresh_sight_shadow</span>
+    <span class="n">dispose_sight_shadow</span>
+    <span class="n">create_sight_shadow</span>
+  <span class="k">end</span>
+
+  <span class="sx">%w(create dispose update refresh)</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">prefix</span><span class="o">|</span>
+    <span class="n">def_after</span> <span class="ss">:"</span><span class="si">#{</span><span class="n">prefix</span><span class="si">}</span><span class="ss">_characters"</span><span class="p">,</span> <span class="ss">:"</span><span class="si">#{</span><span class="n">prefix</span><span class="si">}</span><span class="ss">_sight_shadow"</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre></div>

@@ -1,0 +1,229 @@
+---
+title: 使用目标的扩展
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">target_ext</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">使用目标的扩展</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1">设置技能、物品的使用目标。</span></a>
+<span class="c1"># 使用方法：</span>
+<span class="c1">#   在技能/物品的备注栏写下类似于下面例子的备注，设置可选择的全体目标。</span>
+<span class="c1">#</span>
+<span class="c1">#   该脚本不影响菜单中使用技能/物品。</span>
+<span class="c1">#</span>
+<span class="c1">#   用 a 指代使用者，用 b 或 self 指代目标。</span>
+<span class="c1">#</span>
+<span class="c1">#   例1：存活队员中 hp 比例最小者。</span>
+<span class="c1">#   &lt;target&gt;</span>
+<span class="c1">#     select: alive?</span>
+<span class="c1">#     min_by: hp_rate</span>
+<span class="c1">#   &lt;/target&gt;</span>
+<span class="c1">#</span>
+<span class="c1">#   例2：所有 hp 大于 50 的队员</span>
+<span class="c1">#   &lt;target&gt;</span>
+<span class="c1">#     select: hp &gt; 50</span>
+<span class="c1">#   &lt;/target&gt;</span>
+<span class="c1">#</span>
+<span class="c1">#   例3：除自己之外的全体队友</span>
+<span class="c1">#   &lt;target&gt;</span>
+<span class="c1">#     select: alive? &amp;&amp; b != a</span>
+<span class="c1">#   &lt;/target&gt;</span>
+<span class="c1">#</span>
+<span class="c1">#   例4：无视生死</span>
+<span class="c1">#   &lt;target&gt;&lt;/target&gt;</span>
+
+<span class="k">module</span> <span class="nn">Taroxd::TargetExt</span>
+
+  <span class="no">RE_OUTER</span> <span class="o">=</span> <span class="sr">/&lt;target&gt;(.*?)&lt;\/target&gt;/mi</span> <span class="c1"># 整体设置</span>
+  <span class="no">SEPARATOR</span> <span class="o">=</span> <span class="s1">':'</span>                        <span class="c1"># 每一行中的分隔符</span>
+
+  <span class="c1"># 实例方法，用于选择目标的窗口中</span>
+
+  <span class="c1"># virtual</span>
+  <span class="c1"># 返回可以选择的所有目标</span>
+  <span class="k">def</span> <span class="nf">targets_to_select</span>
+    <span class="p">[]</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 返回设置的目标</span>
+  <span class="c1"># 若 actor 未初始化，或没有设置目标，返回 nil</span>
+  <span class="k">def</span> <span class="nf">selectable_targets</span>
+    <span class="n">actor</span> <span class="o">=</span> <span class="no">BattleManager</span><span class="p">.</span><span class="nf">actor</span>
+    <span class="k">return</span> <span class="k">unless</span> <span class="n">actor</span>
+    <span class="n">item</span> <span class="o">=</span> <span class="n">actor</span><span class="p">.</span><span class="nf">input</span><span class="p">.</span><span class="nf">item</span>
+    <span class="k">return</span> <span class="k">unless</span> <span class="n">item</span>
+    <span class="n">item</span><span class="p">.</span><span class="nf">get_targets</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">targets_to_select</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 由于父类可能未定义，不调用 super</span>
+  <span class="k">def</span> <span class="nf">enable?</span><span class="p">(</span><span class="n">battler</span><span class="p">)</span>
+    <span class="n">targets</span> <span class="o">=</span> <span class="n">selectable_targets</span>
+    <span class="o">!</span><span class="n">targets</span> <span class="o">||</span> <span class="n">targets</span><span class="p">.</span><span class="nf">include?</span><span class="p">(</span><span class="n">battler</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">current_item_enabled?</span>
+    <span class="k">super</span> <span class="o">&amp;&amp;</span> <span class="n">enable?</span><span class="p">(</span><span class="n">targets_to_select</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 模块方法，用于读取备注</span>
+
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">parse_note</span><span class="p">(</span><span class="n">note</span><span class="p">)</span>
+    <span class="n">note</span> <span class="o">=~</span> <span class="no">RE_OUTER</span> <span class="p">?</span> <span class="n">parse_settings</span><span class="p">(</span><span class="vg">$1</span><span class="p">)</span> <span class="p">:</span> <span class="kp">false</span>
+  <span class="k">end</span>
+
+  <span class="kp">private</span>
+
+  <span class="c1"># lambda do |battlers, a|</span>
+  <span class="c1">#   battlers.select { |b| b.instance_eval { alive? &amp;&amp; b != a } }</span>
+  <span class="c1"># end</span>
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">parse_settings</span><span class="p">(</span><span class="n">settings</span><span class="p">)</span>
+    <span class="nb">eval</span> <span class="sx">%(
+      lambda do |battlers, a|
+        battlers#{extract_settings(settings)}
+      end
+    )</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">extract_settings</span><span class="p">(</span><span class="n">settings</span><span class="p">)</span>
+    <span class="n">settings</span><span class="p">.</span><span class="nf">each_line</span><span class="p">.</span><span class="nf">map</span> <span class="p">{</span> <span class="o">|</span><span class="n">line</span><span class="o">|</span>
+      <span class="nb">method</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">block</span> <span class="o">=</span> <span class="n">line</span><span class="p">.</span><span class="nf">partition</span><span class="p">(</span><span class="no">SEPARATOR</span><span class="p">).</span><span class="nf">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:strip</span><span class="p">)</span>
+      <span class="k">if</span> <span class="nb">method</span><span class="p">.</span><span class="nf">empty?</span>
+        <span class="s1">''</span>
+      <span class="k">elsif</span> <span class="n">block</span><span class="p">.</span><span class="nf">empty?</span>
+        <span class="s2">".</span><span class="si">#{</span><span class="nb">method</span><span class="si">}</span><span class="s2">"</span>
+      <span class="k">else</span>
+        <span class="s2">".</span><span class="si">#{</span><span class="nb">method</span><span class="si">}</span><span class="s2"> { |b| b.instance_eval { </span><span class="si">#{</span><span class="n">block</span><span class="si">}</span><span class="s2"> } }"</span>
+      <span class="k">end</span>
+    <span class="p">}.</span><span class="nf">join</span>
+  <span class="k">end</span>
+
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">RPG</span><span class="o">::</span><span class="no">UsableItem</span> <span class="o">&lt;</span> <span class="no">RPG</span><span class="o">::</span><span class="no">BaseItem</span>
+
+  <span class="c1"># 缓存并返回生成的 lambda。</span>
+  <span class="c1"># 如果不存在，返回伪值。</span>
+  <span class="k">def</span> <span class="nf">get_target_lambda</span>
+    <span class="vi">@get_target</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">TargetExt</span><span class="p">.</span><span class="nf">parse_note</span><span class="p">(</span><span class="vi">@note</span><span class="p">)</span> <span class="k">if</span> <span class="vi">@get_target</span><span class="p">.</span><span class="nf">nil?</span>
+    <span class="vi">@get_target</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 返回目标的数组。a：使用者。</span>
+  <span class="c1"># 如果没有设置，返回 nil。</span>
+  <span class="k">def</span> <span class="nf">get_targets</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">battlers</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
+    <span class="k">return</span> <span class="k">unless</span> <span class="n">get_target_lambda</span>
+    <span class="n">battlers</span> <span class="o">||=</span> <span class="p">(</span><span class="n">for_friend?</span> <span class="p">?</span> <span class="n">a</span><span class="p">.</span><span class="nf">friends_unit</span> <span class="p">:</span> <span class="n">a</span><span class="p">.</span><span class="nf">opponents_unit</span><span class="p">).</span><span class="nf">members</span>
+    <span class="no">Array</span><span class="p">(</span><span class="n">get_target_lambda</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="n">battlers</span><span class="p">,</span> <span class="n">a</span><span class="p">))</span>
+  <span class="k">end</span>
+
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Action</span>
+
+  <span class="n">def_chain</span> <span class="ss">:targets_for_opponents</span> <span class="k">do</span> <span class="o">|</span><span class="n">old</span><span class="o">|</span>
+    <span class="n">targets</span> <span class="o">=</span> <span class="n">item</span><span class="p">.</span><span class="nf">get_targets</span><span class="p">(</span><span class="vi">@subject</span><span class="p">)</span>
+    <span class="k">if</span> <span class="o">!</span><span class="n">targets</span>
+      <span class="n">old</span><span class="p">.</span><span class="nf">call</span>
+    <span class="k">elsif</span> <span class="n">item</span><span class="p">.</span><span class="nf">for_random?</span>
+      <span class="no">Array</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="nf">number_of_targets</span><span class="p">)</span> <span class="p">{</span> <span class="n">random_target</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span> <span class="p">}</span>
+    <span class="k">elsif</span> <span class="n">item</span><span class="p">.</span><span class="nf">for_one?</span>
+      <span class="n">num</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">attack?</span> <span class="p">?</span> <span class="n">subject</span><span class="p">.</span><span class="nf">atk_times_add</span><span class="p">.</span><span class="nf">to_i</span> <span class="p">:</span> <span class="mi">0</span><span class="p">)</span>
+      <span class="n">target</span> <span class="o">=</span> <span class="k">if</span> <span class="vi">@target_index</span> <span class="o">&lt;</span> <span class="mi">0</span>
+        <span class="n">random_target</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span>
+      <span class="k">else</span>
+        <span class="n">eval_smooth_target</span><span class="p">(</span><span class="n">opponents_unit</span><span class="p">,</span> <span class="vi">@target_index</span><span class="p">)</span>
+      <span class="k">end</span>
+      <span class="no">Array</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+    <span class="k">else</span>
+      <span class="n">targets</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="n">def_chain</span> <span class="ss">:targets_for_friends</span> <span class="k">do</span> <span class="o">|</span><span class="n">old</span><span class="o">|</span>
+    <span class="n">targets</span> <span class="o">=</span> <span class="n">item</span><span class="p">.</span><span class="nf">get_targets</span><span class="p">(</span><span class="vi">@subject</span><span class="p">)</span>
+    <span class="k">if</span> <span class="o">!</span><span class="n">targets</span>
+      <span class="n">old</span><span class="p">.</span><span class="nf">call</span>
+    <span class="k">elsif</span> <span class="n">item</span><span class="p">.</span><span class="nf">for_user?</span>
+      <span class="p">[</span><span class="n">subject</span><span class="p">]</span>
+    <span class="k">else</span>
+      <span class="k">if</span> <span class="n">item</span><span class="p">.</span><span class="nf">for_one?</span>
+        <span class="k">if</span> <span class="vi">@target_index</span> <span class="o">&lt;</span> <span class="mi">0</span>
+          <span class="p">[</span><span class="n">random_target</span><span class="p">(</span><span class="n">targets</span><span class="p">)]</span>
+        <span class="k">else</span>
+          <span class="p">[</span><span class="n">eval_smooth_target</span><span class="p">(</span><span class="n">friends_unit</span><span class="p">,</span> <span class="vi">@target_index</span><span class="p">)]</span>
+        <span class="k">end</span>
+      <span class="k">else</span>
+        <span class="n">targets</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="kp">private</span>
+
+  <span class="k">def</span> <span class="nf">eval_smooth_target</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+    <span class="n">unit</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">||</span> <span class="n">unit</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">random_target</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span>
+    <span class="n">tgr_rand</span> <span class="o">=</span> <span class="nb">rand</span> <span class="o">*</span> <span class="n">targets</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:tgr</span><span class="p">)</span>
+    <span class="n">targets</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">target</span><span class="o">|</span>
+      <span class="n">tgr_rand</span> <span class="o">-=</span> <span class="n">target</span><span class="p">.</span><span class="nf">tgr</span>
+      <span class="k">return</span> <span class="n">target</span> <span class="k">if</span> <span class="n">tgr_rand</span> <span class="o">&lt;</span> <span class="mi">0</span>
+    <span class="k">end</span>
+    <span class="n">targets</span><span class="p">.</span><span class="nf">first</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_BattlerBase</span>
+  <span class="c1"># 如果设置了目标，必须存在目标才可使用</span>
+  <span class="n">def_and</span> <span class="ss">:usable_item_conditions_met?</span> <span class="k">do</span> <span class="o">|</span><span class="n">item</span><span class="o">|</span>
+    <span class="n">targets</span> <span class="o">=</span> <span class="n">item</span><span class="p">.</span><span class="nf">get_targets</span><span class="p">(</span><span class="nb">self</span><span class="p">)</span>
+    <span class="o">!</span><span class="n">targets</span> <span class="o">||</span> <span class="o">!</span><span class="n">targets</span><span class="p">.</span><span class="nf">empty?</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Battler</span> <span class="o">&lt;</span> <span class="no">Game_BattlerBase</span>
+  <span class="c1"># 如果设置了目标，删除是否死亡的测试</span>
+  <span class="n">def_chain</span> <span class="ss">:item_test</span> <span class="k">do</span> <span class="o">|</span><span class="n">old</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">item</span><span class="o">|</span>
+    <span class="k">if</span> <span class="n">item</span><span class="p">.</span><span class="nf">get_target_lambda</span>
+      <span class="k">return</span> <span class="kp">true</span> <span class="k">if</span> <span class="vg">$game_party</span><span class="p">.</span><span class="nf">in_battle</span>
+      <span class="k">return</span> <span class="kp">true</span> <span class="k">if</span> <span class="n">item</span><span class="p">.</span><span class="nf">for_opponent?</span>
+      <span class="k">return</span> <span class="kp">true</span> <span class="k">if</span> <span class="n">item</span><span class="p">.</span><span class="nf">damage</span><span class="p">.</span><span class="nf">recover?</span> <span class="o">&amp;&amp;</span> <span class="n">item</span><span class="p">.</span><span class="nf">damage</span><span class="p">.</span><span class="nf">to_hp?</span> <span class="o">&amp;&amp;</span> <span class="n">hp</span> <span class="o">&lt;</span> <span class="n">mhp</span>
+      <span class="k">return</span> <span class="kp">true</span> <span class="k">if</span> <span class="n">item</span><span class="p">.</span><span class="nf">damage</span><span class="p">.</span><span class="nf">recover?</span> <span class="o">&amp;&amp;</span> <span class="n">item</span><span class="p">.</span><span class="nf">damage</span><span class="p">.</span><span class="nf">to_mp?</span> <span class="o">&amp;&amp;</span> <span class="n">mp</span> <span class="o">&lt;</span> <span class="n">mmp</span>
+      <span class="k">return</span> <span class="kp">true</span> <span class="k">if</span> <span class="n">item_has_any_valid_effects?</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+      <span class="kp">false</span>
+    <span class="k">else</span>
+      <span class="n">old</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Window_BattleActor</span> <span class="o">&lt;</span> <span class="no">Window_BattleStatus</span>
+
+  <span class="kp">include</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">TargetExt</span>
+
+  <span class="k">def</span> <span class="nf">targets_to_select</span>
+    <span class="vg">$game_party</span><span class="p">.</span><span class="nf">battle_members</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">draw_actor_name</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="mi">112</span><span class="p">)</span>
+    <span class="n">change_color</span><span class="p">(</span><span class="n">hp_color</span><span class="p">(</span><span class="n">actor</span><span class="p">),</span> <span class="n">enable?</span><span class="p">(</span><span class="n">actor</span><span class="p">))</span>
+    <span class="n">draw_text</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">line_height</span><span class="p">,</span> <span class="n">actor</span><span class="p">.</span><span class="nf">name</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Window_BattleEnemy</span> <span class="o">&lt;</span> <span class="no">Window_Selectable</span>
+
+  <span class="kp">include</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">TargetExt</span>
+
+  <span class="k">def</span> <span class="nf">targets_to_select</span>
+    <span class="vg">$game_troop</span><span class="p">.</span><span class="nf">alive_members</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">draw_item</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+    <span class="n">enemy</span> <span class="o">=</span> <span class="vg">$game_troop</span><span class="p">.</span><span class="nf">alive_members</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+    <span class="n">change_color</span><span class="p">(</span><span class="n">normal_color</span><span class="p">,</span> <span class="n">enable?</span><span class="p">(</span><span class="n">enemy</span><span class="p">))</span>
+    <span class="nb">name</span> <span class="o">=</span> <span class="n">enemy</span><span class="p">.</span><span class="nf">name</span>
+    <span class="n">draw_text</span><span class="p">(</span><span class="n">item_rect_for_text</span><span class="p">(</span><span class="n">index</span><span class="p">),</span> <span class="nb">name</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre></div>

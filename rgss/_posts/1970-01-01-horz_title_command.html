@@ -1,0 +1,118 @@
+---
+title: 横向标题菜单
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">horz_title_command</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">横向标题菜单</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1">将标题菜单的选择窗口改为横向</span></a>
+<span class="k">module</span> <span class="nn">Taroxd</span>
+  <span class="no">HorzTitleCommand</span> <span class="o">=</span> <span class="kp">true</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Window_TitleCommand</span> <span class="o">&lt;</span> <span class="no">Window_Command</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="c1"># ● 获取窗口的宽度</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="k">def</span> <span class="nf">window_width</span>
+    <span class="k">return</span> <span class="mi">360</span>
+  <span class="k">end</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="c1"># ● 获取显示行数</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="k">def</span> <span class="nf">visible_line_number</span>
+    <span class="k">return</span> <span class="mi">1</span>
+  <span class="k">end</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="c1"># ● 获取列数</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="k">def</span> <span class="nf">col_max</span>
+    <span class="k">return</span> <span class="mi">3</span>
+  <span class="k">end</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="c1"># ● 获取行间距的宽度</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="k">def</span> <span class="nf">spacing</span>
+    <span class="k">return</span> <span class="mi">8</span>
+  <span class="k">end</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="c1"># ● 计算窗口内容的宽度</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="k">def</span> <span class="nf">contents_width</span>
+    <span class="p">(</span><span class="n">item_width</span> <span class="o">+</span> <span class="n">spacing</span><span class="p">)</span> <span class="o">*</span> <span class="n">item_max</span> <span class="o">-</span> <span class="n">spacing</span>
+  <span class="k">end</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="c1"># ● 计算窗口内容的高度</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="k">def</span> <span class="nf">contents_height</span>
+    <span class="n">item_height</span>
+  <span class="k">end</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="c1"># ● 获取首列位置</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="k">def</span> <span class="nf">top_col</span>
+    <span class="n">ox</span> <span class="o">/</span> <span class="p">(</span><span class="n">item_width</span> <span class="o">+</span> <span class="n">spacing</span><span class="p">)</span>
+  <span class="k">end</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="c1"># ● 设置首列位置</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="k">def</span> <span class="nf">top_col</span><span class="o">=</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
+    <span class="n">col</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">col</span> <span class="o">&lt;</span> <span class="mi">0</span>
+    <span class="n">col</span> <span class="o">=</span> <span class="n">col_max</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">col</span> <span class="o">&gt;</span> <span class="n">col_max</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">ox</span> <span class="o">=</span> <span class="n">col</span> <span class="o">*</span> <span class="p">(</span><span class="n">item_width</span> <span class="o">+</span> <span class="n">spacing</span><span class="p">)</span>
+  <span class="k">end</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="c1"># ● 获取尾列位置</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="k">def</span> <span class="nf">bottom_col</span>
+    <span class="n">top_col</span> <span class="o">+</span> <span class="n">col_max</span> <span class="o">-</span> <span class="mi">1</span>
+  <span class="k">end</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="c1"># ● 设置尾列位置</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="k">def</span> <span class="nf">bottom_col</span><span class="o">=</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">top_col</span> <span class="o">=</span> <span class="n">col</span> <span class="o">-</span> <span class="p">(</span><span class="n">col_max</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+  <span class="k">end</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="c1"># ● 确保光标在画面范围内滚动</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="k">def</span> <span class="nf">ensure_cursor_visible</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">top_col</span> <span class="o">=</span> <span class="n">index</span> <span class="k">if</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="n">top_col</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">bottom_col</span> <span class="o">=</span> <span class="n">index</span> <span class="k">if</span> <span class="n">index</span> <span class="o">&gt;</span> <span class="n">bottom_col</span>
+  <span class="k">end</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="c1"># ● 获取项目的绘制矩形</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="k">def</span> <span class="nf">item_rect</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+    <span class="n">rect</span> <span class="o">=</span> <span class="k">super</span>
+    <span class="n">rect</span><span class="p">.</span><span class="nf">x</span> <span class="o">=</span> <span class="n">index</span> <span class="o">*</span> <span class="p">(</span><span class="n">item_width</span> <span class="o">+</span> <span class="n">spacing</span><span class="p">)</span>
+    <span class="n">rect</span><span class="p">.</span><span class="nf">y</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">rect</span>
+  <span class="k">end</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="c1"># ● 获取对齐方向</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="k">def</span> <span class="nf">alignment</span>
+    <span class="k">return</span> <span class="mi">1</span>
+  <span class="k">end</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="c1"># ● 光标向下移动</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="k">def</span> <span class="nf">cursor_down</span><span class="p">(</span><span class="n">wrap</span> <span class="o">=</span> <span class="kp">false</span><span class="p">)</span>
+  <span class="k">end</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="c1"># ● 光标向上移动</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="k">def</span> <span class="nf">cursor_up</span><span class="p">(</span><span class="n">wrap</span> <span class="o">=</span> <span class="kp">false</span><span class="p">)</span>
+  <span class="k">end</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="c1"># ● 光标移至下一页</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="k">def</span> <span class="nf">cursor_pagedown</span>
+  <span class="k">end</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="c1"># ● 光标移至上一页</span>
+  <span class="c1">#--------------------------------------------------------------------------</span>
+  <span class="k">def</span> <span class="nf">cursor_pageup</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>

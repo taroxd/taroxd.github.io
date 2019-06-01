@@ -1,0 +1,47 @@
+---
+title: 修复 bug
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">修复 bug</span></a>
+<span class="sd ge">#</span> <span class="sd">@desciption</span> <span class="c1">修复默认系统的一些 bug。详见下方的注释</span></a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">rgss_bugfix</span></a>
+<span class="k">module</span> <span class="nn">Taroxd</span>
+  <span class="k">module</span> <span class="nn">BugFix</span>
+    <span class="c1"># Plane#visible 永远返回 true 的 bug。需要主动 include。</span>
+    <span class="k">module</span> <span class="nn">PlaneVisible</span>
+
+      <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">_</span><span class="p">)</span>
+        <span class="k">super</span>
+        <span class="vi">@__visible</span> <span class="o">=</span> <span class="kp">true</span>
+      <span class="k">end</span>
+
+      <span class="k">def</span> <span class="nf">visible</span>
+        <span class="vi">@__visible</span>
+      <span class="k">end</span>
+
+      <span class="k">def</span> <span class="nf">visible</span><span class="o">=</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="vi">@__visible</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="k">super</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_BattlerBase</span>
+  <span class="c1"># max_tp 不为 100 时，以下两方法返回值错误的 bug</span>
+  <span class="k">def</span> <span class="nf">tp_rate</span>
+    <span class="vi">@tp</span><span class="p">.</span><span class="nf">fdiv</span><span class="p">(</span><span class="n">max_tp</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">regenerate_tp</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">tp</span> <span class="o">+=</span> <span class="n">max_tp</span> <span class="o">*</span> <span class="n">trg</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Interpreter</span>
+  <span class="c1"># 震动画面后等待时间不正确的 bug</span>
+  <span class="k">def</span> <span class="nf">command_225</span>
+    <span class="n">screen</span><span class="p">.</span><span class="nf">start_shake</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="n">wait</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="k">if</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre></div>

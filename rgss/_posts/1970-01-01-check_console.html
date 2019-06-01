@@ -1,0 +1,10 @@
+---
+title: 检查控制台是否打开
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">检查控制台是否打开</span></a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">check_console</span></a>
+<span class="k">if</span> <span class="vg">$TEST</span> <span class="o">&amp;&amp;</span> <span class="no">Win32API</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="s1">'Kernel32.dll'</span><span class="p">,</span> <span class="s1">'GetConsoleWindow'</span><span class="p">,</span> <span class="s1">''</span><span class="p">,</span> <span class="s1">'L'</span><span class="p">).</span><span class="nf">call</span> <span class="o">==</span> <span class="mi">0</span>
+  <span class="n">msgbox</span> <span class="s2">"Warning: Console window is not displayed"</span>
+<span class="k">end</span>
+</code></pre></div>

@@ -1,0 +1,120 @@
+---
+title: 用图片设置地图通行度
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">用图片设置地图通行度</span></a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">collision</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1"></span></a>
+<span class="c1">#             会用 Parallaxes 文件夹下面的对应图片作为该地图的通行度。</span>
+<span class="c1">#             图片上透明的点表示可以通行，不透明的点表示不能通行。</span>
+<span class="c1">#             不处理地图循环的情况。</span>
+
+<span class="k">module</span> <span class="nn">Taroxd::Collision</span>
+  <span class="no">ENABLE_FLOAT_POSITION</span> <span class="o">=</span> <span class="kp">false</span>   <span class="c1"># 是否允许坐标出现小数。可能会导致未知错误。</span>
+
+  <span class="c1"># 人物判定点到图块左上角的距离</span>
+  <span class="no">X_OFFSET</span> <span class="o">=</span> <span class="mi">16</span>
+  <span class="no">Y_OFFSET</span> <span class="o">=</span> <span class="mi">16</span>
+
+  <span class="c1"># position:</span>
+  <span class="c1">#   行走到的最远位置的坐标（可为 x 坐标或 y 坐标）</span>
+  <span class="c1"># status:</span>
+  <span class="c1">#   nil: 完全无法行走</span>
+  <span class="c1">#   false: 可以行走，但无法走过一格。此时 position 为浮点数</span>
+  <span class="c1">#   true: 可以完全走过一格，此时 position 为整数</span>
+  <span class="no">PassageStatus</span> <span class="o">=</span> <span class="no">Struct</span><span class="p">.</span><span class="nf">new</span> <span class="ss">:position</span><span class="p">,</span> <span class="ss">:status</span>
+
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">passage_status</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="kp">nil</span>
+    <span class="n">bx</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="mi">32</span> <span class="o">+</span> <span class="no">X_OFFSET</span><span class="p">).</span><span class="nf">round</span>
+    <span class="n">by</span> <span class="o">=</span> <span class="p">(</span><span class="n">y</span> <span class="o">*</span> <span class="mi">32</span> <span class="o">+</span> <span class="no">Y_OFFSET</span><span class="p">).</span><span class="nf">round</span>
+
+    <span class="n">is_x</span> <span class="o">=</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">4</span> <span class="o">||</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">6</span>
+    <span class="n">current</span> <span class="o">=</span> <span class="n">is_x</span> <span class="p">?</span> <span class="n">x</span> <span class="p">:</span> <span class="n">y</span>
+
+    <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">2</span> <span class="o">||</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">6</span>
+      <span class="n">step</span> <span class="o">=</span> <span class="mi">1</span>
+      <span class="n">target</span> <span class="o">=</span> <span class="p">(</span><span class="n">current</span> <span class="o">+</span> <span class="mi">1</span><span class="p">).</span><span class="nf">floor</span>
+    <span class="k">else</span>
+      <span class="n">step</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+      <span class="n">target</span> <span class="o">=</span> <span class="p">(</span><span class="n">current</span> <span class="o">-</span> <span class="mi">1</span><span class="p">).</span><span class="nf">ceil</span>
+    <span class="k">end</span>
+
+    <span class="n">lbound</span> <span class="o">=</span> <span class="p">(</span><span class="n">current</span> <span class="o">*</span> <span class="mi">32</span><span class="p">).</span><span class="nf">round</span> <span class="o">+</span> <span class="n">step</span>
+    <span class="n">ubound</span> <span class="o">=</span> <span class="n">target</span> <span class="o">*</span> <span class="mi">32</span>
+    <span class="n">bitmap</span> <span class="o">=</span> <span class="vg">$game_map</span><span class="p">.</span><span class="nf">collision_bitmap</span>
+    <span class="n">lbound</span><span class="p">.</span><span class="nf">step</span><span class="p">(</span><span class="n">ubound</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
+      <span class="k">if</span> <span class="n">is_x</span>
+        <span class="n">bx</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="no">X_OFFSET</span>
+      <span class="k">else</span>
+        <span class="n">by</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="no">Y_OFFSET</span>
+      <span class="k">end</span>
+
+      <span class="k">if</span> <span class="n">bitmap</span><span class="p">.</span><span class="nf">get_pixel</span><span class="p">(</span><span class="n">bx</span><span class="p">,</span> <span class="n">by</span><span class="p">).</span><span class="nf">alpha</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">i</span>
+      <span class="k">else</span>
+        <span class="k">break</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+    <span class="k">if</span> <span class="n">pos</span>
+      <span class="k">if</span> <span class="n">pos</span> <span class="o">==</span> <span class="n">ubound</span>
+        <span class="no">PassageStatus</span><span class="p">[</span><span class="n">pos</span> <span class="o">/</span> <span class="mi">32</span><span class="p">,</span> <span class="kp">true</span><span class="p">]</span>
+      <span class="k">else</span>
+        <span class="no">PassageStatus</span><span class="p">[</span><span class="n">pos</span> <span class="o">/</span> <span class="mf">32.0</span><span class="p">,</span> <span class="kp">false</span><span class="p">]</span>
+      <span class="k">end</span>
+    <span class="k">else</span>
+      <span class="no">PassageStatus</span><span class="p">[</span><span class="kp">nil</span><span class="p">,</span> <span class="kp">nil</span><span class="p">]</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="no">RPG</span><span class="o">::</span><span class="no">Map</span><span class="p">.</span><span class="nf">note_s</span> <span class="ss">:collision</span>
+
+<span class="k">class</span> <span class="nc">Game_Map</span>
+  <span class="k">def</span> <span class="nf">collision?</span>
+    <span class="vi">@map</span><span class="p">.</span><span class="nf">collision</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">collision_bitmap</span>
+    <span class="vi">@map</span><span class="p">.</span><span class="nf">collision</span> <span class="o">&amp;&amp;</span> <span class="no">Cache</span><span class="p">.</span><span class="nf">parallax</span><span class="p">(</span><span class="vi">@map</span><span class="p">.</span><span class="nf">collision</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="c1"># preload bitmap in cache</span>
+  <span class="n">def_after</span> <span class="ss">:setup</span> <span class="k">do</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span>
+    <span class="n">collision_bitmap</span>
+  <span class="k">end</span>
+
+  <span class="n">def_and</span> <span class="ss">:passable?</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">d</span><span class="o">|</span>
+    <span class="no">Taroxd</span><span class="o">::</span><span class="no">Collision</span><span class="p">.</span><span class="nf">passage_status</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">d</span><span class="p">).</span><span class="nf">status</span>
+  <span class="k">end</span> <span class="k">unless</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Collision</span><span class="o">::</span><span class="no">ENABLE_FLOAT_POSITION</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_CharacterBase</span>
+  <span class="n">def_chain</span> <span class="ss">:move_straight</span> <span class="k">do</span> <span class="o">|</span><span class="n">old</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">turn_ok</span> <span class="o">=</span> <span class="kp">true</span><span class="o">|</span>
+    <span class="k">if</span> <span class="vg">$game_map</span><span class="p">.</span><span class="nf">collision?</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="p">(</span><span class="vi">@through</span> <span class="o">||</span> <span class="n">debug_through?</span><span class="p">)</span>
+      <span class="vi">@move_succeed</span> <span class="o">=</span> <span class="n">passable?</span><span class="p">(</span><span class="vi">@x</span><span class="p">.</span><span class="nf">round</span><span class="p">,</span> <span class="vi">@y</span><span class="p">.</span><span class="nf">round</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+
+      <span class="k">if</span> <span class="vi">@move_succeed</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Collision</span><span class="p">.</span><span class="nf">passage_status</span><span class="p">(</span><span class="vi">@x</span><span class="p">,</span> <span class="vi">@y</span><span class="p">,</span> <span class="n">d</span><span class="p">).</span><span class="nf">position</span>
+        <span class="k">if</span> <span class="n">pos</span>
+          <span class="n">set_direction</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+          <span class="n">d</span> <span class="o">==</span> <span class="mi">4</span> <span class="o">||</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">6</span> <span class="p">?</span> <span class="vi">@x</span> <span class="o">=</span> <span class="n">pos</span> <span class="p">:</span> <span class="vi">@y</span> <span class="o">=</span> <span class="n">pos</span>
+          <span class="n">increase_steps</span>
+        <span class="k">else</span>
+          <span class="vi">@move_succeed</span> <span class="o">=</span> <span class="kp">false</span>
+        <span class="k">end</span>
+      <span class="k">end</span>
+
+      <span class="k">if</span> <span class="o">!</span><span class="vi">@move_succeed</span> <span class="o">&amp;&amp;</span> <span class="n">turn_ok</span>
+        <span class="n">set_direction</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="n">check_event_trigger_touch_front</span>
+      <span class="k">end</span>
+    <span class="k">else</span>
+      <span class="n">old</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">turn_ok</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+<span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Collision</span><span class="o">::</span><span class="no">ENABLE_FLOAT_POSITION</span>
+</code></pre></div>

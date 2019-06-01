@@ -1,0 +1,50 @@
+---
+title: 延迟技能
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">delay_item</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">延迟技能</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1"></span></a>
+<span class="c1">#       技能备注&lt;delay message s&gt;，s为技能施放时提示的信息。</span>
+<span class="c1">#       其中使用者名称用\N代替。</span>
+
+<span class="k">module</span> <span class="nn">Taroxd</span>
+  <span class="no">DelayItem</span> <span class="o">=</span> <span class="s1">'\N'</span>     <span class="c1"># 用 \N 代替使用者名称</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">RPG</span><span class="o">::</span><span class="no">UsableItem</span>
+  <span class="n">note_i</span> <span class="ss">:delay</span><span class="p">,</span> <span class="kp">false</span>
+  <span class="n">note_s</span> <span class="ss">:delay_message</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Window_BattleLog</span> <span class="o">&lt;</span> <span class="no">Window_Selectable</span>
+
+  <span class="k">def</span> <span class="nf">display_delay_use_item</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+    <span class="n">add_text</span><span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="nf">delay_message</span><span class="p">.</span><span class="nf">gsub</span><span class="p">(</span><span class="no">Taroxd</span><span class="o">::</span><span class="no">DelayItem</span><span class="p">,</span> <span class="n">subject</span><span class="p">.</span><span class="nf">name</span><span class="p">))</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Scene_Battle</span> <span class="o">&lt;</span> <span class="no">Scene_Base</span>
+
+  <span class="n">def_after</span><span class="p">(</span><span class="ss">:start</span><span class="p">)</span> <span class="p">{</span> <span class="vi">@delay_list</span> <span class="o">=</span> <span class="p">[]</span> <span class="p">}</span>
+
+  <span class="n">def_chain</span> <span class="ss">:execute_action</span> <span class="k">do</span> <span class="o">|</span><span class="n">old</span><span class="o">|</span>
+    <span class="n">item</span> <span class="o">=</span> <span class="vi">@subject</span><span class="p">.</span><span class="nf">current_action</span><span class="p">.</span><span class="nf">item</span>
+    <span class="k">return</span> <span class="n">old</span><span class="p">.</span><span class="nf">call</span> <span class="k">unless</span> <span class="n">item</span><span class="p">.</span><span class="nf">delay</span>
+    <span class="vi">@log_window</span><span class="p">.</span><span class="nf">display_delay_use_item</span><span class="p">(</span><span class="vi">@subject</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+    <span class="n">subject</span> <span class="o">=</span> <span class="vi">@subject</span>
+    <span class="n">action</span> <span class="o">=</span> <span class="vi">@subject</span><span class="p">.</span><span class="nf">current_action</span>
+    <span class="vi">@delay_list</span><span class="p">.</span><span class="nf">push</span> <span class="no">Fiber</span><span class="p">.</span><span class="nf">new</span> <span class="p">{</span>
+      <span class="n">item</span><span class="p">.</span><span class="nf">delay</span><span class="p">.</span><span class="nf">times</span> <span class="p">{</span> <span class="no">Fiber</span><span class="p">.</span><span class="nf">yield</span> <span class="p">}</span>
+      <span class="n">subject</span><span class="p">.</span><span class="nf">actions</span><span class="p">.</span><span class="nf">unshift</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+      <span class="vi">@subject</span><span class="p">,</span> <span class="n">subject</span> <span class="o">=</span> <span class="n">subject</span><span class="p">,</span> <span class="vi">@subject</span>
+      <span class="n">old</span><span class="p">.</span><span class="nf">call</span>
+      <span class="vi">@subject</span><span class="p">.</span><span class="nf">remove_current_action</span>
+      <span class="vi">@subject</span> <span class="o">=</span> <span class="n">subject</span>
+      <span class="kp">true</span>
+    <span class="p">}</span>
+  <span class="k">end</span>
+
+  <span class="n">def_before</span><span class="p">(</span><span class="ss">:turn_end</span><span class="p">)</span> <span class="p">{</span> <span class="vi">@delay_list</span><span class="p">.</span><span class="nf">delete_if</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:resume</span><span class="p">)</span> <span class="p">}</span>
+<span class="k">end</span></code></pre></div>

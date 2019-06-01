@@ -1,0 +1,42 @@
+---
+title: 检测未释放的对象
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">check_object_dispose</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">检测未释放的对象</span></a>
+<span class="k">class</span> <span class="nc">Viewport</span>
+  <span class="n">def_before</span><span class="p">(</span><span class="ss">:dispose</span><span class="p">)</span> <span class="p">{</span> <span class="vi">@__dispose__</span> <span class="o">=</span> <span class="kp">true</span> <span class="p">}</span>
+  <span class="k">def</span> <span class="nf">disposed?</span><span class="p">;</span> <span class="vi">@__dispose__</span><span class="p">;</span> <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="n">need_dispose</span> <span class="o">=</span> <span class="p">[</span><span class="no">Bitmap</span><span class="p">,</span> <span class="no">Sprite</span><span class="p">,</span> <span class="no">Window</span><span class="p">,</span> <span class="no">Plane</span><span class="p">,</span> <span class="no">Tilemap</span><span class="p">,</span> <span class="no">Viewport</span><span class="p">]</span>
+<span class="n">callers</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">callers</span><span class="p">.</span><span class="nf">compare_by_identity</span>
+<span class="n">not_disposed</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="n">need_dispose</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">klass</span><span class="o">|</span>
+  <span class="n">klass</span><span class="p">.</span><span class="nf">class_eval</span> <span class="k">do</span>
+    <span class="n">def_after</span><span class="p">(</span><span class="ss">:initialize</span><span class="p">)</span> <span class="p">{</span> <span class="o">|*|</span> <span class="n">callers</span><span class="p">[</span><span class="nb">self</span><span class="p">]</span> <span class="o">=</span> <span class="nb">caller</span> <span class="p">}</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="no">Scene_Base</span><span class="p">.</span><span class="nf">class_eval</span> <span class="k">do</span>
+  <span class="n">def_after</span> <span class="ss">:terminate</span> <span class="k">do</span>
+    <span class="n">need_dispose</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">klass</span><span class="o">|</span>
+      <span class="no">ObjectSpace</span><span class="p">.</span><span class="nf">each_object</span><span class="p">(</span><span class="n">klass</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">obj</span><span class="o">|</span>
+        <span class="n">not_disposed</span><span class="p">.</span><span class="nf">push</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="k">unless</span> <span class="n">obj</span><span class="p">.</span><span class="nf">disposed?</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="n">def_after</span> <span class="ss">:update</span> <span class="k">do</span>
+    <span class="k">return</span> <span class="k">unless</span> <span class="no">Input</span><span class="p">.</span><span class="nf">trigger?</span><span class="p">(</span><span class="ss">:ALT</span><span class="p">)</span>
+    <span class="nb">puts</span> <span class="n">not_disposed</span><span class="p">.</span><span class="nf">delete_if</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:disposed?</span><span class="p">)</span>
+    <span class="nb">puts</span> <span class="n">callers</span><span class="p">[</span>
+      <span class="n">not_disposed</span><span class="p">.</span><span class="nf">shuffle</span><span class="p">.</span><span class="nf">find</span> <span class="k">do</span> <span class="o">|</span><span class="n">obj</span><span class="o">|</span>
+        <span class="n">callers</span><span class="p">[</span><span class="n">obj</span><span class="p">]</span> <span class="o">&amp;&amp;</span> <span class="n">callers</span><span class="p">[</span><span class="n">obj</span><span class="p">].</span><span class="nf">none?</span> <span class="p">{</span> <span class="o">|</span><span class="n">s</span><span class="o">|</span> <span class="n">s</span><span class="p">.</span><span class="nf">start_with?</span><span class="p">(</span><span class="s1">'{0004}'</span><span class="p">)</span> <span class="p">}</span>
+      <span class="k">end</span>
+    <span class="p">]</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre></div>

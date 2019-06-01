@@ -1,0 +1,16 @@
+---
+title: 跳过标题画面
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">跳过标题画面</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1">测试游戏时跳过标题画面</span></a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">skip_title</span></a>
+<span class="k">module</span> <span class="nn">Taroxd</span>
+  <span class="no">SkipTitle</span> <span class="o">=</span> <span class="vg">$TEST</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="vg">$BTEST</span>
+<span class="k">end</span>
+
+<span class="k">def</span> <span class="nc">SceneManager</span><span class="o">.</span><span class="nf">first_scene_class</span>
+  <span class="no">DataManager</span><span class="p">.</span><span class="nf">setup_new_game</span>
+  <span class="vg">$game_map</span><span class="p">.</span><span class="nf">autoplay</span>
+  <span class="no">Scene_Map</span>
+<span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">SkipTitle</span></code></pre></div>

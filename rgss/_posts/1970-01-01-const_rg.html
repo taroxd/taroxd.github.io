@@ -1,0 +1,23 @@
+---
+title: 定值再生
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">const_rg</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">定值再生</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1">备注&lt;hrg x&gt;，表示每回合回复 x 点 HP。</span></a>
+<span class="c1">#       备注&lt;trg x&gt;，表示每回合回复 x 点 TP。</span>
+<span class="c1">#       其中 x 可以为负数</span>
+
+<span class="no">Taroxd</span><span class="o">::</span><span class="no">ConstRG</span> <span class="o">=</span> <span class="kp">true</span>
+
+<span class="sx">%w(h m t)</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">type</span><span class="o">|</span>
+  <span class="nb">name</span> <span class="o">=</span> <span class="s2">"</span><span class="si">#{</span><span class="n">type</span><span class="si">}</span><span class="s2">rg"</span>
+  <span class="no">RPG</span><span class="o">::</span><span class="no">BaseItem</span><span class="p">.</span><span class="nf">note_f</span> <span class="nb">name</span>
+  <span class="no">Game_BattlerBase</span><span class="p">.</span><span class="nf">class_eval</span> <span class="sx">%{
+    def_with :#{name} do |old|
+      max = m#{type}p
+      max == 0 ? old : feature_objects.sum(old) { |obj| obj.#{name} / max }
+    end
+  }</span>
+<span class="k">end</span></code></pre></div>

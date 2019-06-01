@@ -1,0 +1,44 @@
+---
+title: 简化 handler 设置
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">简化 handler 设置</span></a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">symbol_handler</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1">简化命令窗口的 handler 设置</span></a>
+<span class="k">module</span> <span class="nn">Taroxd</span>
+
+  <span class="c1"># Window_Command 的子类 include 后，会自动对场景调用 symbol 对应的</span>
+  <span class="c1"># command_symbol 方法，无需再 set_handler。</span>
+  <span class="k">module</span> <span class="nn">SymbolHandler</span>
+
+    <span class="k">def</span> <span class="nf">handle?</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span>
+      <span class="k">super</span> <span class="o">||</span> <span class="n">symbol_to_command</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">call_handler</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span>
+      <span class="vi">@handler</span><span class="p">[</span><span class="n">symbol</span><span class="p">].</span><span class="nf">call</span> <span class="k">if</span> <span class="vi">@handler</span><span class="p">.</span><span class="nf">key?</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span>
+      <span class="n">command</span> <span class="o">=</span> <span class="n">symbol_to_command</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span>
+      <span class="n">receiver</span><span class="p">.</span><span class="nf">send</span><span class="p">(</span><span class="n">command</span><span class="p">)</span> <span class="k">if</span> <span class="n">command</span>
+    <span class="k">end</span>
+
+    <span class="kp">private</span>
+
+    <span class="c1"># 以下方法可由子类覆盖。</span>
+
+    <span class="c1"># 调用者。默认为当前场景。</span>
+    <span class="k">def</span> <span class="nf">receiver</span>
+      <span class="no">SceneManager</span><span class="p">.</span><span class="nf">scene</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">command_prefix</span>
+      <span class="s1">'command_'</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 返回符号对应的场景方法名。</span>
+    <span class="c1"># 场景不能响应 command_symbol 时，返回 nil。</span>
+    <span class="k">def</span> <span class="nf">symbol_to_command</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span>
+      <span class="n">sym</span> <span class="o">=</span> <span class="ss">:"</span><span class="si">#{</span><span class="n">command_prefix</span><span class="si">}#{</span><span class="n">symbol</span><span class="si">}</span><span class="ss">"</span>
+      <span class="n">sym</span> <span class="k">if</span> <span class="n">receiver</span><span class="p">.</span><span class="nf">respond_to?</span><span class="p">(</span><span class="n">sym</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre></div>

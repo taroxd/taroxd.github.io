@@ -1,0 +1,36 @@
+---
+title: 禁用贵重物品
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">disable_key_item</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">禁用贵重物品</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1">禁用“贵重物品”功能</span></a>
+<span class="no">Taroxd</span><span class="o">::</span><span class="no">DisableKeyItem</span> <span class="o">=</span> <span class="kp">true</span>
+
+<span class="k">class</span> <span class="nc">RPG</span><span class="o">::</span><span class="no">Item</span> <span class="o">&lt;</span> <span class="no">RPG</span><span class="o">::</span><span class="no">UsableItem</span>
+  <span class="k">def</span> <span class="nf">key_item?</span>
+    <span class="kp">false</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Window_ItemCategory</span> <span class="o">&lt;</span> <span class="no">Window_HorzCommand</span>
+  <span class="k">def</span> <span class="nf">col_max</span>
+    <span class="mi">3</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">make_command_list</span>
+    <span class="n">add_command</span><span class="p">(</span><span class="no">Vocab</span><span class="o">::</span><span class="n">item</span><span class="p">,</span>   <span class="ss">:item</span><span class="p">)</span>
+    <span class="n">add_command</span><span class="p">(</span><span class="no">Vocab</span><span class="o">::</span><span class="n">weapon</span><span class="p">,</span> <span class="ss">:weapon</span><span class="p">)</span>
+    <span class="n">add_command</span><span class="p">(</span><span class="no">Vocab</span><span class="o">::</span><span class="n">armor</span><span class="p">,</span>  <span class="ss">:armor</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Window_KeyItem</span> <span class="o">&lt;</span> <span class="no">Window_ItemList</span>
+
+  <span class="n">def_after</span><span class="p">(</span><span class="ss">:start</span><span class="p">)</span> <span class="p">{</span> <span class="nb">self</span><span class="p">.</span><span class="nf">category</span> <span class="o">=</span> <span class="ss">:item</span> <span class="p">}</span>
+
+  <span class="k">def</span> <span class="nf">enable?</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+    <span class="kp">true</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre></div>

@@ -1,0 +1,25 @@
+---
+title: 继承存档
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">inherit</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">继承存档</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="k">module</span> <span class="nn">Taroxd::Inherit</span>
+
+  <span class="no">Game_Interpreter</span><span class="p">.</span><span class="nf">send</span> <span class="ss">:include</span><span class="p">,</span> <span class="nb">self</span>
+
+  <span class="kp">module_function</span>
+
+  <span class="k">def</span> <span class="nf">save_inherit_data</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">flag</span> <span class="o">=</span> <span class="kp">true</span><span class="p">)</span>
+    <span class="n">save_data</span><span class="p">({</span><span class="ss">actors: </span><span class="vg">$game_actors</span><span class="p">,</span> <span class="ss">party: </span><span class="vg">$game_party</span><span class="p">,</span> <span class="ss">flag: </span><span class="n">flag</span><span class="p">},</span>
+      <span class="n">filename</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">load_inherit_data</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="n">contents</span>     <span class="o">=</span> <span class="n">load_data</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="vg">$game_actors</span> <span class="o">=</span> <span class="n">contents</span><span class="p">[</span><span class="ss">:actors</span><span class="p">]</span>
+    <span class="vg">$game_party</span>  <span class="o">=</span> <span class="n">contents</span><span class="p">[</span><span class="ss">:party</span><span class="p">]</span>
+    <span class="n">contents</span><span class="p">[</span><span class="ss">:flag</span><span class="p">]</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre></div>

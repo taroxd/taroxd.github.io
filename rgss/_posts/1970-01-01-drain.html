@@ -1,0 +1,20 @@
+---
+title: 按比例吸血
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">drain</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">按比例吸血</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="c1">#   在可以设置“特性”的地方备注 &lt;drain r&gt;。</span>
+<span class="c1">#   其中 r 为吸血的比例。</span>
+
+<span class="no">Taroxd</span><span class="o">::</span><span class="no">Drain</span> <span class="o">=</span> <span class="kp">true</span>
+
+<span class="no">RPG</span><span class="o">::</span><span class="no">BaseItem</span><span class="p">.</span><span class="nf">note_f</span> <span class="ss">:drain</span>
+
+<span class="no">Game_Battler</span><span class="p">.</span><span class="nf">send</span> <span class="ss">:def_after</span><span class="p">,</span> <span class="ss">:execute_damage</span> <span class="k">do</span> <span class="o">|</span><span class="n">user</span><span class="o">|</span>
+  <span class="k">if</span> <span class="vi">@result</span><span class="p">.</span><span class="nf">hp_damage</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="n">user</span><span class="p">.</span><span class="nf">hp</span> <span class="o">+=</span> <span class="p">(</span><span class="vi">@result</span><span class="p">.</span><span class="nf">hp_damage</span> <span class="o">*</span> <span class="n">user</span><span class="p">.</span><span class="nf">feature_objects</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:drain</span><span class="p">)).</span><span class="nf">to_i</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>

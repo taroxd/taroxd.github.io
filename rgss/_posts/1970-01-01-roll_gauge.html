@@ -1,0 +1,162 @@
+---
+title: 动态值槽
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">动态值槽</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">roll_gauge</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1">给值槽增加动态的滚动效果</span></a>
+<span class="k">class</span> <span class="nc">Taroxd</span><span class="o">::</span><span class="no">Transition</span>
+
+  <span class="c1"># value: 当前值。changing: 当前是否正在变化</span>
+  <span class="nb">attr_reader</span> <span class="ss">:value</span><span class="p">,</span> <span class="ss">:changing</span>
+
+  <span class="c1"># get_target.call 获取到变化的数据。可以使用 block 代替 get_target。</span>
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">duration</span><span class="p">,</span> <span class="n">get_target</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+    <span class="vi">@duration</span> <span class="o">=</span> <span class="n">duration</span>
+    <span class="vi">@get_target</span> <span class="o">=</span> <span class="n">get_target</span> <span class="o">||</span> <span class="n">block</span>
+    <span class="vi">@value</span> <span class="o">=</span> <span class="vi">@target</span> <span class="o">=</span> <span class="vi">@get_target</span><span class="p">.</span><span class="nf">call</span>
+    <span class="vi">@d</span> <span class="o">=</span> <span class="mi">0</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 更新值槽的值。如果值槽发生变化，返回 true。</span>
+  <span class="k">def</span> <span class="nf">update</span>
+    <span class="vi">@target</span> <span class="o">=</span> <span class="vi">@get_target</span><span class="p">.</span><span class="nf">call</span>
+    <span class="vi">@changing</span> <span class="o">=</span> <span class="vi">@value</span> <span class="o">!=</span> <span class="vi">@target</span>
+    <span class="n">update_transition</span> <span class="k">if</span> <span class="vi">@changing</span>
+    <span class="vi">@changing</span>
+  <span class="k">end</span>
+
+  <span class="kp">private</span>
+
+  <span class="k">def</span> <span class="nf">update_transition</span>
+    <span class="vi">@d</span> <span class="o">=</span> <span class="vi">@duration</span> <span class="k">if</span> <span class="vi">@d</span><span class="p">.</span><span class="nf">zero?</span>
+    <span class="vi">@d</span> <span class="o">-=</span> <span class="mi">1</span>
+    <span class="vi">@value</span> <span class="o">=</span> <span class="k">if</span> <span class="vi">@d</span><span class="p">.</span><span class="nf">zero?</span>
+      <span class="vi">@target</span>
+    <span class="k">else</span>
+      <span class="p">(</span><span class="vi">@value</span> <span class="o">*</span> <span class="vi">@d</span> <span class="o">+</span> <span class="vi">@target</span><span class="p">).</span><span class="nf">fdiv</span><span class="p">(</span><span class="vi">@d</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="c1"># include 之后，可用 @gauge_transitions[actor][:hp] 等</span>
+<span class="c1"># 获取 Taroxd::Transition 的实例。</span>
+<span class="k">module</span> <span class="nn">Taroxd::RollGauge</span>
+
+  <span class="no">Transition</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Transition</span>
+
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
+    <span class="vi">@gauge_transitions</span> <span class="o">=</span> <span class="n">make_gauge_transitions</span>
+    <span class="vi">@gauge_roll_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">super</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">update</span>
+    <span class="k">super</span>
+    <span class="k">if</span> <span class="p">(</span><span class="vi">@gauge_roll_count</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">gauge_roll_interval</span>
+      <span class="n">roll_all_gauge</span> <span class="k">if</span> <span class="n">update_gauge_transitions</span> <span class="o">&amp;&amp;</span> <span class="n">visible</span>
+      <span class="vi">@gauge_roll_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">draw_actor_hp</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="mi">124</span><span class="p">)</span>
+    <span class="n">hp</span> <span class="o">=</span> <span class="vi">@gauge_transitions</span><span class="p">[</span><span class="n">actor</span><span class="p">][</span><span class="ss">:hp</span><span class="p">].</span><span class="nf">value</span>
+    <span class="n">rate</span> <span class="o">=</span> <span class="n">hp</span><span class="p">.</span><span class="nf">fdiv</span><span class="p">(</span><span class="n">actor</span><span class="p">.</span><span class="nf">mhp</span><span class="p">)</span>
+    <span class="n">draw_gauge</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">rate</span><span class="p">,</span> <span class="n">hp_gauge_color1</span><span class="p">,</span> <span class="n">hp_gauge_color2</span><span class="p">)</span>
+    <span class="n">change_color</span><span class="p">(</span><span class="n">system_color</span><span class="p">)</span>
+    <span class="n">draw_text</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">line_height</span><span class="p">,</span> <span class="no">Vocab</span><span class="o">::</span><span class="n">hp_a</span><span class="p">)</span>
+    <span class="n">draw_current_and_max_values</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">hp</span><span class="p">.</span><span class="nf">to_i</span><span class="p">,</span> <span class="n">actor</span><span class="p">.</span><span class="nf">mhp</span><span class="p">,</span>
+      <span class="n">hp_color</span><span class="p">(</span><span class="n">actor</span><span class="p">),</span> <span class="n">normal_color</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">draw_actor_mp</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="mi">124</span><span class="p">)</span>
+    <span class="n">mp</span> <span class="o">=</span> <span class="vi">@gauge_transitions</span><span class="p">[</span><span class="n">actor</span><span class="p">][</span><span class="ss">:mp</span><span class="p">].</span><span class="nf">value</span>
+    <span class="n">mmp</span> <span class="o">=</span> <span class="n">actor</span><span class="p">.</span><span class="nf">mmp</span>
+    <span class="n">rate</span> <span class="o">=</span> <span class="n">mmp</span><span class="p">.</span><span class="nf">zero?</span> <span class="p">?</span> <span class="mi">0</span> <span class="p">:</span> <span class="n">mp</span><span class="p">.</span><span class="nf">fdiv</span><span class="p">(</span><span class="n">actor</span><span class="p">.</span><span class="nf">mmp</span><span class="p">)</span>
+    <span class="n">draw_gauge</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">rate</span><span class="p">,</span> <span class="n">mp_gauge_color1</span><span class="p">,</span> <span class="n">mp_gauge_color2</span><span class="p">)</span>
+    <span class="n">change_color</span><span class="p">(</span><span class="n">system_color</span><span class="p">)</span>
+    <span class="n">draw_text</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">line_height</span><span class="p">,</span> <span class="no">Vocab</span><span class="o">::</span><span class="n">mp_a</span><span class="p">)</span>
+    <span class="n">draw_current_and_max_values</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">mp</span><span class="p">.</span><span class="nf">to_i</span><span class="p">,</span> <span class="n">actor</span><span class="p">.</span><span class="nf">mmp</span><span class="p">,</span>
+      <span class="n">mp_color</span><span class="p">(</span><span class="n">actor</span><span class="p">),</span> <span class="n">normal_color</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">draw_actor_tp</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="mi">124</span><span class="p">)</span>
+    <span class="n">tp</span> <span class="o">=</span> <span class="vi">@gauge_transitions</span><span class="p">[</span><span class="n">actor</span><span class="p">][</span><span class="ss">:tp</span><span class="p">].</span><span class="nf">value</span>
+    <span class="n">rate</span> <span class="o">=</span> <span class="n">tp</span><span class="p">.</span><span class="nf">fdiv</span><span class="p">(</span><span class="n">actor</span><span class="p">.</span><span class="nf">max_tp</span><span class="p">)</span>
+    <span class="n">draw_gauge</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">rate</span><span class="p">,</span> <span class="n">tp_gauge_color1</span><span class="p">,</span> <span class="n">tp_gauge_color2</span><span class="p">)</span>
+    <span class="n">change_color</span><span class="p">(</span><span class="n">system_color</span><span class="p">)</span>
+    <span class="n">draw_text</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">line_height</span><span class="p">,</span> <span class="no">Vocab</span><span class="o">::</span><span class="n">tp_a</span><span class="p">)</span>
+    <span class="n">change_color</span><span class="p">(</span><span class="n">tp_color</span><span class="p">(</span><span class="n">actor</span><span class="p">))</span>
+    <span class="n">draw_text</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">width</span> <span class="o">-</span> <span class="mi">42</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="mi">42</span><span class="p">,</span> <span class="n">line_height</span><span class="p">,</span> <span class="n">tp</span><span class="p">.</span><span class="nf">to_i</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="kp">private</span>
+
+  <span class="c1"># 获取 make_gauge_transitions 生成的对象</span>
+  <span class="nb">attr_reader</span> <span class="ss">:gauge_transitions</span>
+
+  <span class="c1"># 值槽滚动所需的帧数</span>
+  <span class="k">def</span> <span class="nf">gauge_roll_frame</span>
+    <span class="mi">30</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 每隔多少帧更新一次值槽</span>
+  <span class="k">def</span> <span class="nf">gauge_roll_interval</span>
+    <span class="mi">1</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 生成值槽变化的数据。可在子类重定义。</span>
+  <span class="c1"># 默认的定义中，可以通过 gauge_transitions[actor][:hp] 等方式获取数据。</span>
+  <span class="k">def</span> <span class="nf">make_gauge_transitions</span>
+    <span class="no">Hash</span><span class="p">.</span><span class="nf">new</span> <span class="p">{</span> <span class="o">|</span><span class="nb">hash</span><span class="p">,</span> <span class="n">actor</span><span class="o">|</span>
+      <span class="nb">hash</span><span class="p">[</span><span class="n">actor</span><span class="p">]</span> <span class="o">=</span> <span class="no">Hash</span><span class="p">.</span><span class="nf">new</span> <span class="k">do</span> <span class="o">|</span><span class="n">h</span><span class="p">,</span> <span class="n">k</span><span class="o">|</span>
+        <span class="n">h</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="no">Transition</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">gauge_roll_times</span><span class="p">,</span> <span class="n">actor</span><span class="p">.</span><span class="nf">method</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+      <span class="k">end</span>
+    <span class="p">}.</span><span class="nf">compare_by_identity</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 更新渐变的值。</span>
+  <span class="c1"># 返回真值则触发一次刷新。</span>
+  <span class="c1"># 每 gauge_roll_interval 帧调用一次。</span>
+  <span class="k">def</span> <span class="nf">update_gauge_transitions</span>
+    <span class="n">need_roll</span> <span class="o">=</span> <span class="kp">false</span>
+    <span class="n">gauge_transitions</span><span class="p">.</span><span class="nf">each_value</span> <span class="k">do</span> <span class="o">|</span><span class="nb">hash</span><span class="o">|</span>
+      <span class="nb">hash</span><span class="p">.</span><span class="nf">each_value</span> <span class="k">do</span> <span class="o">|</span><span class="n">t</span><span class="o">|</span>
+        <span class="n">need_roll</span> <span class="o">=</span> <span class="kp">true</span> <span class="k">if</span> <span class="n">t</span><span class="p">.</span><span class="nf">update</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+    <span class="n">need_roll</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 值槽滚动所需的次数。</span>
+  <span class="k">def</span> <span class="nf">gauge_roll_times</span>
+    <span class="n">gauge_roll_frame</span> <span class="o">/</span> <span class="n">gauge_roll_interval</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 滚动所有值槽。可在子类重定义。</span>
+  <span class="k">def</span> <span class="nf">roll_all_gauge</span>
+    <span class="n">refresh</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Window_BattleStatus</span>
+  <span class="kp">include</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">RollGauge</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Window_MenuStatus</span> <span class="o">&lt;</span> <span class="no">Window_Selectable</span>
+
+  <span class="kp">include</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">RollGauge</span>
+
+  <span class="k">def</span> <span class="nf">roll_all_gauge</span>
+    <span class="n">item_max</span><span class="p">.</span><span class="nf">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">i</span><span class="o">|</span>
+      <span class="n">actor</span> <span class="o">=</span> <span class="vg">$game_party</span><span class="p">.</span><span class="nf">members</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+      <span class="n">rect</span> <span class="o">=</span> <span class="n">item_rect</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+      <span class="n">rect</span><span class="p">.</span><span class="nf">x</span> <span class="o">+=</span> <span class="mi">108</span>
+      <span class="n">rect</span><span class="p">.</span><span class="nf">y</span> <span class="o">+=</span> <span class="n">line_height</span> <span class="o">/</span> <span class="mi">2</span>
+      <span class="n">contents</span><span class="p">.</span><span class="nf">clear_rect</span><span class="p">(</span><span class="n">rect</span><span class="p">)</span>
+      <span class="n">draw_actor_simple_status</span><span class="p">(</span><span class="n">actor</span><span class="p">,</span> <span class="n">rect</span><span class="p">.</span><span class="nf">x</span><span class="p">,</span> <span class="n">rect</span><span class="p">.</span><span class="nf">y</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>

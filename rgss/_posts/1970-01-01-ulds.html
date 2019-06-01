@@ -1,0 +1,294 @@
+---
+title: 无限图层显示系统
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">无限图层显示系统</span></a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">ulds</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1"></span></a>
+<span class="c1">#  使用方法：导入此脚本后，在地图上备注如下内容。</span>
+<span class="c1">#</span>
+<span class="c1">#  &lt;ulds=filename&gt;</span>
+<span class="c1">#    x: X坐标</span>
+<span class="c1">#      公式，默认为 0</span>
+<span class="c1">#    y: Y坐标</span>
+<span class="c1">#      公式，默认为 0</span>
+<span class="c1">#    z: Z坐标</span>
+<span class="c1">#      公式，只计算一次，默认为 10，可以设置为 -100 来当作远景图使用</span>
+<span class="c1">#    zoom: 缩放倍率</span>
+<span class="c1">#      公式，默认为 1。缩放的原点为画面左上角。</span>
+<span class="c1">#    zoom_x: 横向缩放倍率</span>
+<span class="c1">#      公式，默认为 zoom</span>
+<span class="c1">#    zoom_y: 纵向缩放倍率</span>
+<span class="c1">#      公式，默认为 zoom</span>
+<span class="c1">#    opacity: 不透明度</span>
+<span class="c1">#      公式，默认为 255</span>
+<span class="c1">#    blend_type: 合成方式</span>
+<span class="c1">#      公式，只计算一次。默认为 0 （0：正常、1：加法、2：减法）</span>
+<span class="c1">#    scroll: 图像跟随地图卷动的速度</span>
+<span class="c1">#      实数，默认为 32</span>
+<span class="c1">#    scroll_x: 图像跟随地图横向卷动的速度</span>
+<span class="c1">#      实数，默认为 scroll</span>
+<span class="c1">#    scroll_y：图像跟随地图纵向卷动的速度</span>
+<span class="c1">#      实数，默认为 scroll</span>
+<span class="c1">#    loop: 循环</span>
+<span class="c1">#      冒号后面不需要填写任何东西。</span>
+<span class="c1">#    visible: 图像是否显示</span>
+<span class="c1">#      公式，默认为 true</span>
+<span class="c1">#    path: 图像的路径名</span>
+<span class="c1">#      默认为 Parallaxes</span>
+<span class="c1">#    color: 合成的颜色</span>
+<span class="c1">#      公式，只计算一次。默认为 Color.new(0, 0, 0, 0)</span>
+<span class="c1">#    tone: 色调</span>
+<span class="c1">#      公式，只计算一次。默认为 Tone.new(0, 0, 0, 0)</span>
+<span class="c1">#    eval: 初始化后，以 sprite 或 plane 为 self 执行的代码。</span>
+<span class="c1">#      公式，默认为空</span>
+<span class="c1">#    update: 图片显示时，每帧执行的更新代码</span>
+<span class="c1">#      公式，默认为 t += 1</span>
+<span class="c1">#    dispose: 图片释放前执行的代码</span>
+<span class="c1">#      公式，默认为空</span>
+<span class="c1">#  &lt;/ulds&gt;</span>
+<span class="c1">#</span>
+<span class="c1">#  其中 filename 是图片文件名（无需扩展名），放入 Parallaxes 文件夹内</span>
+<span class="c1">#  这个文件夹可以通过 path 设置更改</span>
+<span class="c1">#</span>
+<span class="c1">#  在 &lt;ulds=filename&gt; 和 &lt;/ulds&gt; 中间的部分均为选填。不填则自动设为默认值。</span>
+<span class="c1">#  每一个设置项只能写一行。（地图备注没有单行长度限制）</span>
+<span class="c1">#  每一行只能写一个设置项。</span>
+<span class="c1">#  一般来说，正常使用时大部分都是不需要设置的。</span>
+<span class="c1">#</span>
+<span class="c1">#  设置项目中的“公式”表示，这一个设置项可以像技能的伤害公式一样填写。</span>
+<span class="c1">#  “只计算一次”表示，该公式只会在刚刚进入地图时计算一次，之后不会更新。</span>
+<span class="c1">#  可用 t 表示当前已经显示的帧数，s[n], v[n] 分别表示 n 号开关和 n 号变量。</span>
+<span class="c1">#  width 表示图片宽度，height 表示图片高度。</span>
+<span class="c1">#</span>
+<span class="c1">#  例：</span>
+<span class="c1">#   &lt;ulds=BlueSky&gt;</span>
+<span class="c1">#     x: t</span>
+<span class="c1">#     scroll_x: 16</span>
+<span class="c1">#     scroll_y: 64</span>
+<span class="c1">#     loop:</span>
+<span class="c1">#   &lt;/ulds&gt;</span>
+<span class="c1">#</span>
+<span class="c1">#  需要多行公式时，可以重复备注。</span>
+<span class="c1">#  例：</span>
+<span class="c1">#   &lt;ulds=Slime&gt;</span>
+<span class="c1">#     path: Battlers</span>
+<span class="c1">#     x: width / 2</span>
+<span class="c1">#     y: height / 2</span>
+<span class="c1">#     eval: self.ox = width / 2</span>
+<span class="c1">#     eval: self.oy = height / 2</span>
+<span class="c1">#     eval: self.angle = 180</span>
+<span class="c1">#   &lt;/ulds&gt;</span>
+
+
+<span class="k">module</span> <span class="nn">Taroxd::ULDS</span>
+
+  <span class="no">DEFAULT_PATH</span> <span class="o">=</span> <span class="s1">'Parallaxes'</span>                    <span class="c1"># 图片文件的默认路径</span>
+  <span class="no">DEFAULT_Z</span> <span class="o">=</span> <span class="mi">10</span>                                 <span class="c1"># 默认的 z 值</span>
+  <span class="no">RE_OUTER</span> <span class="o">=</span> <span class="sr">/&lt;ulds[= ]?(.*?)&gt;(.*?)&lt;\/ulds&gt;/mi</span>  <span class="c1"># 读取备注用的正则表达式</span>
+  <span class="no">RE_INNER</span> <span class="o">=</span> <span class="sr">/(\w+) *: *(.*)/</span>                    <span class="c1"># 读取设置用的正则表达式</span>
+
+  <span class="k">module</span> <span class="nn">Base</span>
+    <span class="kp">include</span> <span class="no">Math</span>
+
+    <span class="nb">attr_accessor</span> <span class="ss">:scroll_x</span><span class="p">,</span> <span class="ss">:scroll_y</span>
+
+    <span class="k">def</span> <span class="nf">dispose</span>
+      <span class="n">bitmap</span><span class="p">.</span><span class="nf">dispose</span> <span class="k">if</span> <span class="n">bitmap</span>
+      <span class="k">super</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">adjust_x</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+      <span class="k">return</span> <span class="n">x</span> <span class="k">if</span> <span class="o">!</span><span class="vi">@scroll_x</span> <span class="o">||</span> <span class="vi">@scroll_x</span><span class="p">.</span><span class="nf">abs</span> <span class="o">&lt;</span> <span class="no">Float</span><span class="o">::</span><span class="no">EPSILON</span>
+      <span class="vg">$game_map</span><span class="p">.</span><span class="nf">adjust_x</span><span class="p">(</span><span class="n">x</span><span class="p">.</span><span class="nf">fdiv</span><span class="p">(</span><span class="vi">@scroll_x</span><span class="p">))</span> <span class="o">*</span> <span class="vi">@scroll_x</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">adjust_y</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+      <span class="k">return</span> <span class="n">y</span> <span class="k">if</span> <span class="o">!</span><span class="vi">@scroll_y</span> <span class="o">||</span> <span class="vi">@scroll_y</span><span class="p">.</span><span class="nf">abs</span> <span class="o">&lt;</span> <span class="no">Float</span><span class="o">::</span><span class="no">EPSILON</span>
+      <span class="vg">$game_map</span><span class="p">.</span><span class="nf">adjust_y</span><span class="p">(</span><span class="n">y</span><span class="p">.</span><span class="nf">fdiv</span><span class="p">(</span><span class="vi">@scroll_y</span><span class="p">))</span> <span class="o">*</span> <span class="vi">@scroll_y</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">class</span> <span class="nc">Sprite</span> <span class="o">&lt;</span> <span class="o">::</span><span class="no">Sprite</span>
+    <span class="kp">include</span> <span class="no">Base</span>
+
+    <span class="k">def</span> <span class="nf">x</span><span class="o">=</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+      <span class="k">super</span><span class="p">(</span><span class="n">adjust_x</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">y</span><span class="o">=</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+      <span class="k">super</span><span class="p">(</span><span class="n">adjust_y</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">class</span> <span class="nc">Plane</span> <span class="o">&lt;</span> <span class="o">::</span><span class="no">Plane</span>
+    <span class="kp">include</span> <span class="no">Base</span>
+
+    <span class="nb">attr_reader</span> <span class="ss">:visible</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">_</span><span class="p">)</span>
+      <span class="k">super</span>
+      <span class="vi">@visible</span> <span class="o">=</span> <span class="kp">true</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">x</span><span class="o">=</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+      <span class="nb">self</span><span class="p">.</span><span class="nf">ox</span> <span class="o">=</span> <span class="o">-</span><span class="n">adjust_x</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">y</span><span class="o">=</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+      <span class="nb">self</span><span class="p">.</span><span class="nf">oy</span> <span class="o">=</span> <span class="o">-</span><span class="n">adjust_y</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">visible</span><span class="o">=</span><span class="p">(</span><span class="n">visible</span><span class="p">)</span>
+      <span class="k">super</span>
+      <span class="vi">@visible</span> <span class="o">=</span> <span class="n">visible</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">width</span>
+      <span class="n">bitmap</span><span class="p">.</span><span class="nf">width</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">height</span>
+      <span class="n">bitmap</span><span class="p">.</span><span class="nf">height</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">class</span> <span class="o">&lt;&lt;</span> <span class="nb">self</span>
+
+    <span class="c1"># 从备注中读取设置，并生成数组</span>
+    <span class="k">def</span> <span class="nf">from_note</span><span class="p">(</span><span class="n">note</span><span class="p">,</span> <span class="n">viewport</span><span class="p">)</span>
+      <span class="n">note</span><span class="p">.</span><span class="nf">scan</span><span class="p">(</span><span class="no">RE_OUTER</span><span class="p">).</span><span class="nf">map</span> <span class="k">do</span> <span class="o">|</span><span class="nb">name</span><span class="p">,</span> <span class="n">contents</span><span class="o">|</span>
+        <span class="n">settings</span> <span class="o">=</span> <span class="p">{</span><span class="kp">nil</span> <span class="o">=&gt;</span> <span class="nb">name</span><span class="p">}</span>
+        <span class="n">contents</span><span class="p">.</span><span class="nf">scan</span><span class="p">(</span><span class="no">RE_INNER</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="o">|</span>
+          <span class="p">(</span><span class="n">settings</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">||=</span> <span class="s1">''</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">value</span> <span class="o">&lt;&lt;</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="k">end</span>
+        <span class="n">new</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span> <span class="n">viewport</span><span class="p">)</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 返回一个 ULDS::Sprite 或 ULDS::Plane 的实例</span>
+    <span class="k">def</span> <span class="nf">new</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span> <span class="n">viewport</span><span class="p">)</span>
+      <span class="vi">@settings</span> <span class="o">=</span> <span class="n">settings</span>
+      <span class="n">container</span><span class="p">(</span><span class="n">viewport</span><span class="p">)</span>
+    <span class="k">end</span>
+
+    <span class="kp">private</span>
+
+    <span class="k">def</span> <span class="nf">container</span><span class="p">(</span><span class="n">viewport</span><span class="p">)</span>
+      <span class="p">(</span><span class="n">extract</span><span class="p">(</span><span class="s1">'loop'</span><span class="p">)</span> <span class="p">?</span> <span class="no">Plane</span> <span class="p">:</span> <span class="no">Sprite</span><span class="p">).</span><span class="nf">new</span><span class="p">(</span><span class="n">viewport</span><span class="p">).</span><span class="nf">tap</span> <span class="k">do</span> <span class="o">|</span><span class="n">container</span><span class="o">|</span>
+        <span class="n">container</span><span class="p">.</span><span class="nf">bitmap</span> <span class="o">=</span> <span class="n">make_bitmap</span>
+        <span class="n">container</span><span class="p">.</span><span class="nf">instance_eval</span><span class="p">(</span><span class="n">init_container_code</span><span class="p">,</span> <span class="kp">__FILE__</span><span class="p">,</span> <span class="kp">__LINE__</span><span class="p">)</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 在一个 sprite 或 plane 的上下文中执行的代码。</span>
+    <span class="c1"># 如果难以理解，请尝试输出这段代码来查看。</span>
+    <span class="k">def</span> <span class="nf">init_container_code</span>
+      <span class="s2">"</span><span class="si">#{</span><span class="n">binding_code</span><span class="si">}</span><span class="s2">
+      </span><span class="si">#{</span><span class="n">init_attr_code</span><span class="si">}</span><span class="s2">
+      </span><span class="si">#{</span><span class="n">define_update_code</span><span class="si">}</span><span class="s2">
+      </span><span class="si">#{</span><span class="n">define_dispose_code</span><span class="si">}</span><span class="s2">
+      </span><span class="si">#{</span><span class="n">extract</span> <span class="s1">'eval'</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 定义变量的代码</span>
+    <span class="k">def</span> <span class="nf">binding_code</span>
+      <span class="s1">'s = $game_switches
+      v = $game_variables
+      t = 0'</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 只计算一次的初始化代码</span>
+    <span class="k">def</span> <span class="nf">init_attr_code</span>
+      <span class="s2">"</span><span class="si">#{</span><span class="n">set_attr_code</span> <span class="s1">'z'</span><span class="p">,</span> <span class="no">DEFAULT_Z</span><span class="si">}</span><span class="s2">
+      </span><span class="si">#{</span><span class="n">set_attr_code</span> <span class="s1">'scroll_x'</span><span class="p">,</span> <span class="mi">32</span><span class="si">}</span><span class="s2">
+      </span><span class="si">#{</span><span class="n">set_attr_code</span> <span class="s1">'scroll_y'</span><span class="p">,</span> <span class="mi">32</span><span class="si">}</span><span class="s2">
+      </span><span class="si">#{</span><span class="n">set_attr_code</span> <span class="s1">'blend_type'</span><span class="si">}</span><span class="s2">
+      </span><span class="si">#{</span><span class="n">set_attr_code</span> <span class="s1">'color'</span><span class="si">}</span><span class="s2">
+      </span><span class="si">#{</span><span class="n">set_attr_code</span> <span class="s1">'tone'</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 更新的代码</span>
+    <span class="k">def</span> <span class="nf">define_update_code</span>
+      <span class="sx">%{
+        define_singleton_method :update do
+          #{set_attr_code 'visible'}
+          return unless visible
+          #{set_attr_code 'zoom_x'}
+          #{set_attr_code 'zoom_y'}
+          #{set_attr_code 'opacity'}
+          #{set_attr_code 'x', 0}
+          #{set_attr_code 'y', 0}
+          #{set_t_code}
+        end
+      }</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">define_dispose_code</span>
+      <span class="n">code</span> <span class="o">=</span> <span class="n">extract</span><span class="p">(</span><span class="s1">'dispose'</span><span class="p">)</span>
+      <span class="o">!</span><span class="n">code</span> <span class="p">?</span> <span class="s2">""</span> <span class="p">:</span> <span class="sx">%{
+        define_singleton_method :dispose do
+          #{code}
+          super()
+        end
+      }</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 设置属性的代码</span>
+    <span class="k">def</span> <span class="nf">set_attr_code</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
+      <span class="n">formula</span> <span class="o">=</span> <span class="n">extract</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
+      <span class="n">formula</span> <span class="o">&amp;&amp;</span> <span class="s2">"self.</span><span class="si">#{</span><span class="n">key</span><span class="si">}</span><span class="s2"> = (</span><span class="si">#{</span><span class="n">formula</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 设置时间的代码</span>
+    <span class="k">def</span> <span class="nf">set_t_code</span>
+      <span class="n">extract</span><span class="p">(</span><span class="s1">'update'</span><span class="p">,</span> <span class="s1">'t += 1'</span><span class="p">)</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 获得位图</span>
+    <span class="k">def</span> <span class="nf">make_bitmap</span>
+      <span class="n">basename</span> <span class="o">=</span> <span class="n">extract</span><span class="p">(</span><span class="kp">nil</span><span class="p">)</span>
+      <span class="k">if</span> <span class="o">!</span><span class="n">basename</span><span class="p">.</span><span class="nf">empty?</span>
+        <span class="n">folder_name</span> <span class="o">=</span> <span class="s2">"Graphics/</span><span class="si">#{</span><span class="n">extract</span><span class="p">(</span><span class="s1">'path'</span><span class="p">,</span> <span class="no">DEFAULT_PATH</span><span class="p">).</span><span class="nf">chomp</span><span class="si">}</span><span class="s2">"</span>
+        <span class="no">Bitmap</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="s2">"</span><span class="si">#{</span><span class="n">folder_name</span><span class="si">}</span><span class="s2">/</span><span class="si">#{</span><span class="n">basename</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+      <span class="k">else</span>
+        <span class="kp">nil</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 获取备注中的设定值</span>
+    <span class="k">def</span> <span class="nf">extract</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">default</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
+      <span class="vi">@settings</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">||</span> <span class="sr">/(.+)_[xy]\Z/</span> <span class="o">=~</span> <span class="n">key</span> <span class="o">&amp;&amp;</span> <span class="vi">@settings</span><span class="p">[</span><span class="vg">$1</span><span class="p">]</span> <span class="o">||</span> <span class="n">default</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Spriteset_Map</span>
+
+  <span class="kp">private</span>
+
+  <span class="k">def</span> <span class="nf">create_ulds</span>
+    <span class="vi">@ulds</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">ULDS</span><span class="p">.</span><span class="nf">from_note</span><span class="p">(</span><span class="vg">$game_map</span><span class="p">.</span><span class="nf">note</span><span class="p">,</span> <span class="vi">@viewport1</span><span class="p">)</span>
+    <span class="vi">@ulds_map_id</span> <span class="o">=</span> <span class="vg">$game_map</span><span class="p">.</span><span class="nf">map_id</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">refresh_ulds</span>
+    <span class="n">dispose_ulds</span>
+    <span class="n">create_ulds</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">update_ulds</span>
+    <span class="n">refresh_ulds</span> <span class="k">if</span> <span class="vi">@ulds_map_id</span> <span class="o">!=</span> <span class="vg">$game_map</span><span class="p">.</span><span class="nf">map_id</span>
+    <span class="vi">@ulds</span><span class="p">.</span><span class="nf">each</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:update</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">dispose_ulds</span>
+    <span class="vi">@ulds</span><span class="p">.</span><span class="nf">each</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:dispose</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="n">def_before</span> <span class="ss">:create_parallax</span><span class="p">,</span>  <span class="ss">:create_ulds</span>
+  <span class="n">def_before</span> <span class="ss">:update_parallax</span><span class="p">,</span>  <span class="ss">:update_ulds</span>
+  <span class="n">def_before</span> <span class="ss">:dispose_parallax</span><span class="p">,</span> <span class="ss">:dispose_ulds</span>
+<span class="k">end</span>
+</code></pre></div>

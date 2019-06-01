@@ -1,0 +1,143 @@
+---
+title: Astar 寻路
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">astar</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">Astar 寻路</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1">AStar Core v1.01 by 禾西 on 2012.01.02</span></a>
+<span class="k">module</span> <span class="nn">Taroxd</span> <span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Taroxd</span><span class="o">::</span><span class="no">AStar</span>
+
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">path</span><span class="p">(</span><span class="n">character</span><span class="p">,</span> <span class="n">tx</span><span class="p">,</span> <span class="n">ty</span><span class="p">)</span>
+    <span class="n">new</span><span class="p">(</span><span class="n">character</span><span class="p">,</span> <span class="n">tx</span><span class="p">,</span> <span class="n">ty</span><span class="p">).</span><span class="nf">do_search</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">path_to_player</span><span class="p">(</span><span class="n">character</span><span class="p">)</span>
+    <span class="n">path</span><span class="p">(</span><span class="n">character</span><span class="p">,</span> <span class="vg">$game_player</span><span class="p">.</span><span class="nf">x</span><span class="p">,</span> <span class="vg">$game_player</span><span class="p">.</span><span class="nf">y</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">character</span><span class="p">,</span> <span class="n">tx</span><span class="p">,</span> <span class="n">ty</span><span class="p">)</span>
+    <span class="vi">@map_width</span>  <span class="o">=</span> <span class="vg">$game_map</span><span class="p">.</span><span class="nf">width</span>
+    <span class="vi">@map_height</span> <span class="o">=</span> <span class="vg">$game_map</span><span class="p">.</span><span class="nf">height</span>
+    <span class="vi">@g_data</span> <span class="o">=</span> <span class="no">Table</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="vi">@map_width</span><span class="p">,</span> <span class="vi">@map_height</span><span class="p">)</span>
+    <span class="vi">@f_data</span> <span class="o">=</span> <span class="no">Table</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="vi">@map_width</span><span class="p">,</span> <span class="vi">@map_height</span><span class="p">)</span>
+    <span class="vi">@p_data</span> <span class="o">=</span> <span class="no">Table</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="vi">@map_width</span><span class="p">,</span> <span class="vi">@map_height</span><span class="p">)</span>
+    <span class="vi">@character</span> <span class="o">=</span> <span class="n">character</span>
+    <span class="vi">@ox</span> <span class="o">=</span> <span class="n">character</span><span class="p">.</span><span class="nf">x</span>
+    <span class="vi">@oy</span> <span class="o">=</span> <span class="n">character</span><span class="p">.</span><span class="nf">y</span>
+    <span class="vi">@tx</span> <span class="o">=</span> <span class="n">tx</span>
+    <span class="vi">@ty</span> <span class="o">=</span> <span class="n">ty</span>
+    <span class="vi">@open_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="vi">@g</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="vi">@search_done</span> <span class="o">=</span> <span class="kp">false</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">do_search</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="vi">@ox</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="vi">@oy</span>
+    <span class="vi">@g_data</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="vi">@f_data</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="vi">@open_list</span> <span class="o">&lt;&lt;</span> <span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">begin</span>
+      <span class="n">t</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="n">point</span> <span class="o">=</span> <span class="vi">@open_list</span><span class="p">.</span><span class="nf">shift</span>
+      <span class="k">return</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">point</span><span class="p">.</span><span class="nf">nil?</span>
+      <span class="n">check_4dir</span><span class="p">(</span><span class="n">point</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">point</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">end</span> <span class="k">until</span> <span class="vi">@search_done</span>
+    <span class="k">if</span> <span class="vi">@g_data</span><span class="p">[</span><span class="vi">@tx</span><span class="p">,</span> <span class="vi">@ty</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
+      <span class="vi">@tx</span> <span class="o">=</span> <span class="n">point</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+      <span class="vi">@ty</span> <span class="o">=</span> <span class="n">point</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">end</span>
+    <span class="n">make_path</span>
+    <span class="vi">@path</span>
+  <span class="k">end</span>
+
+  <span class="kp">private</span>
+
+  <span class="c1"># 检查四方向</span>
+  <span class="k">def</span> <span class="nf">check_4dir</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="vi">@g</span> <span class="o">=</span> <span class="vi">@g_data</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">mark_point</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
+    <span class="n">mark_point</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">mark_point</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+    <span class="n">mark_point</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 检查单点</span>
+  <span class="k">def</span> <span class="nf">mark_point</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">dir</span><span class="p">)</span>
+    <span class="k">return</span> <span class="k">if</span> <span class="n">over_map?</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">return</span> <span class="k">if</span> <span class="vi">@g_data</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">check_passage</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">dir</span><span class="p">)</span>
+      <span class="vi">@g_data</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="vi">@g</span>
+      <span class="vi">@f_data</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span> <span class="o">=</span> <span class="n">_f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+      <span class="n">point</span> <span class="o">=</span> <span class="vi">@open_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+      <span class="k">if</span> <span class="n">point</span><span class="p">.</span><span class="nf">nil?</span> <span class="o">||</span> <span class="n">f</span> <span class="o">&gt;</span> <span class="vi">@f_data</span><span class="p">[</span><span class="n">point</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">point</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="vi">@open_list</span><span class="p">.</span><span class="nf">push</span> <span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span>
+      <span class="k">else</span>
+        <span class="vi">@open_list</span><span class="p">.</span><span class="nf">unshift</span> <span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span>
+      <span class="k">end</span>
+    <span class="k">else</span>
+      <span class="vi">@g_data</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+      <span class="vi">@f_data</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="n">_f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">end</span>
+    <span class="vi">@search_done</span> <span class="o">=</span> <span class="kp">true</span> <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="vi">@tx</span> <span class="o">&amp;&amp;</span> <span class="n">y</span> <span class="o">==</span> <span class="vi">@ty</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">make_path</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="vi">@tx</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="vi">@ty</span>
+    <span class="vi">@path</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">while</span> <span class="n">x</span> <span class="o">!=</span> <span class="vi">@ox</span> <span class="o">||</span> <span class="n">y</span> <span class="o">!=</span> <span class="vi">@oy</span>
+      <span class="vi">@g</span> <span class="o">=</span> <span class="vi">@g_data</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span>
+      <span class="vi">@best_f</span> <span class="o">=</span> <span class="mi">0</span>
+      <span class="n">dir</span> <span class="o">=</span> <span class="mi">0</span>
+      <span class="n">dir</span> <span class="o">=</span> <span class="n">make_step</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">||</span> <span class="n">dir</span>
+      <span class="n">dir</span> <span class="o">=</span> <span class="n">make_step</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span> <span class="o">||</span> <span class="n">dir</span>
+      <span class="n">dir</span> <span class="o">=</span> <span class="n">make_step</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span> <span class="o">||</span> <span class="n">dir</span>
+      <span class="n">dir</span> <span class="o">=</span> <span class="n">make_step</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span> <span class="o">||</span> <span class="n">dir</span>
+      <span class="vi">@path</span><span class="p">.</span><span class="nf">unshift</span><span class="p">(</span><span class="n">dir</span><span class="p">)</span>
+      <span class="k">case</span> <span class="n">dir</span>
+      <span class="k">when</span> <span class="mi">2</span> <span class="k">then</span> <span class="n">y</span> <span class="o">-=</span> <span class="mi">1</span>
+      <span class="k">when</span> <span class="mi">8</span> <span class="k">then</span> <span class="n">y</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="k">when</span> <span class="mi">6</span> <span class="k">then</span> <span class="n">x</span> <span class="o">-=</span> <span class="mi">1</span>
+      <span class="k">when</span> <span class="mi">4</span> <span class="k">then</span> <span class="n">x</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="k">end</span>
+      <span class="vi">@p_data</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 生成单步</span>
+  <span class="k">def</span> <span class="nf">make_step</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">dir</span><span class="p">)</span>
+    <span class="k">return</span> <span class="k">if</span> <span class="vi">@g_data</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">].</span><span class="nf">nil?</span> <span class="o">||</span> <span class="vi">@p_data</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="vi">@g</span> <span class="o">-</span> <span class="vi">@g_data</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="o">||</span> <span class="vi">@g</span> <span class="o">==</span> <span class="mi">1</span>
+      <span class="n">f</span> <span class="o">=</span> <span class="vi">@f_data</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span>
+      <span class="k">if</span> <span class="n">f</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="vi">@best_f</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">f</span> <span class="o">&lt;</span> <span class="vi">@best_f</span><span class="p">)</span>
+        <span class="vi">@best_f</span> <span class="o">=</span> <span class="n">f</span>
+        <span class="n">dir</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+  <span class="c1"># 检查地图通行度</span>
+  <span class="k">def</span> <span class="nf">check_passage</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">dir</span><span class="p">)</span>
+    <span class="k">case</span> <span class="n">dir</span>
+    <span class="k">when</span> <span class="mi">2</span> <span class="k">then</span> <span class="n">y</span> <span class="o">-=</span> <span class="mi">1</span>
+    <span class="k">when</span> <span class="mi">8</span> <span class="k">then</span> <span class="n">y</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">when</span> <span class="mi">4</span> <span class="k">then</span> <span class="n">x</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">when</span> <span class="mi">6</span> <span class="k">then</span> <span class="n">x</span> <span class="o">-=</span> <span class="mi">1</span>
+    <span class="k">end</span>
+    <span class="vi">@character</span><span class="p">.</span><span class="nf">passable?</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">dir</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 检查地图是否越界</span>
+  <span class="k">def</span> <span class="nf">over_map?</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">|</span> <span class="n">y</span> <span class="o">|</span> <span class="p">(</span><span class="vi">@map_width</span> <span class="o">-</span> <span class="n">x</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="vi">@map_height</span> <span class="o">-</span> <span class="n">y</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span>
+  <span class="k">end</span>
+
+  <span class="c1"># f 值算法</span>
+  <span class="k">def</span> <span class="nf">_f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="vi">@tx</span><span class="p">).</span><span class="nf">abs</span> <span class="o">+</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="vi">@ty</span><span class="p">).</span><span class="nf">abs</span> <span class="o">+</span> <span class="vi">@g</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>

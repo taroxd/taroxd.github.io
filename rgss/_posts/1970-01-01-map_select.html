@@ -1,0 +1,186 @@
+---
+title: 选择地图上的点
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">选择地图上的点</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/point.html">point</a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/rgss_bugfix.html">rgss_bugfix</a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">map_select</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1"></span></a>
+<span class="c1">#    开始选择，并将光标指定在 x, y 处。注意 x, y 不可以在地图之外。</span>
+<span class="c1">#    若不指定参数，默认 x, y 为玩家所在的位置。</span>
+<span class="c1">#    一直等待，直到玩家选择或取消。</span>
+<span class="c1">#    返回 Taroxd::Point 的实例或 nil（取消）</span>
+<span class="c1">#</span>
+<span class="c1">#    可以选择的区域默认为可以通行的区域。该设置可在下方修改。</span>
+
+<span class="k">module</span> <span class="nn">Taroxd::MapSelect</span>
+
+  <span class="c1"># 颜色设置</span>
+  <span class="no">OPACITY</span> <span class="o">=</span> <span class="mi">150</span>
+  <span class="no">NG_COLOR</span> <span class="o">=</span> <span class="no">Color</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="no">OPACITY</span><span class="p">)</span>
+  <span class="no">OK_COLOR</span> <span class="o">=</span> <span class="no">Color</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="no">OPACITY</span><span class="p">)</span>
+
+  <span class="k">class</span> <span class="o">&lt;&lt;</span> <span class="nb">self</span>
+
+    <span class="nb">attr_reader</span> <span class="ss">:point</span>
+    <span class="nb">attr_reader</span> <span class="ss">:selecting</span>
+
+    <span class="k">def</span> <span class="nf">x</span>
+      <span class="vi">@point</span><span class="p">.</span><span class="nf">x</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">y</span>
+      <span class="vi">@point</span><span class="p">.</span><span class="nf">y</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 是否允许选择点 (x, y)（该方法可以自定义）</span>
+    <span class="k">def</span> <span class="nf">can_select?</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+      <span class="vg">$game_player</span><span class="p">.</span><span class="nf">passable?</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="mi">10</span> <span class="o">-</span> <span class="vg">$game_player</span><span class="p">.</span><span class="nf">direction</span><span class="p">)</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+      <span class="vi">@point</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Point</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span>
+      <span class="vi">@selecting</span> <span class="o">=</span> <span class="kp">true</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">select</span>
+      <span class="k">if</span> <span class="n">can_select?</span><span class="p">(</span><span class="o">*</span><span class="vi">@point</span><span class="p">)</span>
+        <span class="no">Sound</span><span class="p">.</span><span class="nf">play_ok</span>
+        <span class="vi">@selecting</span> <span class="o">=</span> <span class="kp">false</span>
+      <span class="k">else</span>
+        <span class="no">Sound</span><span class="p">.</span><span class="nf">play_buzzer</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">cancel</span>
+      <span class="vi">@point</span> <span class="o">=</span> <span class="kp">nil</span>
+      <span class="vi">@selecting</span> <span class="o">=</span> <span class="kp">false</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">update</span>
+      <span class="n">move_right</span> <span class="k">if</span> <span class="no">Input</span><span class="p">.</span><span class="nf">repeat?</span><span class="p">(</span><span class="ss">:RIGHT</span><span class="p">)</span>
+      <span class="n">move_left</span>  <span class="k">if</span> <span class="no">Input</span><span class="p">.</span><span class="nf">repeat?</span><span class="p">(</span><span class="ss">:LEFT</span><span class="p">)</span>
+      <span class="n">move_down</span>  <span class="k">if</span> <span class="no">Input</span><span class="p">.</span><span class="nf">repeat?</span><span class="p">(</span><span class="ss">:DOWN</span><span class="p">)</span>
+      <span class="n">move_up</span>    <span class="k">if</span> <span class="no">Input</span><span class="p">.</span><span class="nf">repeat?</span><span class="p">(</span><span class="ss">:UP</span><span class="p">)</span>
+      <span class="nb">select</span>     <span class="k">if</span> <span class="no">Input</span><span class="p">.</span><span class="nf">trigger?</span><span class="p">(</span><span class="ss">:C</span><span class="p">)</span>
+      <span class="n">cancel</span>     <span class="k">if</span> <span class="no">Input</span><span class="p">.</span><span class="nf">trigger?</span><span class="p">(</span><span class="ss">:B</span><span class="p">)</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">move_right</span>
+      <span class="k">return</span> <span class="k">if</span> <span class="n">screen_x</span> <span class="o">&gt;</span> <span class="no">Graphics</span><span class="p">.</span><span class="nf">width</span> <span class="o">-</span> <span class="mi">48</span>
+      <span class="vi">@point</span><span class="p">.</span><span class="nf">x</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="no">Sound</span><span class="p">.</span><span class="nf">play_cursor</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">move_left</span>
+      <span class="k">return</span> <span class="k">if</span> <span class="n">screen_x</span> <span class="o">&lt;</span> <span class="mi">16</span>
+      <span class="vi">@point</span><span class="p">.</span><span class="nf">x</span> <span class="o">-=</span> <span class="mi">1</span>
+      <span class="no">Sound</span><span class="p">.</span><span class="nf">play_cursor</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">move_up</span>
+      <span class="k">return</span> <span class="k">if</span> <span class="n">screen_y</span> <span class="o">&lt;</span> <span class="mi">16</span>
+      <span class="vi">@point</span><span class="p">.</span><span class="nf">y</span> <span class="o">-=</span> <span class="mi">1</span>
+      <span class="no">Sound</span><span class="p">.</span><span class="nf">play_cursor</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">move_down</span>
+      <span class="k">return</span> <span class="k">if</span> <span class="n">screen_y</span> <span class="o">&gt;</span> <span class="no">Graphics</span><span class="p">.</span><span class="nf">height</span> <span class="o">-</span> <span class="mi">48</span>
+      <span class="vi">@point</span><span class="p">.</span><span class="nf">y</span> <span class="o">+=</span> <span class="mi">1</span>
+      <span class="no">Sound</span><span class="p">.</span><span class="nf">play_cursor</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">screen_x</span>
+      <span class="vi">@point</span><span class="p">.</span><span class="nf">screen_x</span> <span class="o">-</span> <span class="mi">16</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">screen_y</span>
+      <span class="vi">@point</span><span class="p">.</span><span class="nf">screen_y</span> <span class="o">-</span> <span class="mi">32</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">class</span> <span class="nc">Cursor</span> <span class="o">&lt;</span> <span class="no">Sprite</span>
+    <span class="kp">include</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">DisposeBitmap</span>
+
+    <span class="c1"># 光标的位图缓存。该方法可以自定义。</span>
+    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">bitmap</span>
+      <span class="k">return</span> <span class="vi">@bitmap</span> <span class="k">if</span> <span class="vi">@bitmap</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="vi">@bitmap</span><span class="p">.</span><span class="nf">disposed?</span>
+      <span class="vi">@bitmap</span> <span class="o">=</span> <span class="no">Bitmap</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>
+      <span class="n">skin</span> <span class="o">=</span> <span class="no">Cache</span><span class="p">.</span><span class="nf">system</span><span class="p">(</span><span class="s1">'Window'</span><span class="p">)</span>
+      <span class="vi">@bitmap</span><span class="p">.</span><span class="nf">stretch_blt</span><span class="p">(</span><span class="vi">@bitmap</span><span class="p">.</span><span class="nf">rect</span><span class="p">,</span> <span class="n">skin</span><span class="p">,</span> <span class="no">Rect</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">))</span>
+      <span class="vi">@bitmap</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">_</span><span class="p">)</span>
+      <span class="k">super</span>
+      <span class="nb">self</span><span class="p">.</span><span class="nf">bitmap</span> <span class="o">=</span> <span class="nb">self</span><span class="p">.</span><span class="nf">class</span><span class="p">.</span><span class="nf">bitmap</span>
+      <span class="nb">self</span><span class="p">.</span><span class="nf">z</span> <span class="o">=</span> <span class="mi">205</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">update</span>
+      <span class="nb">self</span><span class="p">.</span><span class="nf">visible</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">MapSelect</span><span class="p">.</span><span class="nf">selecting</span>
+      <span class="k">return</span> <span class="k">unless</span> <span class="n">visible</span>
+      <span class="nb">self</span><span class="p">.</span><span class="nf">x</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">MapSelect</span><span class="p">.</span><span class="nf">screen_x</span>
+      <span class="nb">self</span><span class="p">.</span><span class="nf">y</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">MapSelect</span><span class="p">.</span><span class="nf">screen_y</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">class</span> <span class="nc">Status</span> <span class="o">&lt;</span> <span class="no">Plane</span>
+    <span class="kp">include</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">DisposeBitmap</span>
+    <span class="kp">include</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">BugFix</span><span class="o">::</span><span class="no">PlaneVisible</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">_</span><span class="p">)</span>
+      <span class="k">super</span>
+      <span class="nb">self</span><span class="p">.</span><span class="nf">z</span> <span class="o">=</span> <span class="mi">200</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">update</span>
+      <span class="n">was_visible</span> <span class="o">=</span> <span class="n">visible</span>
+      <span class="nb">self</span><span class="p">.</span><span class="nf">visible</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">MapSelect</span><span class="p">.</span><span class="nf">selecting</span>
+      <span class="k">return</span> <span class="k">unless</span> <span class="n">visible</span>
+      <span class="n">refresh</span> <span class="k">unless</span> <span class="n">was_visible</span>
+      <span class="nb">self</span><span class="p">.</span><span class="nf">ox</span> <span class="o">=</span> <span class="vg">$game_map</span><span class="p">.</span><span class="nf">display_x</span> <span class="o">*</span> <span class="mi">32</span>
+      <span class="nb">self</span><span class="p">.</span><span class="nf">oy</span> <span class="o">=</span> <span class="vg">$game_map</span><span class="p">.</span><span class="nf">display_y</span> <span class="o">*</span> <span class="mi">32</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">refresh</span>
+      <span class="n">bitmap</span><span class="p">.</span><span class="nf">dispose</span> <span class="k">if</span> <span class="n">bitmap</span>
+      <span class="nb">self</span><span class="p">.</span><span class="nf">bitmap</span> <span class="o">=</span> <span class="no">Bitmap</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="vg">$game_map</span><span class="p">.</span><span class="nf">width</span> <span class="o">*</span> <span class="mi">32</span><span class="p">,</span> <span class="vg">$game_map</span><span class="p">.</span><span class="nf">height</span> <span class="o">*</span> <span class="mi">32</span><span class="p">)</span>
+      <span class="vg">$game_map</span><span class="p">.</span><span class="nf">width</span><span class="p">.</span><span class="nf">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+        <span class="vg">$game_map</span><span class="p">.</span><span class="nf">height</span><span class="p">.</span><span class="nf">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">y</span><span class="o">|</span>
+          <span class="n">draw_point</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="k">end</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">draw_point</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+      <span class="n">color</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">MapSelect</span><span class="p">.</span><span class="nf">can_select?</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="p">?</span> <span class="no">OK_COLOR</span> <span class="p">:</span> <span class="no">NG_COLOR</span>
+      <span class="n">bitmap</span><span class="p">.</span><span class="nf">fill_rect</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="mi">32</span><span class="p">,</span> <span class="n">y</span> <span class="o">*</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">color</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># F12 guard</span>
+  <span class="no">DataManager</span><span class="p">.</span><span class="nf">singleton_def_before</span><span class="p">(</span><span class="ss">:init</span><span class="p">,</span> <span class="nb">method</span><span class="p">(</span><span class="ss">:cancel</span><span class="p">))</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Interpreter</span>
+
+  <span class="no">MapSelect</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">MapSelect</span>
+
+  <span class="k">def</span> <span class="nf">select_point</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="vg">$game_player</span><span class="p">.</span><span class="nf">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="vg">$game_player</span><span class="p">.</span><span class="nf">y</span><span class="p">)</span>
+    <span class="no">MapSelect</span><span class="p">.</span><span class="nf">start</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">while</span> <span class="no">MapSelect</span><span class="p">.</span><span class="nf">selecting</span>
+      <span class="no">MapSelect</span><span class="p">.</span><span class="nf">update</span>
+      <span class="no">Fiber</span><span class="p">.</span><span class="nf">yield</span>
+    <span class="k">end</span>
+    <span class="no">MapSelect</span><span class="p">.</span><span class="nf">point</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Spriteset_Map</span>
+  <span class="n">use_sprite</span><span class="p">(</span><span class="no">Taroxd</span><span class="o">::</span><span class="no">MapSelect</span><span class="o">::</span><span class="no">Cursor</span><span class="p">)</span> <span class="p">{</span> <span class="vi">@viewport2</span> <span class="p">}</span>
+  <span class="n">use_sprite</span><span class="p">(</span><span class="no">Taroxd</span><span class="o">::</span><span class="no">MapSelect</span><span class="o">::</span><span class="no">Status</span><span class="p">)</span> <span class="p">{</span> <span class="vi">@viewport2</span> <span class="p">}</span>
+<span class="k">end</span>
+</code></pre></div>

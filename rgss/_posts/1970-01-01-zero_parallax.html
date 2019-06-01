@@ -1,0 +1,32 @@
+---
+title: 固定远景
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">固定远景</span></a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">zero_parallax</span></a>
+<span class="k">module</span> <span class="nn">Taroxd</span>
+  <span class="c1"># 判断是否固定远景图</span>
+  <span class="no">ZeroParallax</span> <span class="o">=</span>
+    <span class="nb">proc</span> <span class="p">{</span> <span class="kp">true</span> <span class="p">}</span>                          <span class="c1"># 永远固定</span>
+    <span class="c1"># -&gt; name { name.start_with? '!' }     # 文件名以 ! 开头时固定</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Map</span>
+
+  <span class="n">def_chain</span> <span class="ss">:parallax_ox</span> <span class="k">do</span> <span class="o">|</span><span class="n">old</span><span class="p">,</span> <span class="n">bitmap</span><span class="o">|</span>
+    <span class="vi">@parallax_zero</span> <span class="p">?</span> <span class="vi">@parallax_x</span> <span class="o">*</span> <span class="mi">32</span> <span class="p">:</span> <span class="n">old</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="n">bitmap</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="n">def_chain</span> <span class="ss">:parallax_oy</span> <span class="k">do</span> <span class="o">|</span><span class="n">old</span><span class="p">,</span> <span class="n">bitmap</span><span class="o">|</span>
+    <span class="vi">@parallax_zero</span> <span class="p">?</span> <span class="vi">@parallax_y</span> <span class="o">*</span> <span class="mi">32</span> <span class="p">:</span> <span class="n">old</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="n">bitmap</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">update_parallax_zero</span><span class="p">(</span><span class="o">*</span><span class="p">)</span>
+    <span class="vi">@parallax_zero</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">ZeroParallax</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="vi">@parallax_name</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="n">def_after</span> <span class="ss">:change_parallax</span><span class="p">,</span> <span class="ss">:update_parallax_zero</span>
+  <span class="n">def_after</span> <span class="ss">:setup_parallax</span><span class="p">,</span> <span class="ss">:update_parallax_zero</span>
+<span class="k">end</span>
+</code></pre></div>

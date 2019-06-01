@@ -1,0 +1,100 @@
+---
+title: 敌人显血
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">enemy_hp</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">敌人显血</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/roll_gauge.html">roll_gauge</a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1"></span></a>
+<span class="c1">#    如不想显示，可在敌人处备注 &lt;hide hp&gt;</span>
+<span class="c1">#    可在敌人处备注 &lt;hp width w&gt;、&lt;hp height h&gt;、&lt;hp dxy dx dy&gt; 调整血槽。</span>
+<span class="c1">#    其中 w 表示宽度、h 表示高度，dx、dy 表示坐标的偏移。</span>
+
+<span class="no">Taroxd</span><span class="o">::</span><span class="no">EnemyHP</span> <span class="o">=</span> <span class="kp">true</span>
+
+<span class="k">class</span> <span class="nc">RPG</span><span class="o">::</span><span class="no">Enemy</span> <span class="o">&lt;</span> <span class="no">RPG</span><span class="o">::</span><span class="no">BaseItem</span>
+
+  <span class="n">note_any</span> <span class="ss">:hp_dxy</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="sr">/\s+(-?\d+)\s+(-?\d+)/</span><span class="p">,</span> <span class="s1">'[$1.to_i, $2.to_i]'</span>
+  <span class="n">note_i</span> <span class="ss">:hp_width</span><span class="p">,</span> <span class="mi">80</span>
+  <span class="n">note_i</span> <span class="ss">:hp_height</span><span class="p">,</span> <span class="mi">6</span>
+  <span class="n">note_bool</span> <span class="ss">:hide_hp?</span>
+
+  <span class="c1"># 初始化并获取战斗图的尺寸</span>
+  <span class="k">def</span> <span class="nf">init_width_height</span>
+    <span class="n">bitmap</span> <span class="o">=</span> <span class="no">Bitmap</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="s2">"Graphics/Battlers/</span><span class="si">#{</span><span class="vi">@battler_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="vi">@width</span> <span class="o">=</span> <span class="n">bitmap</span><span class="p">.</span><span class="nf">width</span>
+    <span class="vi">@height</span> <span class="o">=</span> <span class="n">bitmap</span><span class="p">.</span><span class="nf">height</span>
+    <span class="n">bitmap</span><span class="p">.</span><span class="nf">dispose</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">width</span>
+    <span class="k">return</span> <span class="vi">@width</span> <span class="k">if</span> <span class="vi">@width</span>
+    <span class="n">init_width_height</span>
+    <span class="vi">@width</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">height</span>
+    <span class="k">return</span> <span class="vi">@height</span> <span class="k">if</span> <span class="vi">@height</span>
+    <span class="n">init_width_height</span>
+    <span class="vi">@height</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Sprite_EnemyHP</span> <span class="o">&lt;</span> <span class="no">Sprite</span>
+
+  <span class="kp">include</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">RollGauge</span>
+  <span class="kp">include</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">DisposeBitmap</span>
+
+  <span class="no">HP_COLOR1</span> <span class="o">=</span> <span class="no">Color</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">223</span><span class="p">,</span> <span class="mi">127</span><span class="p">,</span> <span class="mi">63</span><span class="p">)</span>
+  <span class="no">HP_COLOR2</span> <span class="o">=</span> <span class="no">Color</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">239</span><span class="p">,</span> <span class="mi">191</span><span class="p">,</span> <span class="mi">63</span><span class="p">)</span>
+  <span class="no">BACK_COLOR</span> <span class="o">=</span> <span class="no">Color</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">31</span><span class="p">,</span> <span class="mi">31</span><span class="p">,</span> <span class="mi">63</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">viewport</span><span class="p">,</span> <span class="n">enemy</span><span class="p">)</span>
+    <span class="vi">@enemy</span> <span class="o">=</span> <span class="n">enemy</span>
+    <span class="k">super</span><span class="p">(</span><span class="n">viewport</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">enemy</span><span class="p">.</span><span class="nf">enemy</span>
+    <span class="vi">@width</span> <span class="o">=</span> <span class="n">data</span><span class="p">.</span><span class="nf">hp_width</span>
+    <span class="vi">@height</span> <span class="o">=</span> <span class="n">data</span><span class="p">.</span><span class="nf">hp_height</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">bitmap</span> <span class="o">=</span> <span class="no">Bitmap</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="vi">@width</span><span class="p">,</span> <span class="vi">@height</span><span class="p">)</span>
+    <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span> <span class="o">=</span> <span class="n">enemy</span><span class="p">.</span><span class="nf">enemy</span><span class="p">.</span><span class="nf">hp_dxy</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">ox</span> <span class="o">=</span> <span class="vi">@width</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">oy</span> <span class="o">=</span> <span class="vi">@height</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">x</span> <span class="o">=</span> <span class="n">enemy</span><span class="p">.</span><span class="nf">screen_x</span> <span class="o">+</span> <span class="n">dx</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">y</span> <span class="o">=</span> <span class="n">enemy</span><span class="p">.</span><span class="nf">screen_y</span> <span class="o">+</span> <span class="n">dy</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">z</span> <span class="o">=</span> <span class="n">enemy</span><span class="p">.</span><span class="nf">screen_z</span> <span class="o">+</span> <span class="mi">10</span>
+    <span class="n">refresh</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">make_gauge_transitions</span>
+    <span class="no">Transition</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">gauge_roll_times</span><span class="p">)</span> <span class="k">do</span>
+      <span class="vi">@enemy</span><span class="p">.</span><span class="nf">hp</span><span class="p">.</span><span class="nf">fdiv</span><span class="p">(</span><span class="vi">@enemy</span><span class="p">.</span><span class="nf">mhp</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">update_gauge_transitions</span>
+    <span class="n">gauge_transitions</span><span class="p">.</span><span class="nf">update</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">refresh</span>
+    <span class="n">bitmap</span><span class="p">.</span><span class="nf">clear</span>
+    <span class="n">rate</span> <span class="o">=</span> <span class="n">gauge_transitions</span><span class="p">.</span><span class="nf">value</span>
+    <span class="k">return</span> <span class="k">if</span> <span class="n">rate</span><span class="p">.</span><span class="nf">zero?</span>
+    <span class="n">fill_w</span> <span class="o">=</span> <span class="p">(</span><span class="n">bitmap</span><span class="p">.</span><span class="nf">width</span> <span class="o">*</span> <span class="n">rate</span><span class="p">).</span><span class="nf">to_i</span>
+    <span class="n">bitmap</span><span class="p">.</span><span class="nf">fill_rect</span><span class="p">(</span><span class="n">fill_w</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="vi">@width</span> <span class="o">-</span> <span class="n">fill_w</span><span class="p">,</span> <span class="vi">@height</span><span class="p">,</span> <span class="no">BACK_COLOR</span><span class="p">)</span>
+    <span class="n">bitmap</span><span class="p">.</span><span class="nf">gradient_fill_rect</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">fill_w</span><span class="p">,</span> <span class="vi">@height</span><span class="p">,</span> <span class="no">HP_COLOR1</span><span class="p">,</span> <span class="no">HP_COLOR2</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Spriteset_Battle</span>
+
+  <span class="c1"># 导入精灵组</span>
+  <span class="n">def_after</span> <span class="ss">:create_enemies</span> <span class="k">do</span>
+    <span class="vi">@enemy_hp_sprites</span> <span class="o">=</span> <span class="vg">$game_troop</span><span class="p">.</span><span class="nf">members</span><span class="p">.</span><span class="nf">map</span> <span class="p">{</span> <span class="o">|</span><span class="n">enemy</span><span class="o">|</span>
+      <span class="no">Sprite_EnemyHP</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="vi">@viewport1</span><span class="p">,</span> <span class="n">enemy</span><span class="p">)</span> <span class="k">unless</span> <span class="n">enemy</span><span class="p">.</span><span class="nf">enemy</span><span class="p">.</span><span class="nf">hide_hp?</span>
+    <span class="p">}.</span><span class="nf">compact</span>
+  <span class="k">end</span>
+
+  <span class="n">def_after</span><span class="p">(</span><span class="ss">:update_enemies</span><span class="p">)</span>  <span class="p">{</span> <span class="vi">@enemy_hp_sprites</span><span class="p">.</span><span class="nf">each</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:update</span><span class="p">)</span>  <span class="p">}</span>
+  <span class="n">def_after</span><span class="p">(</span><span class="ss">:dispose_enemies</span><span class="p">)</span> <span class="p">{</span> <span class="vi">@enemy_hp_sprites</span><span class="p">.</span><span class="nf">each</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:dispose</span><span class="p">)</span> <span class="p">}</span>
+<span class="k">end</span></code></pre></div>

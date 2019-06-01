@@ -1,0 +1,158 @@
+---
+title: 全键盘脚本
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">全键盘脚本</span></a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">keyboard</span></a>
+<span class="k">module</span> <span class="nn">Keyboard</span>
+
+  <span class="no">Taroxd</span><span class="o">::</span><span class="no">Keyboard</span> <span class="o">=</span> <span class="nb">self</span>
+
+  <span class="no">BUTTON_L</span>  <span class="o">=</span> <span class="mh">0x01</span>        <span class="c1"># left mouse button</span>
+  <span class="no">BUTTON_R</span>  <span class="o">=</span> <span class="mh">0x02</span>        <span class="c1"># right mouse button</span>
+  <span class="no">BUTTON_M</span>  <span class="o">=</span> <span class="mh">0x04</span>        <span class="c1"># middle mouse button</span>
+  <span class="no">BUTTON_4</span>  <span class="o">=</span> <span class="mh">0x05</span>        <span class="c1"># 4th mouse button</span>
+  <span class="no">BUTTON_5</span>  <span class="o">=</span> <span class="mh">0x06</span>        <span class="c1"># 5th mouse button</span>
+
+  <span class="no">BACK</span>      <span class="o">=</span> <span class="mh">0x08</span>        <span class="c1"># BACKSPACE key</span>
+  <span class="no">TAB</span>       <span class="o">=</span> <span class="mh">0x09</span>        <span class="c1"># TAB key</span>
+  <span class="no">ENTER</span>     <span class="o">=</span> <span class="mh">0x0D</span>        <span class="c1"># ENTER key</span>
+  <span class="no">SHIFT</span>     <span class="o">=</span> <span class="mh">0x10</span>        <span class="c1"># SHIFT key</span>
+  <span class="no">CTLR</span>      <span class="o">=</span> <span class="mh">0x11</span>        <span class="c1"># CTLR key</span>
+  <span class="no">ALT</span>       <span class="o">=</span> <span class="mh">0x12</span>        <span class="c1"># ALT key</span>
+  <span class="no">PAUSE</span>     <span class="o">=</span> <span class="mh">0x13</span>        <span class="c1"># PAUSE key</span>
+  <span class="no">CAPS</span>      <span class="o">=</span> <span class="mh">0x14</span>        <span class="c1"># CAPS LOCK key</span>
+  <span class="no">ESC</span>       <span class="o">=</span> <span class="mh">0x1B</span>        <span class="c1"># ESC key</span>
+  <span class="no">SPACE</span>     <span class="o">=</span> <span class="mh">0x20</span>        <span class="c1"># SPACEBAR</span>
+  <span class="no">PRIOR</span>     <span class="o">=</span> <span class="mh">0x21</span>        <span class="c1"># PAGE UP key</span>
+  <span class="no">NEXT</span>      <span class="o">=</span> <span class="mh">0x22</span>        <span class="c1"># PAGE DOWN key</span>
+  <span class="nb">self</span><span class="o">::</span><span class="k">END</span> <span class="o">=</span> <span class="mh">0x23</span>        <span class="c1"># END key</span>
+  <span class="no">HOME</span>      <span class="o">=</span> <span class="mh">0x24</span>        <span class="c1"># HOME key</span>
+  <span class="no">LEFT</span>      <span class="o">=</span> <span class="mh">0x25</span>        <span class="c1"># LEFT ARROW key</span>
+  <span class="no">UP</span>        <span class="o">=</span> <span class="mh">0x26</span>        <span class="c1"># UP ARROW key</span>
+  <span class="no">RIGHT</span>     <span class="o">=</span> <span class="mh">0x27</span>        <span class="c1"># RIGHT ARROW key</span>
+  <span class="no">DOWN</span>      <span class="o">=</span> <span class="mh">0x28</span>        <span class="c1"># DOWN ARROW key</span>
+  <span class="no">SELECT</span>    <span class="o">=</span> <span class="mh">0x29</span>        <span class="c1"># SELECT key</span>
+  <span class="no">PRINT</span>     <span class="o">=</span> <span class="mh">0x2A</span>        <span class="c1"># PRINT key</span>
+  <span class="no">BB</span>        <span class="o">=</span> <span class="mh">0x2B</span>        <span class="c1"># SELECT key</span>
+  <span class="no">SNAPSHOT</span>  <span class="o">=</span> <span class="mh">0x2C</span>        <span class="c1"># PRINT SCREEN key</span>
+  <span class="no">INSERT</span>    <span class="o">=</span> <span class="mh">0x2D</span>        <span class="c1"># INS key</span>
+  <span class="no">DELETE</span>    <span class="o">=</span> <span class="mh">0x2E</span>        <span class="c1"># DEL key</span>
+
+  <span class="no">NUM0</span>      <span class="o">=</span> <span class="mh">0x30</span>        <span class="c1"># 0 key</span>
+  <span class="no">NUM1</span>      <span class="o">=</span> <span class="mh">0x31</span>        <span class="c1"># 1 key</span>
+  <span class="no">NUM2</span>      <span class="o">=</span> <span class="mh">0x32</span>        <span class="c1"># 2 key</span>
+  <span class="no">NUM3</span>      <span class="o">=</span> <span class="mh">0x33</span>        <span class="c1"># 3 key</span>
+  <span class="no">NUM4</span>      <span class="o">=</span> <span class="mh">0x34</span>        <span class="c1"># 4 key</span>
+  <span class="no">NUM5</span>      <span class="o">=</span> <span class="mh">0x35</span>        <span class="c1"># 5 key</span>
+  <span class="no">NUM6</span>      <span class="o">=</span> <span class="mh">0x36</span>        <span class="c1"># 6 key</span>
+  <span class="no">NUM7</span>      <span class="o">=</span> <span class="mh">0x37</span>        <span class="c1"># 7 key</span>
+  <span class="no">NUM8</span>      <span class="o">=</span> <span class="mh">0x38</span>        <span class="c1"># 8 key</span>
+  <span class="no">NUM9</span>      <span class="o">=</span> <span class="mh">0x39</span>        <span class="c1"># 9 key</span>
+  <span class="no">A</span>         <span class="o">=</span> <span class="mh">0x41</span>        <span class="c1"># A key</span>
+  <span class="no">B</span>         <span class="o">=</span> <span class="mh">0x42</span>        <span class="c1"># B key</span>
+  <span class="no">C</span>         <span class="o">=</span> <span class="mh">0x43</span>        <span class="c1"># C key</span>
+  <span class="no">D</span>         <span class="o">=</span> <span class="mh">0x44</span>        <span class="c1"># D key</span>
+  <span class="no">E</span>         <span class="o">=</span> <span class="mh">0x45</span>        <span class="c1"># E key</span>
+  <span class="no">F</span>         <span class="o">=</span> <span class="mh">0x46</span>        <span class="c1"># F key</span>
+  <span class="no">G</span>         <span class="o">=</span> <span class="mh">0x47</span>        <span class="c1"># G key</span>
+  <span class="no">H</span>         <span class="o">=</span> <span class="mh">0x48</span>        <span class="c1"># H key</span>
+  <span class="no">I</span>         <span class="o">=</span> <span class="mh">0x49</span>        <span class="c1"># I key</span>
+  <span class="no">J</span>         <span class="o">=</span> <span class="mh">0x4A</span>        <span class="c1"># J key</span>
+  <span class="no">K</span>         <span class="o">=</span> <span class="mh">0x4B</span>        <span class="c1"># K key</span>
+  <span class="no">L</span>         <span class="o">=</span> <span class="mh">0x4C</span>        <span class="c1"># L key</span>
+  <span class="no">M</span>         <span class="o">=</span> <span class="mh">0x4D</span>        <span class="c1"># M key</span>
+  <span class="no">N</span>         <span class="o">=</span> <span class="mh">0x4E</span>        <span class="c1"># N key</span>
+  <span class="no">O</span>         <span class="o">=</span> <span class="mh">0x4F</span>        <span class="c1"># O key</span>
+  <span class="no">P</span>         <span class="o">=</span> <span class="mh">0x50</span>        <span class="c1"># P key</span>
+  <span class="no">Q</span>         <span class="o">=</span> <span class="mh">0x51</span>        <span class="c1"># Q key</span>
+  <span class="no">R</span>         <span class="o">=</span> <span class="mh">0x52</span>        <span class="c1"># R key</span>
+  <span class="no">S</span>         <span class="o">=</span> <span class="mh">0x53</span>        <span class="c1"># S key</span>
+  <span class="no">T</span>         <span class="o">=</span> <span class="mh">0x54</span>        <span class="c1"># T key</span>
+  <span class="no">U</span>         <span class="o">=</span> <span class="mh">0x55</span>        <span class="c1"># U key</span>
+  <span class="no">V</span>         <span class="o">=</span> <span class="mh">0x56</span>        <span class="c1"># V key</span>
+  <span class="no">W</span>         <span class="o">=</span> <span class="mh">0x57</span>        <span class="c1"># W key</span>
+  <span class="no">X</span>         <span class="o">=</span> <span class="mh">0x58</span>        <span class="c1"># X key</span>
+  <span class="no">Y</span>         <span class="o">=</span> <span class="mh">0x59</span>        <span class="c1"># Y key</span>
+  <span class="no">Z</span>         <span class="o">=</span> <span class="mh">0x5A</span>        <span class="c1"># Z key</span>
+
+  <span class="no">LWIN</span>      <span class="o">=</span> <span class="mh">0x5B</span>        <span class="c1"># Left Windows key (Microsoft Natural keyboard)</span>
+  <span class="no">RWIN</span>      <span class="o">=</span> <span class="mh">0x5C</span>        <span class="c1"># Right Windows key (Natural keyboard)</span>
+  <span class="no">APPS</span>      <span class="o">=</span> <span class="mh">0x5D</span>        <span class="c1"># Applications key (Natural keyboard)</span>
+
+  <span class="no">NUMPAD0</span>   <span class="o">=</span> <span class="mh">0x60</span>        <span class="c1"># Numeric keypad 0 key</span>
+  <span class="no">NUMPAD1</span>   <span class="o">=</span> <span class="mh">0x61</span>        <span class="c1"># Numeric keypad 1 key</span>
+  <span class="no">NUMPAD2</span>   <span class="o">=</span> <span class="mh">0x62</span>        <span class="c1"># Numeric keypad 2 key</span>
+  <span class="no">NUMPAD3</span>   <span class="o">=</span> <span class="mh">0x63</span>        <span class="c1"># Numeric keypad 3 key</span>
+  <span class="no">NUMPAD4</span>   <span class="o">=</span> <span class="mh">0x64</span>        <span class="c1"># Numeric keypad 4 key</span>
+  <span class="no">NUMPAD5</span>   <span class="o">=</span> <span class="mh">0x65</span>        <span class="c1"># Numeric keypad 5 key</span>
+  <span class="no">NUMPAD6</span>   <span class="o">=</span> <span class="mh">0x66</span>        <span class="c1"># Numeric keypad 6 key</span>
+  <span class="no">NUMPAD7</span>   <span class="o">=</span> <span class="mh">0x67</span>        <span class="c1"># Numeric keypad 7 key</span>
+  <span class="no">NUMPAD8</span>   <span class="o">=</span> <span class="mh">0x68</span>        <span class="c1"># Numeric keypad 8 key</span>
+  <span class="no">NUMPAD9</span>   <span class="o">=</span> <span class="mh">0x69</span>        <span class="c1"># Numeric keypad 9 key</span>
+  <span class="no">MULTIPLY</span>  <span class="o">=</span> <span class="mh">0x6A</span>        <span class="c1"># Multiply key (*)</span>
+  <span class="no">ADD</span>       <span class="o">=</span> <span class="mh">0x6B</span>        <span class="c1"># Add key (+)</span>
+  <span class="no">SEPARATOR</span> <span class="o">=</span> <span class="mh">0x6C</span>        <span class="c1"># Separator key</span>
+  <span class="no">SUBTRACT</span>  <span class="o">=</span> <span class="mh">0x6D</span>        <span class="c1"># Subtract key (-)</span>
+  <span class="no">DECIMAL</span>   <span class="o">=</span> <span class="mh">0x6E</span>        <span class="c1"># Decimal key</span>
+  <span class="no">DIVIDE</span>    <span class="o">=</span> <span class="mh">0x6F</span>        <span class="c1"># Divide key (/)</span>
+
+  <span class="no">F1</span>        <span class="o">=</span> <span class="mh">0x70</span>        <span class="c1"># F1 key</span>
+  <span class="no">F2</span>        <span class="o">=</span> <span class="mh">0x71</span>        <span class="c1"># F2 key</span>
+  <span class="no">F3</span>        <span class="o">=</span> <span class="mh">0x72</span>        <span class="c1"># F3 key</span>
+  <span class="no">F4</span>        <span class="o">=</span> <span class="mh">0x73</span>        <span class="c1"># F4 key</span>
+  <span class="no">F5</span>        <span class="o">=</span> <span class="mh">0x74</span>        <span class="c1"># F5 key</span>
+  <span class="no">F6</span>        <span class="o">=</span> <span class="mh">0x75</span>        <span class="c1"># F6 key</span>
+  <span class="no">F7</span>        <span class="o">=</span> <span class="mh">0x76</span>        <span class="c1"># F7 key</span>
+  <span class="no">F8</span>        <span class="o">=</span> <span class="mh">0x77</span>        <span class="c1"># F8 key</span>
+  <span class="no">F9</span>        <span class="o">=</span> <span class="mh">0x78</span>        <span class="c1"># F9 key</span>
+  <span class="no">F10</span>       <span class="o">=</span> <span class="mh">0x79</span>        <span class="c1"># F10 key</span>
+  <span class="no">F11</span>       <span class="o">=</span> <span class="mh">0x7A</span>        <span class="c1"># F11 key</span>
+  <span class="no">F12</span>       <span class="o">=</span> <span class="mh">0x7B</span>        <span class="c1"># F12 key</span>
+
+  <span class="no">NUMLOCK</span>   <span class="o">=</span> <span class="mh">0x90</span>        <span class="c1"># NUM LOCK key</span>
+  <span class="no">SCROLL</span>    <span class="o">=</span> <span class="mh">0x91</span>        <span class="c1"># SCROLL LOCK key</span>
+
+  <span class="no">LSHIFT</span>    <span class="o">=</span> <span class="mh">0xA0</span>        <span class="c1"># Left SHIFT key</span>
+  <span class="no">RSHIFT</span>    <span class="o">=</span> <span class="mh">0xA1</span>        <span class="c1"># Right SHIFT key</span>
+  <span class="no">LCONTROL</span>  <span class="o">=</span> <span class="mh">0xA2</span>        <span class="c1"># Left CONTROL key</span>
+  <span class="no">RCONTROL</span>  <span class="o">=</span> <span class="mh">0xA3</span>        <span class="c1"># Right CONTROL key</span>
+  <span class="no">L_ALT</span>     <span class="o">=</span> <span class="mh">0xA4</span>        <span class="c1"># Left ALT key</span>
+  <span class="no">R_ALT</span>     <span class="o">=</span> <span class="mh">0xA5</span>        <span class="c1"># Right ALT key</span>
+
+  <span class="no">SEP</span>       <span class="o">=</span> <span class="mh">0xBC</span>        <span class="c1"># , key</span>
+  <span class="no">DASH</span>      <span class="o">=</span> <span class="mh">0xBD</span>        <span class="c1"># - key</span>
+  <span class="no">DOTT</span>      <span class="o">=</span> <span class="mh">0xBE</span>        <span class="c1"># . Key</span>
+
+  <span class="no">API</span> <span class="o">=</span> <span class="no">Win32API</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="s1">'user32'</span><span class="p">,</span> <span class="s1">'GetAsyncKeyState'</span><span class="p">,</span> <span class="s1">'I'</span><span class="p">,</span> <span class="s1">'I'</span><span class="p">)</span>
+
+  <span class="c1"># 以按键码为键，连续按下的帧数为值的 hash</span>
+  <span class="vi">@states</span> <span class="o">=</span> <span class="no">Hash</span><span class="p">.</span><span class="nf">new</span> <span class="p">{</span> <span class="o">|</span><span class="n">h</span><span class="p">,</span> <span class="n">k</span><span class="o">|</span> <span class="n">h</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span> <span class="p">}</span>
+
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">update</span>
+    <span class="vi">@states</span><span class="p">.</span><span class="nf">each_key</span> <span class="k">do</span> <span class="o">|</span><span class="n">key</span><span class="o">|</span>
+      <span class="vi">@states</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">press?</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="p">?</span> <span class="vi">@states</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:</span> <span class="mi">0</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">clear</span>
+    <span class="vi">@states</span><span class="p">.</span><span class="nf">clear</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">press?</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="no">API</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">trigger?</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="vi">@states</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">repeat?</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="n">times</span> <span class="o">=</span> <span class="vi">@states</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="n">times</span> <span class="o">==</span> <span class="mi">1</span> <span class="o">||</span> <span class="n">times</span> <span class="o">&gt;</span> <span class="mi">23</span> <span class="o">&amp;&amp;</span> <span class="n">times</span> <span class="o">%</span> <span class="mi">6</span> <span class="o">==</span> <span class="mi">0</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="no">Scene_Base</span><span class="p">.</span><span class="nf">send</span> <span class="ss">:def_before</span><span class="p">,</span> <span class="ss">:post_start</span><span class="p">,</span> <span class="no">Keyboard</span><span class="p">.</span><span class="nf">method</span><span class="p">(</span><span class="ss">:clear</span><span class="p">)</span>
+<span class="no">Input</span><span class="p">.</span><span class="nf">singleton_def_after</span> <span class="ss">:update</span><span class="p">,</span> <span class="no">Keyboard</span><span class="p">.</span><span class="nf">method</span><span class="p">(</span><span class="ss">:update</span><span class="p">)</span></code></pre></div>

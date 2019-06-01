@@ -1,0 +1,77 @@
+---
+title: 显示地图通行度
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">show_passage</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">显示地图通行度</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/rgss_bugfix.html">rgss_bugfix</a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1">游戏测试中按下F6即可启用，再按一次关闭</span></a>
+<span class="k">class</span> <span class="nc">Taroxd</span><span class="o">::</span><span class="no">PlanePassage</span> <span class="o">&lt;</span> <span class="no">Plane</span>
+
+  <span class="no">ENABLE</span> <span class="o">=</span> <span class="vg">$TEST</span>                       <span class="c1"># 是否启用功能</span>
+  <span class="no">KEY</span> <span class="o">=</span> <span class="ss">:F6</span>                            <span class="c1"># 控制显示通行度的按键</span>
+  <span class="no">VISIBLE</span> <span class="o">=</span> <span class="kp">false</span>                      <span class="c1"># 起始时是否可见</span>
+  <span class="no">OPACITY</span> <span class="o">=</span> <span class="mi">150</span>                        <span class="c1"># 不透明度</span>
+  <span class="no">NG</span> <span class="o">=</span> <span class="no">Color</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="no">OPACITY</span><span class="p">)</span>   <span class="c1"># 不可通行的颜色</span>
+  <span class="no">OK</span> <span class="o">=</span> <span class="no">Color</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="no">OPACITY</span><span class="p">)</span>   <span class="c1"># 可以通行的颜色</span>
+  <span class="no">NG_WIDTH</span> <span class="o">=</span> <span class="mi">4</span>                         <span class="c1"># 不可通行方向显示的宽度</span>
+
+  <span class="kp">include</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">DisposeBitmap</span>
+  <span class="kp">include</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">BugFix</span><span class="o">::</span><span class="no">PlaneVisible</span>
+
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">_</span><span class="p">)</span>
+    <span class="k">super</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">visible</span> <span class="o">=</span> <span class="no">VISIBLE</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">z</span> <span class="o">=</span> <span class="mi">200</span>
+    <span class="n">refresh</span>
+    <span class="n">update</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">update</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">visible</span> <span class="o">^=</span> <span class="kp">true</span> <span class="k">if</span> <span class="no">Input</span><span class="p">.</span><span class="nf">trigger?</span><span class="p">(</span><span class="no">KEY</span><span class="p">)</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">ox</span> <span class="o">=</span> <span class="vg">$game_map</span><span class="p">.</span><span class="nf">display_x</span> <span class="o">*</span> <span class="mi">32</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">oy</span> <span class="o">=</span> <span class="vg">$game_map</span><span class="p">.</span><span class="nf">display_y</span> <span class="o">*</span> <span class="mi">32</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">refresh</span>
+    <span class="n">bitmap</span><span class="p">.</span><span class="nf">dispose</span> <span class="k">if</span> <span class="n">bitmap</span>
+    <span class="nb">self</span><span class="p">.</span><span class="nf">bitmap</span> <span class="o">=</span> <span class="no">Bitmap</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="vg">$game_map</span><span class="p">.</span><span class="nf">width</span> <span class="o">*</span> <span class="mi">32</span><span class="p">,</span> <span class="vg">$game_map</span><span class="p">.</span><span class="nf">height</span> <span class="o">*</span> <span class="mi">32</span><span class="p">)</span>
+    <span class="vg">$game_map</span><span class="p">.</span><span class="nf">width</span><span class="p">.</span><span class="nf">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+      <span class="vg">$game_map</span><span class="p">.</span><span class="nf">height</span><span class="p">.</span><span class="nf">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">y</span><span class="o">|</span>
+        <span class="n">draw_point</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 绘制地图上的点 (x, y)</span>
+  <span class="k">def</span> <span class="nf">draw_point</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="n">ng_dirs</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">].</span><span class="nf">reject</span> <span class="p">{</span> <span class="o">|</span><span class="n">d</span><span class="o">|</span> <span class="vg">$game_map</span><span class="p">.</span><span class="nf">passable?</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="p">}</span>
+    <span class="k">if</span> <span class="n">ng_dirs</span><span class="p">.</span><span class="nf">size</span> <span class="o">==</span> <span class="mi">4</span>
+      <span class="n">bitmap</span><span class="p">.</span><span class="nf">fill_rect</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="mi">32</span><span class="p">,</span> <span class="n">y</span> <span class="o">*</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="no">NG</span><span class="p">)</span>
+      <span class="k">return</span>
+    <span class="k">end</span>
+    <span class="n">bitmap</span><span class="p">.</span><span class="nf">fill_rect</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="mi">32</span><span class="p">,</span> <span class="n">y</span> <span class="o">*</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="no">OK</span><span class="p">)</span>
+    <span class="n">ng_dirs</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">d</span><span class="o">|</span>
+      <span class="n">dx</span> <span class="o">=</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">6</span> <span class="p">?</span> <span class="mi">32</span> <span class="o">-</span> <span class="no">NG_WIDTH</span> <span class="p">:</span> <span class="mi">0</span>
+      <span class="n">dy</span> <span class="o">=</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">2</span> <span class="p">?</span> <span class="mi">32</span> <span class="o">-</span> <span class="no">NG_WIDTH</span> <span class="p">:</span> <span class="mi">0</span>
+      <span class="k">if</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">2</span> <span class="o">||</span> <span class="n">d</span> <span class="o">==</span> <span class="mi">8</span>
+        <span class="n">width</span>  <span class="o">=</span> <span class="mi">32</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="no">NG_WIDTH</span>
+      <span class="k">else</span>
+        <span class="n">width</span>  <span class="o">=</span> <span class="no">NG_WIDTH</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="mi">32</span>
+      <span class="k">end</span>
+      <span class="n">bitmap</span><span class="p">.</span><span class="nf">fill_rect</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="mi">32</span> <span class="o">+</span> <span class="n">dx</span><span class="p">,</span> <span class="n">y</span> <span class="o">*</span> <span class="mi">32</span> <span class="o">+</span> <span class="n">dy</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="no">NG</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Spriteset_Map</span>
+  <span class="n">def_before</span> <span class="ss">:create_parallax</span> <span class="k">do</span>
+    <span class="vi">@passage_plane</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">PlanePassage</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="vi">@viewport3</span><span class="p">)</span>
+  <span class="k">end</span>
+  <span class="n">def_before</span><span class="p">(</span><span class="ss">:update_parallax</span><span class="p">)</span>    <span class="p">{</span> <span class="vi">@passage_plane</span><span class="p">.</span><span class="nf">update</span>  <span class="p">}</span>
+  <span class="n">def_before</span><span class="p">(</span><span class="ss">:refresh_characters</span><span class="p">)</span> <span class="p">{</span> <span class="vi">@passage_plane</span><span class="p">.</span><span class="nf">refresh</span> <span class="p">}</span>
+  <span class="n">def_before</span><span class="p">(</span><span class="ss">:dispose_parallax</span><span class="p">)</span>   <span class="p">{</span> <span class="vi">@passage_plane</span><span class="p">.</span><span class="nf">dispose</span> <span class="p">}</span>
+<span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">PlanePassage</span><span class="o">::</span><span class="no">ENABLE</span></code></pre></div>

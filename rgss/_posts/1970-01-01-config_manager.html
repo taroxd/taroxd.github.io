@@ -1,0 +1,46 @@
+---
+title: 全局配置管理器
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">全局配置管理器</span></a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">config_manager</span></a>
+<span class="k">module</span> <span class="nn">Taroxd</span>
+  <span class="k">module</span> <span class="nn">ConfigManager</span>
+    <span class="no">SAVEFILE_NAME</span> <span class="o">=</span> <span class="s1">'config.rvdata2'</span>
+
+    <span class="k">if</span> <span class="no">File</span><span class="p">.</span><span class="nf">exist?</span><span class="p">(</span><span class="no">SAVEFILE_NAME</span><span class="p">)</span>
+      <span class="vi">@data</span> <span class="o">=</span> <span class="n">load_data</span><span class="p">(</span><span class="no">SAVEFILE_NAME</span><span class="p">)</span>
+    <span class="k">else</span>
+      <span class="vi">@data</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">[]</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+      <span class="vi">@data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">[]=</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+      <span class="vi">@data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+      <span class="n">on_change</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">on_change</span>
+      <span class="n">save_data</span> <span class="vi">@data</span><span class="p">,</span> <span class="no">SAVEFILE_NAME</span>
+    <span class="k">end</span>
+
+    <span class="c1"># This method can be used for consecutive value changes,</span>
+    <span class="c1"># so that the file is written only once.</span>
+    <span class="c1"># The methods defined in Hash can be used for data manipulation.</span>
+    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">data</span>
+      <span class="k">if</span> <span class="nb">block_given?</span>
+        <span class="k">begin</span>
+          <span class="k">yield</span> <span class="vi">@data</span>
+        <span class="k">ensure</span>
+          <span class="n">on_change</span>
+        <span class="k">end</span>
+      <span class="k">else</span>
+        <span class="vi">@data</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>

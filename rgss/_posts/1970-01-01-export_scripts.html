@@ -1,0 +1,39 @@
+---
+title: 导出脚本
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">导出脚本</span></a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">export_scripts</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/metadata.html">metadata</a>
+<span class="k">module</span> <span class="nn">Taroxd</span>
+  <span class="k">module</span> <span class="nn">ExportScripts</span>
+    <span class="no">Success</span> <span class="o">=</span> <span class="no">Class</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="no">StandardError</span><span class="p">)</span>
+    <span class="no">PATH</span> <span class="o">=</span> <span class="s1">'rgss3'</span>
+    <span class="no">EXT</span> <span class="o">=</span> <span class="s1">'.rb'</span>
+    
+    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">call</span>
+      <span class="k">if</span> <span class="no">File</span><span class="p">.</span><span class="nf">directory?</span><span class="p">(</span><span class="no">PATH</span><span class="p">)</span>
+        <span class="no">Dir</span><span class="p">.</span><span class="nf">glob</span><span class="p">(</span><span class="s2">"</span><span class="si">#{</span><span class="no">PATH</span><span class="si">}</span><span class="s2">/*</span><span class="si">#{</span><span class="no">EXT</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="o">&amp;</span><span class="no">File</span><span class="p">.</span><span class="nf">method</span><span class="p">(</span><span class="ss">:delete</span><span class="p">))</span>
+      <span class="k">else</span>
+        <span class="no">Dir</span><span class="p">.</span><span class="nf">mkdir</span><span class="p">(</span><span class="no">PATH</span><span class="p">)</span>
+      <span class="k">end</span>
+
+      <span class="vg">$RGSS_SCRIPTS</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">contents</span><span class="p">)</span><span class="o">|</span>
+        <span class="k">next</span> <span class="k">unless</span> <span class="n">contents</span><span class="p">.</span><span class="nf">force_encoding</span><span class="p">(</span><span class="s1">'utf-8'</span><span class="p">)[</span><span class="sr">/\S/</span><span class="p">]</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Metadata</span><span class="p">.</span><span class="nf">read</span><span class="p">(</span><span class="n">contents</span><span class="p">)</span>
+        <span class="k">next</span> <span class="k">unless</span> <span class="n">metadata</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">metadata</span><span class="p">[</span><span class="ss">:id</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">filename</span>
+          <span class="no">File</span><span class="p">.</span><span class="nf">open</span><span class="p">(</span><span class="s2">"</span><span class="si">#{</span><span class="no">PATH</span><span class="si">}</span><span class="s2">/</span><span class="si">#{</span><span class="n">filename</span><span class="si">}#{</span><span class="no">EXT</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s1">'wb'</span><span class="p">,</span> <span class="ss">encoding: </span><span class="s1">'utf-8'</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">f</span><span class="o">|</span>
+            <span class="n">f</span><span class="p">.</span><span class="nf">write</span> <span class="n">contents</span><span class="p">.</span><span class="nf">delete</span><span class="p">(</span><span class="s2">"</span><span class="se">\r</span><span class="s2">"</span><span class="p">)</span>
+          <span class="k">end</span>
+        <span class="k">end</span>
+      <span class="k">end</span>
+      <span class="c1"># raise in order to navigate to this page</span>
+      <span class="k">raise</span> <span class="no">Success</span><span class="p">,</span> <span class="s1">'Scripts are exported successfully.'</span> 
+    <span class="k">end</span>
+
+    <span class="n">call</span> <span class="k">if</span> <span class="vg">$TEST</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="vg">$BTEST</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>

@@ -1,0 +1,21 @@
+
+<div id="sidebar">
+  <div class="wrapper">
+    <nav class="sidebar-item">
+      <h4>■ 索引</h4>
+      <ul>
+      {% for link in site.links.local %}
+        <li><a href="{{ link.url }}">{{ link.title }}</a></li>
+      {% endfor %}
+      </ul>
+    </nav>
+    <nav class="sidebar-item">
+      <h4>■ Links</h4>
+      <ul>
+      {% for link in site.links.global %}
+        <li><a href="{{ link.url }}">{{ link.title }}</a></li>
+      {% endfor %}
+      </ul>
+    </nav>
+  </div>
+</div>

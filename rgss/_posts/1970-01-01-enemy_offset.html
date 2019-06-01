@@ -1,0 +1,24 @@
+---
+title: 调整敌人位置
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">enemy_offset</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">调整敌人位置</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1"></span></a>
+
+<span class="no">Taroxd</span><span class="o">::</span><span class="no">EnemyOffset</span> <span class="o">=</span> <span class="kp">true</span>
+
+<span class="k">class</span> <span class="nc">RPG</span><span class="o">::</span><span class="no">Enemy</span> <span class="o">&lt;</span> <span class="no">RPG</span><span class="o">::</span><span class="no">BaseItem</span>
+  <span class="n">note_i</span> <span class="ss">:offset_x</span>
+  <span class="n">note_i</span> <span class="ss">:offset_y</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Troop</span>
+  <span class="n">def_after</span> <span class="ss">:setup</span> <span class="k">do</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span>
+    <span class="vi">@enemies</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">enemy</span><span class="o">|</span>
+      <span class="n">enemy</span><span class="p">.</span><span class="nf">screen_x</span> <span class="o">+=</span> <span class="n">enemy</span><span class="p">.</span><span class="nf">enemy</span><span class="p">.</span><span class="nf">offset_x</span>
+      <span class="n">enemy</span><span class="p">.</span><span class="nf">screen_y</span> <span class="o">+=</span> <span class="n">enemy</span><span class="p">.</span><span class="nf">enemy</span><span class="p">.</span><span class="nf">offset_y</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre></div>

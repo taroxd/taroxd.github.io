@@ -1,0 +1,144 @@
+---
+title: 开关变量钩子
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">game_variable_hook</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">开关变量钩子</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1"></span></a>
+<span class="c1">#   可以用于事件页的出现条件，</span>
+<span class="c1">#   可以用于其他以开关作为条件的脚本。</span>
+<span class="c1">#</span>
+<span class="c1">#   设置区域在下方，设置范例：</span>
+<span class="c1">#</span>
+<span class="c1">#   变量1 固定为队伍的金钱</span>
+<span class="c1">#     variable(1) { $game_party.gold }</span>
+<span class="c1">#</span>
+<span class="c1">#   变量2 固定为队伍中第i+1号队员的体力值，其中i为变量2原本的值</span>
+<span class="c1">#     variable(2) do |i|</span>
+<span class="c1">#       actor = $game_party.members[i]</span>
+<span class="c1">#       actor ? actor.hp : 0</span>
+<span class="c1">#     end</span>
+<span class="c1">#</span>
+<span class="c1">#   开关1 取反</span>
+<span class="c1">#     switch(1, &amp;:!)</span>
+
+<span class="k">module</span> <span class="nn">Taroxd</span> <span class="k">end</span>
+
+<span class="k">module</span> <span class="nn">Taroxd::GameVariableHook</span>
+
+  <span class="c1"># 是否更改F9调试窗口的显示。如无冲突建议为 true。</span>
+  <span class="no">DEBUG_WINDOW</span> <span class="o">=</span> <span class="kp">true</span>
+
+  <span class="vi">@list</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># 保存了监控设置的哈希表</span>
+
+  <span class="c1"># 获取变量的值</span>
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">operate</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+    <span class="nb">proc</span> <span class="o">=</span> <span class="vi">@list</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+    <span class="nb">proc</span> <span class="p">?</span> <span class="nb">proc</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="p">:</span> <span class="n">value</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 增加开关监控（不存档）</span>
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">switch</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="o">&amp;</span><span class="nb">proc</span><span class="p">)</span>
+    <span class="vi">@list</span><span class="p">[</span><span class="o">-</span><span class="nb">id</span><span class="p">]</span> <span class="o">=</span> <span class="nb">proc</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 增加变量监控（不存档）</span>
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">variable</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="o">&amp;</span><span class="nb">proc</span><span class="p">)</span>
+    <span class="vi">@list</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="o">=</span> <span class="nb">proc</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 是否正在监控。若列表不存在对应的项或值为 nil，则返回 nil。</span>
+  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">include?</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
+    <span class="vi">@list</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+  <span class="k">end</span>
+
+  <span class="c1"># --- 设置区域在此 ---</span>
+
+  <span class="c1"># --- 设置区域结束 ---</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Switches</span>
+  <span class="kp">alias_method</span> <span class="ss">:value_without_hook</span><span class="p">,</span> <span class="ss">:[]</span>
+  <span class="k">def</span> <span class="nf">[]</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
+    <span class="no">Taroxd</span><span class="o">::</span><span class="no">GameVariableHook</span><span class="p">.</span><span class="nf">operate</span><span class="p">(</span><span class="o">-</span><span class="nb">id</span><span class="p">,</span> <span class="n">value_without_hook</span><span class="p">(</span><span class="nb">id</span><span class="p">))</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Variables</span>
+  <span class="kp">alias_method</span> <span class="ss">:value_without_hook</span><span class="p">,</span> <span class="ss">:[]</span>
+  <span class="k">def</span> <span class="nf">[]</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
+    <span class="no">Taroxd</span><span class="o">::</span><span class="no">GameVariableHook</span><span class="p">.</span><span class="nf">operate</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">value_without_hook</span><span class="p">(</span><span class="nb">id</span><span class="p">))</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Interpreter</span>
+  <span class="k">def</span> <span class="nf">operate_variable</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">type</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+    <span class="vg">$game_variables</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="o">=</span> <span class="k">case</span> <span class="n">type</span>
+    <span class="k">when</span> <span class="mi">0</span>  <span class="c1"># 代入</span>
+      <span class="n">value</span>
+    <span class="k">when</span> <span class="mi">1</span>  <span class="c1"># 加法</span>
+      <span class="vg">$game_variables</span><span class="p">.</span><span class="nf">value_without_hook</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span> <span class="o">+</span> <span class="n">value</span>
+    <span class="k">when</span> <span class="mi">2</span>  <span class="c1"># 减法</span>
+      <span class="vg">$game_variables</span><span class="p">.</span><span class="nf">value_without_hook</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span> <span class="o">-</span> <span class="n">value</span>
+    <span class="k">when</span> <span class="mi">3</span>  <span class="c1"># 乘法</span>
+      <span class="vg">$game_variables</span><span class="p">.</span><span class="nf">value_without_hook</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span> <span class="o">*</span> <span class="n">value</span>
+    <span class="k">when</span> <span class="mi">4</span>  <span class="c1"># 除法</span>
+      <span class="n">value</span><span class="p">.</span><span class="nf">zero?</span> <span class="p">?</span> <span class="mi">0</span> <span class="p">:</span> <span class="vg">$game_variables</span><span class="p">.</span><span class="nf">value_without_hook</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span> <span class="o">/</span> <span class="n">value</span>
+    <span class="k">when</span> <span class="mi">5</span>  <span class="c1"># 取余</span>
+      <span class="n">value</span><span class="p">.</span><span class="nf">zero?</span> <span class="p">?</span> <span class="mi">0</span> <span class="p">:</span> <span class="vg">$game_variables</span><span class="p">.</span><span class="nf">value_without_hook</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span> <span class="o">%</span> <span class="n">value</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Window_DebugRight</span> <span class="o">&lt;</span> <span class="no">Window_Selectable</span>
+  <span class="k">def</span> <span class="nf">update_switch_mode</span>
+    <span class="k">return</span> <span class="k">unless</span> <span class="no">Input</span><span class="p">.</span><span class="nf">trigger?</span><span class="p">(</span><span class="ss">:C</span><span class="p">)</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">current_id</span>
+    <span class="vg">$game_switches</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="o">=</span> <span class="o">!</span><span class="vg">$game_switches</span><span class="p">.</span><span class="nf">value_without_hook</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
+    <span class="no">Sound</span><span class="p">.</span><span class="nf">play_ok</span>
+    <span class="n">redraw_current_item</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">update_variable_mode</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">current_id</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="vg">$game_variables</span><span class="p">.</span><span class="nf">value_without_hook</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="k">unless</span> <span class="n">value</span><span class="p">.</span><span class="nf">is_a?</span><span class="p">(</span><span class="no">Numeric</span><span class="p">)</span>
+    <span class="n">value</span> <span class="o">+=</span> <span class="mi">1</span> <span class="k">if</span> <span class="no">Input</span><span class="p">.</span><span class="nf">repeat?</span><span class="p">(</span><span class="ss">:RIGHT</span><span class="p">)</span>
+    <span class="n">value</span> <span class="o">-=</span> <span class="mi">1</span> <span class="k">if</span> <span class="no">Input</span><span class="p">.</span><span class="nf">repeat?</span><span class="p">(</span><span class="ss">:LEFT</span><span class="p">)</span>
+    <span class="n">value</span> <span class="o">+=</span> <span class="mi">10</span> <span class="k">if</span> <span class="no">Input</span><span class="p">.</span><span class="nf">repeat?</span><span class="p">(</span><span class="ss">:R</span><span class="p">)</span>
+    <span class="n">value</span> <span class="o">-=</span> <span class="mi">10</span> <span class="k">if</span> <span class="no">Input</span><span class="p">.</span><span class="nf">repeat?</span><span class="p">(</span><span class="ss">:L</span><span class="p">)</span>
+    <span class="k">if</span> <span class="vg">$game_variables</span><span class="p">.</span><span class="nf">value_without_hook</span><span class="p">(</span><span class="n">current_id</span><span class="p">)</span> <span class="o">!=</span> <span class="n">value</span>
+      <span class="vg">$game_variables</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+      <span class="no">Sound</span><span class="p">.</span><span class="nf">play_cursor</span>
+      <span class="n">redraw_current_item</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">draw_item</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+    <span class="n">data_id</span> <span class="o">=</span> <span class="vi">@top_id</span> <span class="o">+</span> <span class="n">index</span>
+    <span class="n">id_text</span> <span class="o">=</span> <span class="nb">sprintf</span><span class="p">(</span><span class="s2">"%04d:"</span><span class="p">,</span> <span class="n">data_id</span><span class="p">)</span>
+    <span class="n">id_width</span> <span class="o">=</span> <span class="n">text_size</span><span class="p">(</span><span class="n">id_text</span><span class="p">).</span><span class="nf">width</span>
+    <span class="k">if</span> <span class="vi">@mode</span> <span class="o">==</span> <span class="ss">:switch</span>
+      <span class="nb">name</span> <span class="o">=</span> <span class="vg">$data_system</span><span class="p">.</span><span class="nf">switches</span><span class="p">[</span><span class="n">data_id</span><span class="p">]</span>
+      <span class="n">status</span> <span class="o">=</span> <span class="vg">$game_switches</span><span class="p">.</span><span class="nf">value_without_hook</span><span class="p">(</span><span class="n">data_id</span><span class="p">)</span> <span class="p">?</span> <span class="s1">'[ON]'</span> <span class="p">:</span> <span class="s1">'[OFF]'</span>
+      <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">GameVariableHook</span><span class="p">.</span><span class="nf">include?</span><span class="p">(</span><span class="o">-</span><span class="n">data_id</span><span class="p">)</span>
+        <span class="n">status</span><span class="p">.</span><span class="nf">concat</span><span class="p">(</span><span class="vg">$game_switches</span><span class="p">[</span><span class="n">data_id</span><span class="p">]</span> <span class="p">?</span> <span class="s1">' -&gt;  [ON]'</span> <span class="p">:</span> <span class="s1">' -&gt; [OFF]'</span><span class="p">)</span>
+      <span class="k">end</span>
+    <span class="k">else</span>
+      <span class="nb">name</span> <span class="o">=</span> <span class="vg">$data_system</span><span class="p">.</span><span class="nf">variables</span><span class="p">[</span><span class="n">data_id</span><span class="p">]</span>
+      <span class="n">status</span> <span class="o">=</span> <span class="vg">$game_variables</span><span class="p">.</span><span class="nf">value_without_hook</span><span class="p">(</span><span class="n">data_id</span><span class="p">).</span><span class="nf">to_s</span>
+      <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">GameVariableHook</span><span class="p">.</span><span class="nf">include?</span><span class="p">(</span><span class="n">data_id</span><span class="p">)</span>
+        <span class="n">status</span> <span class="o">&lt;&lt;</span> <span class="s1">' -&gt; '</span> <span class="o">&lt;&lt;</span> <span class="vg">$game_variables</span><span class="p">[</span><span class="n">data_id</span><span class="p">].</span><span class="nf">to_s</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+    <span class="nb">name</span> <span class="o">=</span> <span class="s2">""</span> <span class="k">unless</span> <span class="nb">name</span>
+    <span class="n">rect</span> <span class="o">=</span> <span class="n">item_rect_for_text</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+    <span class="n">change_color</span><span class="p">(</span><span class="n">normal_color</span><span class="p">)</span>
+    <span class="n">draw_text</span><span class="p">(</span><span class="n">rect</span><span class="p">,</span> <span class="n">id_text</span><span class="p">)</span>
+    <span class="n">rect</span><span class="p">.</span><span class="nf">x</span> <span class="o">+=</span> <span class="n">id_width</span>
+    <span class="n">rect</span><span class="p">.</span><span class="nf">width</span> <span class="o">-=</span> <span class="n">id_width</span> <span class="o">+</span> <span class="mi">60</span>
+    <span class="n">draw_text</span><span class="p">(</span><span class="n">rect</span><span class="p">,</span> <span class="nb">name</span><span class="p">)</span>
+    <span class="n">rect</span><span class="p">.</span><span class="nf">width</span> <span class="o">+=</span> <span class="mi">60</span>
+    <span class="n">draw_text</span><span class="p">(</span><span class="n">rect</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span> <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">GameVariableHook</span><span class="o">::</span><span class="no">DEBUG_WINDOW</span></code></pre></div>

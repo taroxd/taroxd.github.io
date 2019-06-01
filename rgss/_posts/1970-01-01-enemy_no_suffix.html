@@ -1,0 +1,13 @@
+---
+title: 同名敌人不显示后缀
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">enemy_no_suffix</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">同名敌人不显示后缀</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1">同名的敌人不附加字母后缀</span></a>
+<span class="no">Taroxd</span><span class="o">::</span><span class="no">EnemyNoSuffix</span> <span class="o">=</span> <span class="kp">false</span>
+
+<span class="k">class</span> <span class="nc">Game_Troop</span> <span class="o">&lt;</span> <span class="no">Game_Unit</span>
+  <span class="n">def_after</span><span class="p">(</span><span class="ss">:make_unique_names</span><span class="p">)</span> <span class="p">{</span> <span class="n">each</span> <span class="p">{</span> <span class="o">|</span><span class="n">enemy</span><span class="o">|</span> <span class="n">enemy</span><span class="p">.</span><span class="nf">letter</span> <span class="o">=</span> <span class="s1">''</span> <span class="p">}</span> <span class="p">}</span>
+<span class="k">end</span></code></pre></div>

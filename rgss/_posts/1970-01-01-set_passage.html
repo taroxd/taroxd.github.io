@@ -1,0 +1,198 @@
+---
+title: 设置地图通行度
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">设置地图通行度</span></a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">set_passage</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1"></span></a>
+<span class="c1">#</span>
+<span class="c1">#  使用方法2：** require 显示地图通行度 **</span>
+<span class="c1">#</span>
+<span class="c1">#    测试模式下，把 EDIT_MODE 设为 true，</span>
+<span class="c1">#    然后在地图上按下确定键即可改变当前位置的通行度。</span>
+<span class="c1">#    该模式下，角色可以自由穿透。</span>
+<span class="c1">#</span>
+<span class="c1">#    △表示不改变，○表示可以通行，×表示不可通行。颜色表示最终的通行度。</span>
+<span class="c1">#</span>
+<span class="c1">#    需要清空设置的话，删除设置文件（见 FILE 常量）即可。</span>
+<span class="c1">#</span>
+<span class="c1">#    需要重置一张地图的设置的话，可以调用如下脚本：</span>
+<span class="c1">#      Taroxd::Passage.clear(map_id)</span>
+<span class="c1">#    其中 map_id 为地图 ID。若要清除当前地图的通行度，map_id 可以不填。</span>
+<span class="c1">#    注意，清除后，通行度的显示并不会立即改变。重新打开游戏即可看到效果。</span>
+
+<span class="k">module</span> <span class="nn">Taroxd::Passage</span>
+
+  <span class="c1"># 地图通行度信息会保存到这个文件。建议每次编辑前备份该文件。</span>
+  <span class="no">FILE</span> <span class="o">=</span> <span class="s1">'Data/MapPassage.rvdata2'</span>
+
+  <span class="c1"># 是否打开编辑模式。需要前置脚本“显示地图通行度”才可打开。</span>
+  <span class="no">EDIT_MODE</span> <span class="o">=</span> <span class="kp">false</span>
+
+  <span class="c1"># 编辑方式（可整合鼠标脚本）</span>
+  <span class="no">EDIT_TRIGGER</span> <span class="o">=</span> <span class="o">-&gt;</span> <span class="p">{</span> <span class="no">Input</span><span class="p">.</span><span class="nf">trigger?</span><span class="p">(</span><span class="ss">:C</span><span class="p">)</span> <span class="p">}</span>
+  <span class="no">EDIT_POINT</span>   <span class="o">=</span> <span class="o">-&gt;</span> <span class="p">{</span> <span class="p">[</span><span class="vg">$game_player</span><span class="p">.</span><span class="nf">x</span><span class="p">,</span> <span class="vg">$game_player</span><span class="p">.</span><span class="nf">y</span><span class="p">]</span> <span class="p">}</span>
+
+  <span class="c1"># 常量，不建议改动</span>
+  <span class="no">DEFAULT</span>    <span class="o">=</span> <span class="mi">0</span>
+  <span class="no">PASSABLE</span>   <span class="o">=</span> <span class="mi">1</span>
+  <span class="no">IMPASSABLE</span> <span class="o">=</span> <span class="mi">2</span>
+  <span class="no">TEXTS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'△'</span><span class="p">,</span> <span class="s1">'○'</span><span class="p">,</span> <span class="s1">'×'</span><span class="p">]</span>
+
+  <span class="no">SIZE</span> <span class="o">=</span> <span class="no">TEXTS</span><span class="p">.</span><span class="nf">size</span>
+
+  <span class="c1"># 设置区域通行度。一个以区域ID为键的哈希表。(未设置的区域，ID为0)</span>
+  <span class="c1"># 哈希表值的意义如下</span>
+  <span class="c1"># PASSABLE / true：该区域强制可以通行。</span>
+  <span class="c1"># IMPASSABLE / false：该区域强制不可通行。</span>
+  <span class="c1"># [区域ID1, 区域ID2, ...]：该区域只能通行至指定的区域。</span>
+
+  <span class="c1"># 设置例：</span>
+  <span class="c1"># REGIONS = {</span>
+  <span class="c1">#   1 =&gt; PASSABLE,</span>
+  <span class="c1">#   2 =&gt; false,</span>
+  <span class="c1">#   3 =&gt; [3, 4],         # 只有通过4号区域才能出入3号区域</span>
+  <span class="c1">#   5 =&gt; [*0..63] - [6]  # 5号区域与6号区域的边界线不可通行</span>
+  <span class="c1"># }</span>
+  <span class="no">REGIONS</span> <span class="o">=</span> <span class="p">{}</span>
+
+  <span class="c1"># 通行度的哈希表。以地图ID为键，以通行度的二维 Table 为值。</span>
+  <span class="vi">@data</span> <span class="o">=</span> <span class="no">File</span><span class="p">.</span><span class="nf">exist?</span><span class="p">(</span><span class="no">FILE</span><span class="p">)</span> <span class="p">?</span> <span class="n">load_data</span><span class="p">(</span><span class="no">FILE</span><span class="p">)</span> <span class="p">:</span> <span class="p">{}</span>
+
+  <span class="k">class</span> <span class="o">&lt;&lt;</span> <span class="nb">self</span>
+
+    <span class="c1"># 获取 x, y 坐标处的 d 方向通行度设定。（DEFAULT/PASSABLE/IMPASSABLE）</span>
+    <span class="k">def</span> <span class="nf">[]</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+      <span class="n">data</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span> <span class="o">==</span> <span class="no">DEFAULT</span> <span class="p">?</span> <span class="n">region_passable</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 更新，编辑模式下应每帧调用一次</span>
+    <span class="k">def</span> <span class="nf">update</span>
+      <span class="k">return</span> <span class="k">unless</span> <span class="no">EDIT_TRIGGER</span><span class="p">.</span><span class="nf">call</span>
+      <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="no">EDIT_POINT</span><span class="p">.</span><span class="nf">call</span>
+      <span class="n">data</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="no">SIZE</span>
+      <span class="n">save</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 获取当前地图的数据</span>
+    <span class="k">def</span> <span class="nf">data</span>
+      <span class="n">table</span> <span class="o">=</span> <span class="vi">@data</span><span class="p">[</span><span class="n">map_id</span><span class="p">]</span> <span class="o">||=</span> <span class="no">Table</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span>
+      <span class="k">if</span> <span class="n">table</span><span class="p">.</span><span class="nf">xsize</span> <span class="o">&lt;</span> <span class="n">width</span> <span class="o">||</span> <span class="n">table</span><span class="p">.</span><span class="nf">ysize</span> <span class="o">&lt;</span> <span class="n">height</span>
+        <span class="n">update_table</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
+      <span class="k">else</span>
+        <span class="n">table</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 清除一个地图的设置</span>
+    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="n">map_id</span> <span class="o">=</span> <span class="vg">$game_map</span><span class="p">.</span><span class="nf">map_id</span><span class="p">)</span>
+      <span class="vi">@data</span><span class="p">.</span><span class="nf">delete</span><span class="p">(</span><span class="n">map_id</span><span class="p">)</span>
+      <span class="n">save</span>
+    <span class="k">end</span>
+
+    <span class="kp">private</span>
+
+    <span class="c1"># 区域设置中能否通行（DEFAULT/PASSABLE/IMPASSABLE）</span>
+    <span class="k">def</span> <span class="nf">region_passable</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+      <span class="n">settings</span> <span class="o">=</span> <span class="no">REGIONS</span><span class="p">[</span><span class="vg">$game_map</span><span class="p">.</span><span class="nf">region_id</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)]</span>
+      <span class="k">case</span> <span class="n">settings</span>
+      <span class="k">when</span> <span class="kp">true</span><span class="p">,</span> <span class="no">PASSABLE</span> <span class="k">then</span> <span class="no">PASSABLE</span>
+      <span class="k">when</span> <span class="kp">false</span><span class="p">,</span> <span class="no">IMPASSABLE</span> <span class="k">then</span> <span class="no">IMPASSABLE</span>
+      <span class="k">when</span> <span class="no">Enumerable</span>
+        <span class="n">x2</span> <span class="o">=</span> <span class="vg">$game_map</span><span class="p">.</span><span class="nf">round_x_with_direction</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="n">y2</span> <span class="o">=</span> <span class="vg">$game_map</span><span class="p">.</span><span class="nf">round_y_with_direction</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="n">settings</span><span class="p">.</span><span class="nf">include?</span><span class="p">(</span><span class="vg">$game_map</span><span class="p">.</span><span class="nf">region_id</span><span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">))</span> <span class="p">?</span> <span class="no">DEFAULT</span> <span class="p">:</span> <span class="no">IMPASSABLE</span>
+      <span class="k">else</span> <span class="no">DEFAULT</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 如果表格不够大，那么重新建立表格</span>
+    <span class="k">def</span> <span class="nf">update_table</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
+      <span class="vi">@data</span><span class="p">[</span><span class="n">map_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_table</span> <span class="o">=</span> <span class="no">Table</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span>
+      <span class="n">table</span><span class="p">.</span><span class="nf">xsize</span><span class="p">.</span><span class="nf">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span>
+        <span class="n">table</span><span class="p">.</span><span class="nf">ysize</span><span class="p">.</span><span class="nf">times</span> <span class="k">do</span> <span class="o">|</span><span class="n">y</span><span class="o">|</span>
+          <span class="n">new_table</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="n">table</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span>
+        <span class="k">end</span>
+      <span class="k">end</span>
+      <span class="n">new_table</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 将所有数据保存到文件</span>
+    <span class="k">def</span> <span class="nf">save</span>
+      <span class="n">save_data</span><span class="p">(</span><span class="vi">@data</span><span class="p">,</span> <span class="no">FILE</span><span class="p">)</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 获取当前地图信息</span>
+    <span class="k">def</span> <span class="nf">map_id</span>
+      <span class="vg">$game_map</span><span class="p">.</span><span class="nf">map_id</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">width</span>
+      <span class="vg">$game_map</span><span class="p">.</span><span class="nf">width</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">height</span>
+      <span class="vg">$game_map</span><span class="p">.</span><span class="nf">height</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Map</span>
+  <span class="n">psg</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Passage</span>
+
+  <span class="n">def_chain</span> <span class="ss">:passable?</span> <span class="k">do</span> <span class="o">|</span><span class="n">old</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">d</span><span class="o">|</span>
+    <span class="k">case</span> <span class="n">psg</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">d</span><span class="p">]</span>
+    <span class="k">when</span> <span class="n">psg</span><span class="o">::</span><span class="no">DEFAULT</span>    <span class="k">then</span> <span class="n">old</span><span class="p">.</span><span class="nf">call</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+    <span class="k">when</span> <span class="n">psg</span><span class="o">::</span><span class="no">PASSABLE</span>   <span class="k">then</span> <span class="kp">true</span>
+    <span class="k">when</span> <span class="n">psg</span><span class="o">::</span><span class="no">IMPASSABLE</span> <span class="k">then</span> <span class="kp">false</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">if</span> <span class="vg">$TEST</span> <span class="o">&amp;&amp;</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Passage</span><span class="o">::</span><span class="no">EDIT_MODE</span>
+
+  <span class="k">class</span> <span class="nc">Game_Player</span> <span class="o">&lt;</span> <span class="no">Game_Character</span>
+
+    <span class="c1"># 每帧调用一次 Taroxd::Passage.update</span>
+    <span class="n">def_after</span> <span class="ss">:update</span><span class="p">,</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Passage</span><span class="p">.</span><span class="nf">method</span><span class="p">(</span><span class="ss">:update</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">debug_through?</span>
+      <span class="kp">true</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">class</span> <span class="nc">Taroxd</span><span class="o">::</span><span class="no">PlanePassage</span> <span class="o">&lt;</span> <span class="no">Plane</span>
+
+    <span class="no">TEXT_RECT</span> <span class="o">=</span> <span class="no">Rect</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>
+    <span class="nb">const_set</span> <span class="ss">:VISIBLE</span><span class="p">,</span> <span class="kp">true</span>
+    <span class="n">psg</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Passage</span>
+    <span class="kp">include</span> <span class="n">psg</span>
+
+    <span class="c1"># 通行度文字的位图缓存</span>
+    <span class="k">def</span> <span class="nf">text_bitmaps</span>
+      <span class="vi">@text_bitmap_cache</span> <span class="o">||=</span> <span class="no">TEXTS</span><span class="p">.</span><span class="nf">map</span> <span class="k">do</span> <span class="o">|</span><span class="n">text</span><span class="o">|</span>
+        <span class="n">bitmap</span> <span class="o">=</span> <span class="no">Bitmap</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="no">TEXT_RECT</span><span class="p">.</span><span class="nf">width</span><span class="p">,</span> <span class="no">TEXT_RECT</span><span class="p">.</span><span class="nf">height</span><span class="p">)</span>
+        <span class="n">bitmap</span><span class="p">.</span><span class="nf">draw_text</span><span class="p">(</span><span class="no">TEXT_RECT</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">bitmap</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 绘制通行度的设置情况</span>
+    <span class="n">def_after</span> <span class="ss">:draw_point</span> <span class="k">do</span> <span class="o">|</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">|</span>
+      <span class="n">bitmap</span><span class="p">.</span><span class="nf">blt</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="mi">32</span><span class="p">,</span> <span class="n">y</span> <span class="o">*</span> <span class="mi">32</span><span class="p">,</span> <span class="n">text_bitmaps</span><span class="p">[</span><span class="n">psg</span><span class="p">.</span><span class="nf">data</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]],</span> <span class="no">TEXT_RECT</span><span class="p">)</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 更新通行度的变化</span>
+    <span class="n">def_after</span> <span class="ss">:update</span> <span class="k">do</span>
+      <span class="k">return</span> <span class="k">unless</span> <span class="no">EDIT_TRIGGER</span><span class="p">.</span><span class="nf">call</span>
+      <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="no">EDIT_POINT</span><span class="p">.</span><span class="nf">call</span>
+      <span class="n">bitmap</span><span class="p">.</span><span class="nf">clear_rect</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="mi">32</span><span class="p">,</span> <span class="n">y</span> <span class="o">*</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>
+      <span class="n">draw_point</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">end</span>
+
+    <span class="n">def_before</span> <span class="ss">:dispose</span> <span class="k">do</span>
+      <span class="vi">@text_bitmaps_cache</span><span class="p">.</span><span class="nf">each</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:dispose</span><span class="p">)</span> <span class="k">if</span> <span class="vi">@text_bitmaps</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre></div>

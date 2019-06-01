@@ -1,0 +1,37 @@
+---
+title: 事件寻路
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">event_astar</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/astar.html">astar</a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">事件寻路</span></a>
+<span class="no">Taroxd</span><span class="o">::</span><span class="no">EventAStar</span> <span class="o">=</span> <span class="kp">true</span>
+
+<span class="k">class</span> <span class="nc">Game_Character</span> <span class="o">&lt;</span> <span class="no">Game_CharacterBase</span>
+  <span class="k">def</span> <span class="nf">find_path_toward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">return</span> <span class="vi">@find_path</span> <span class="k">if</span> <span class="vi">@find_path_xy</span> <span class="o">==</span> <span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="vi">@x</span><span class="p">,</span> <span class="vi">@y</span><span class="p">]</span>
+    <span class="vi">@find_path</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">AStar</span><span class="p">.</span><span class="nf">path</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="vi">@find_path_xy</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="vi">@x</span><span class="p">,</span> <span class="vi">@y</span>
+    <span class="vi">@find_path</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 保留原方法，以备需要的时候使用。</span>
+  <span class="kp">alias_method</span> <span class="ss">:move_toward_character_directly</span><span class="p">,</span> <span class="ss">:move_toward_character</span>
+
+  <span class="k">def</span> <span class="nf">move_toward_character</span><span class="p">(</span><span class="n">character</span><span class="p">)</span>
+    <span class="n">dir</span> <span class="o">=</span> <span class="n">find_path_toward</span><span class="p">(</span><span class="n">character</span><span class="p">.</span><span class="nf">x</span><span class="p">,</span> <span class="n">character</span><span class="p">.</span><span class="nf">y</span><span class="p">).</span><span class="nf">shift</span>
+    <span class="k">return</span> <span class="n">move_toward_character_directly</span><span class="p">(</span><span class="n">character</span><span class="p">)</span> <span class="k">unless</span> <span class="n">dir</span>
+    <span class="n">move_straight</span><span class="p">(</span><span class="n">dir</span><span class="p">)</span>
+    <span class="vi">@find_path_xy</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="vi">@x</span><span class="p">,</span> <span class="vi">@y</span> <span class="k">if</span> <span class="vi">@move_succeed</span>
+  <span class="k">end</span>
+
+  <span class="c1"># 使用此方法 require 坐标类</span>
+  <span class="k">def</span> <span class="nf">move_toward_point</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="n">move_toward_character</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">Point</span><span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Event</span> <span class="o">&lt;</span> <span class="no">Game_Character</span>
+  <span class="kp">alias_method</span> <span class="ss">:move_type_toward_player</span><span class="p">,</span> <span class="ss">:move_toward_player</span>
+<span class="k">end</span></code></pre></div>

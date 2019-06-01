@@ -1,0 +1,29 @@
+---
+title: 删除等级功能
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">remove_level</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">删除等级功能</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1">移除所有有关等级和经验值的功能</span></a>
+<span class="k">module</span> <span class="nn">Taroxd</span>
+  <span class="c1"># 试图访问角色等级时执行。参数即为方法的参数。</span>
+  <span class="no">RemoveLevel</span> <span class="o">=</span> <span class="o">-&gt;</span> <span class="o">*</span> <span class="p">{</span> <span class="mi">0</span> <span class="p">}</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Actor</span> <span class="o">&lt;</span> <span class="no">Game_Battler</span>
+
+  <span class="c1"># 等级视为初始等级。仅用于计算属性</span>
+  <span class="k">def</span> <span class="nf">level</span>
+    <span class="n">actor</span><span class="p">.</span><span class="nf">initial_level</span>
+  <span class="k">end</span>
+
+  <span class="sx">%W(level_up level_down init_exp exp exp_for_level
+    current_level_exp next_level_exp max_level? max_level
+    change_exp display_level_up gain_exp final_exp_rate
+    reserve_members_exp_rate change_level)</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="nb">name</span><span class="o">|</span>
+    <span class="n">define_method</span> <span class="nb">name</span><span class="p">,</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">RemoveLevel</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="no">Window_Base</span><span class="p">.</span><span class="nf">send</span> <span class="ss">:define_method</span><span class="p">,</span> <span class="ss">:draw_actor_level</span><span class="p">,</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">RemoveLevel</span>
+<span class="no">Window_Status</span><span class="p">.</span><span class="nf">send</span> <span class="ss">:define_method</span><span class="p">,</span> <span class="ss">:draw_exp_info</span><span class="p">,</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">RemoveLevel</span></code></pre></div>

@@ -1,0 +1,44 @@
+---
+title: 计步器
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">pedometer</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">计步器</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="c1">#   事件脚本</span>
+<span class="c1">#      start_pedometer(var_id[, count])</span>
+<span class="c1">#        变量 var_id 开始计步。若 count 存在，将该变量设为 count。</span>
+<span class="c1">#</span>
+<span class="c1">#      stop_pedometer([var_id])</span>
+<span class="c1">#        变量 var_id 停止计步。若 var_id 不存在，则停止所有计步器。</span>
+
+<span class="no">Taroxd</span><span class="o">::</span><span class="no">Pedometer</span> <span class="o">=</span> <span class="kp">true</span>
+
+<span class="k">class</span> <span class="nc">Game_Party</span> <span class="o">&lt;</span> <span class="no">Game_Unit</span>
+
+  <span class="n">def_after</span><span class="p">(</span><span class="ss">:initialize</span><span class="p">)</span> <span class="p">{</span> <span class="vi">@pedometer</span> <span class="o">=</span> <span class="p">[]</span> <span class="p">}</span>
+
+  <span class="k">def</span> <span class="nf">start_pedometer</span><span class="p">(</span><span class="n">var_id</span><span class="p">,</span> <span class="n">count</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
+    <span class="vi">@pedometer</span> <span class="o">&lt;&lt;</span> <span class="n">var_id</span> <span class="k">unless</span> <span class="vi">@pedometer</span><span class="p">.</span><span class="nf">include?</span><span class="p">(</span><span class="n">var_id</span><span class="p">)</span>
+    <span class="vg">$game_variables</span><span class="p">[</span><span class="n">var_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">count</span> <span class="k">if</span> <span class="n">count</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">stop_pedometer</span><span class="p">(</span><span class="n">var_id</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
+    <span class="n">var_id</span> <span class="p">?</span> <span class="vi">@pedometer</span><span class="p">.</span><span class="nf">delete</span><span class="p">(</span><span class="n">var_id</span><span class="p">)</span> <span class="p">:</span> <span class="vi">@pedometer</span><span class="p">.</span><span class="nf">clear</span>
+  <span class="k">end</span>
+
+  <span class="n">def_after</span> <span class="ss">:on_player_walk</span> <span class="k">do</span>
+    <span class="vi">@pedometer</span><span class="p">.</span><span class="nf">each</span> <span class="p">{</span> <span class="o">|</span><span class="n">var_id</span><span class="o">|</span> <span class="vg">$game_variables</span><span class="p">[</span><span class="n">var_id</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span> <span class="p">}</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Interpreter</span>
+
+  <span class="k">def</span> <span class="nf">start_pedometer</span><span class="p">(</span><span class="n">var_id</span><span class="p">,</span> <span class="n">count</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
+    <span class="vg">$game_party</span><span class="p">.</span><span class="nf">start_pedometer</span><span class="p">(</span><span class="n">var_id</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">stop_pedometer</span><span class="p">(</span><span class="n">var_id</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
+    <span class="vg">$game_party</span><span class="p">.</span><span class="nf">stop_pedometer</span><span class="p">(</span><span class="n">var_id</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre></div>

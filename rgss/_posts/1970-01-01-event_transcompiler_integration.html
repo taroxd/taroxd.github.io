@@ -1,0 +1,101 @@
+---
+title: 事件转译器嵌入
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">事件转译器嵌入</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/event_transcompiler.html">event_transcompiler</a>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">event_transcompiler_integration</span></a>
+<span class="k">class</span> <span class="nc">Taroxd</span><span class="o">::</span><span class="no">EventTranscompiler</span>
+
+  <span class="c1"># 是否需要与旧存档兼容。不是新工程的话填 true。</span>
+  <span class="no">SAVEDATA_COMPATIBLE</span> <span class="o">=</span> <span class="kp">false</span>
+
+  <span class="c1"># 读档时是否重新执行事件。（暂不支持从中断处开始。因此建议不要在事件执行时存档）</span>
+  <span class="c1"># true 表示读档时从头开始执行事件，false 表示读档时丢弃执行中的事件。</span>
+  <span class="c1"># 该选项仅当 SAVEDATA_COMPATIBLE 为 false 时有效。</span>
+  <span class="no">RUN_ON_LOAD</span> <span class="o">=</span> <span class="kp">false</span>
+
+  <span class="c1"># 调试模式，开启时会将转译的脚本输出到控制台</span>
+  <span class="no">DEBUG</span> <span class="o">=</span> <span class="kp">false</span>
+
+  <span class="vi">@cache</span> <span class="o">=</span> <span class="p">{}</span>
+
+  <span class="k">class</span> <span class="o">&lt;&lt;</span> <span class="nb">self</span>
+    <span class="nb">attr_reader</span> <span class="ss">:cache</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Interpreter</span>
+
+  <span class="no">EventTranscompiler</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">EventTranscompiler</span>
+
+  <span class="k">def</span> <span class="nf">run</span>
+    <span class="n">wait_for_message</span>
+    <span class="nb">instance_eval</span><span class="p">(</span><span class="o">&amp;</span><span class="n">compile_code</span><span class="p">)</span>
+    <span class="no">Fiber</span><span class="p">.</span><span class="nf">yield</span>
+    <span class="vi">@fiber</span> <span class="o">=</span> <span class="kp">nil</span>
+  <span class="k">end</span>
+
+  <span class="k">unless</span> <span class="no">EventTranscompiler</span><span class="o">::</span><span class="no">SAVEDATA_COMPATIBLE</span>
+
+    <span class="k">def</span> <span class="nf">marshal_dump</span>
+      <span class="p">[</span><span class="vi">@map_id</span><span class="p">,</span> <span class="vi">@event_id</span><span class="p">,</span> <span class="vi">@list</span><span class="p">]</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">marshal_load</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+      <span class="vi">@map_id</span><span class="p">,</span> <span class="vi">@event_id</span><span class="p">,</span> <span class="vi">@list</span> <span class="o">=</span> <span class="n">obj</span>
+      <span class="n">create_fiber</span> <span class="k">if</span> <span class="no">EventTranscompiler</span><span class="o">::</span><span class="no">RUN_ON_LOAD</span>
+    <span class="k">end</span>
+  <span class="k">end</span> <span class="c1"># unless EventTranscompiler::SAVEDATA_COMPATIBLE</span>
+
+  <span class="kp">private</span>
+
+  <span class="k">def</span> <span class="nf">rb_code</span>
+    <span class="no">EventTranscompiler</span><span class="p">.</span><span class="nf">transcompile</span><span class="p">(</span><span class="vi">@list</span><span class="p">,</span> <span class="vi">@map_id</span><span class="p">,</span> <span class="vi">@event_id</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">transcompiler_binding</span>
+    <span class="nb">binding</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">transcompiler_cache_key</span>
+    <span class="s2">"</span><span class="si">#{</span><span class="vi">@map_id</span><span class="si">}</span><span class="s2">-</span><span class="si">#{</span><span class="vi">@event_id</span><span class="si">}</span><span class="s2">-</span><span class="si">#{</span><span class="vi">@list</span><span class="p">.</span><span class="nf">__id__</span><span class="si">}</span><span class="s2">"</span>
+  <span class="k">end</span>
+
+  <span class="k">if</span> <span class="vg">$TEST</span> <span class="o">&amp;&amp;</span> <span class="no">EventTranscompiler</span><span class="o">::</span><span class="no">DEBUG</span>
+
+    <span class="k">def</span> <span class="nf">compile_code</span>
+      <span class="nb">proc</span> <span class="o">=</span> <span class="no">EventTranscompiler</span><span class="p">.</span><span class="nf">cache</span><span class="p">[</span><span class="n">transcompiler_cache_key</span><span class="p">]</span>
+      <span class="k">return</span> <span class="nb">proc</span> <span class="k">if</span> <span class="nb">proc</span>
+      <span class="n">code</span> <span class="o">=</span> <span class="n">rb_code</span>
+      <span class="nb">puts</span> <span class="n">code</span>
+      <span class="no">EventTranscompiler</span><span class="p">.</span><span class="nf">cache</span><span class="p">[</span><span class="n">transcompiler_cache_key</span><span class="p">]</span> <span class="o">=</span>
+        <span class="nb">eval</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">transcompiler_binding</span><span class="p">)</span>
+    <span class="k">rescue</span> <span class="no">StandardError</span><span class="p">,</span> <span class="no">SyntaxError</span> <span class="o">=&gt;</span> <span class="n">e</span>
+      <span class="nb">p</span> <span class="n">e</span>
+      <span class="nb">puts</span> <span class="n">e</span><span class="p">.</span><span class="nf">backtrace</span>
+      <span class="n">rgss_stop</span>
+    <span class="k">end</span>
+
+  <span class="k">else</span>
+
+    <span class="k">def</span> <span class="nf">compile_code</span>
+      <span class="no">EventTranscompiler</span><span class="p">.</span><span class="nf">cache</span><span class="p">[</span><span class="n">transcompiler_cache_key</span><span class="p">]</span> <span class="o">||=</span>
+        <span class="nb">eval</span><span class="p">(</span><span class="n">rb_code</span><span class="p">,</span> <span class="n">transcompiler_binding</span><span class="p">)</span>
+    <span class="k">end</span>
+
+  <span class="k">end</span> <span class="c1"># if $TEST &amp;&amp; EventTranscompiler::DEBUG</span>
+<span class="k">end</span>
+
+<span class="c1"># 切换地图时，清除事件页转译代码的缓存</span>
+
+<span class="k">class</span> <span class="nc">Game_Map</span>
+
+  <span class="kp">alias_method</span> <span class="ss">:setup_without_transcompiler</span><span class="p">,</span> <span class="ss">:setup</span>
+
+  <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="n">map_id</span><span class="p">)</span>
+    <span class="n">setup_without_transcompiler</span><span class="p">(</span><span class="n">map_id</span><span class="p">)</span>
+    <span class="no">Taroxd</span><span class="o">::</span><span class="no">EventTranscompiler</span><span class="p">.</span><span class="nf">cache</span><span class="p">.</span><span class="nf">clear</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>

@@ -1,0 +1,98 @@
+---
+title: 新建属性值
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">param_ex</span></a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">新建属性值</span></a>
+<span class="k">module</span> <span class="nn">Taroxd</span> <span class="k">end</span>
+
+<span class="k">module</span> <span class="nn">Taroxd::ParamEx</span>
+
+  <span class="c1"># 大写属性名 = {</span>
+  <span class="c1">#  特性 =&gt; 数值，数组，哈希或接受一个参数的 Proc。详见下面的范例,</span>
+  <span class="c1"># }</span>
+  <span class="c1">#</span>
+  <span class="c1"># 角色将会根据 角色-&gt;职业-&gt;武器-&gt;护甲-&gt;状态 的顺序计算属性值</span>
+  <span class="c1"># 初始的属性值等于角色的等级。</span>
+  <span class="c1"># 遇到一个设置是数值时，属性值会加上这个数值。</span>
+  <span class="c1"># 遇到一个 proc 或哈希或数组时，会以属性值为参数/下标来获取新的属性值。</span>
+  <span class="c1">#</span>
+  <span class="c1"># 敌人将会根据 敌人-&gt;状态 的顺序计算属性值。</span>
+  <span class="c1"># 初始的属性值为 0，计算方法同上。</span>
+  <span class="c1">#</span>
+  <span class="c1"># 至于状态窗口的修改，不在本脚本的范围之内。请按需自行修改。</span>
+  <span class="c1">#</span>
+  <span class="c1"># 一般来说，建议在 actor 设置里面用等级索引属性值</span>
+  <span class="c1">#</span>
+  <span class="c1"># 下面是示例：</span>
+
+  <span class="no">STRENGTH</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="c1"># 角色</span>
+    <span class="ss">actor: </span><span class="p">{</span>
+      <span class="mi">1</span> <span class="o">=&gt;</span> <span class="p">[</span><span class="kp">nil</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">13</span><span class="p">,</span><span class="mi">21</span><span class="p">,</span><span class="mi">34</span><span class="p">,</span><span class="mi">55</span><span class="p">],</span>
+      <span class="mi">2</span> <span class="o">=&gt;</span> <span class="p">{</span><span class="mi">1</span><span class="o">=&gt;</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="o">=&gt;</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="o">=&gt;</span><span class="mi">2</span><span class="p">,</span><span class="mi">4</span><span class="o">=&gt;</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="o">=&gt;</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="o">=&gt;</span><span class="mi">8</span><span class="p">,</span><span class="mi">7</span><span class="o">=&gt;</span><span class="mi">13</span><span class="p">,</span><span class="mi">8</span><span class="o">=&gt;</span><span class="mi">21</span><span class="p">,</span><span class="mi">9</span><span class="o">=&gt;</span><span class="mi">34</span><span class="p">,</span><span class="mi">10</span><span class="o">=&gt;</span><span class="mi">55</span><span class="p">},</span>
+      <span class="mi">3</span> <span class="o">=&gt;</span> <span class="no">Hash</span><span class="p">.</span><span class="nf">new</span><span class="p">{</span><span class="o">|</span><span class="n">h</span><span class="p">,</span><span class="n">k</span><span class="o">|</span><span class="n">h</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">=</span><span class="n">h</span><span class="p">[</span><span class="n">k</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">h</span><span class="p">[</span><span class="n">k</span><span class="o">-</span><span class="mi">2</span><span class="p">]}.</span><span class="nf">tap</span><span class="p">{</span><span class="o">|</span><span class="n">h</span><span class="o">|</span><span class="n">h</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">=</span><span class="n">h</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">=</span><span class="mi">1</span><span class="p">},</span>
+      <span class="mi">4</span> <span class="o">=&gt;</span> <span class="o">-&gt;</span><span class="n">lv</span><span class="p">{</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">;(</span><span class="n">lv</span><span class="o">-</span><span class="mi">2</span><span class="p">).</span><span class="nf">times</span><span class="p">{</span><span class="o">|</span><span class="n">k</span><span class="o">|</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="o">=</span><span class="n">j</span><span class="p">,</span><span class="n">i</span><span class="o">+</span><span class="n">j</span><span class="p">};</span><span class="n">j</span><span class="p">},</span>
+    <span class="p">},</span>
+    <span class="c1"># 敌人</span>
+    <span class="ss">enemy: </span><span class="p">{</span>
+      <span class="mi">1</span> <span class="o">=&gt;</span> <span class="mi">5</span><span class="p">,</span>
+      <span class="mi">2</span> <span class="o">=&gt;</span> <span class="mi">6</span><span class="p">,</span>
+      <span class="mi">3</span> <span class="o">=&gt;</span> <span class="mi">8</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="c1"># 职业</span>
+    <span class="ss">class: </span><span class="p">{</span>
+      <span class="mi">1</span> <span class="o">=&gt;</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="c1"># 武器</span>
+    <span class="ss">weapons: </span><span class="p">{</span>
+      <span class="mi">1</span> <span class="o">=&gt;</span> <span class="mi">5</span><span class="p">,</span>
+      <span class="mi">2</span> <span class="o">=&gt;</span> <span class="o">-&gt;</span> <span class="n">old</span> <span class="p">{</span> <span class="n">old</span> <span class="o">*</span> <span class="mf">1.05</span> <span class="p">},</span>
+    <span class="p">},</span>
+    <span class="c1"># 护甲</span>
+    <span class="ss">armors: </span><span class="p">{</span>
+      <span class="c1"># 无设置</span>
+    <span class="p">},</span>
+    <span class="ss">states: </span><span class="p">{</span>
+      <span class="mi">1</span> <span class="o">=&gt;</span> <span class="no">Proc</span><span class="p">.</span><span class="nf">new</span> <span class="p">{</span> <span class="mi">0</span> <span class="p">},</span>
+    <span class="p">},</span>
+  <span class="p">}</span>
+
+  <span class="c1"># strength 设置完成。此后就可以在技能公式里调用 a.strength 了。</span>
+
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_BattlerBase</span>
+  <span class="c1"># 获取属性值。param: 基础值 features: 特性列表, const: 设置的常量</span>
+  <span class="k">def</span> <span class="nf">taroxd_paramex</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">const</span><span class="p">)</span>
+    <span class="n">features</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">type</span><span class="o">|</span>
+      <span class="n">list</span> <span class="o">=</span> <span class="n">const</span><span class="p">[</span><span class="n">type</span><span class="p">]</span>
+      <span class="k">next</span> <span class="k">unless</span> <span class="n">list</span>
+      <span class="p">[</span><span class="o">*</span><span class="nb">send</span><span class="p">(</span><span class="n">type</span><span class="p">)].</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">item</span><span class="o">|</span>
+        <span class="n">settings</span> <span class="o">=</span> <span class="n">list</span><span class="p">[</span><span class="n">item</span><span class="p">.</span><span class="nf">id</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">settings</span><span class="p">.</span><span class="nf">respond_to?</span><span class="p">(</span><span class="ss">:coerce</span><span class="p">)</span>
+          <span class="n">param</span> <span class="o">+=</span> <span class="n">settings</span>
+        <span class="k">elsif</span> <span class="n">settings</span><span class="p">.</span><span class="nf">respond_to?</span><span class="p">(</span><span class="ss">:[]</span><span class="p">)</span>
+          <span class="n">param</span> <span class="o">=</span> <span class="n">settings</span><span class="p">[</span><span class="n">param</span><span class="p">]</span> <span class="o">||</span> <span class="n">param</span>
+        <span class="k">end</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+    <span class="n">param</span><span class="p">.</span><span class="nf">to_i</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="c1"># 定义所有设置的属性</span>
+<span class="n">actor_features</span> <span class="o">=</span> <span class="p">[</span><span class="ss">:actor</span><span class="p">,</span> <span class="ss">:class</span><span class="p">,</span> <span class="ss">:weapons</span><span class="p">,</span> <span class="ss">:armors</span><span class="p">,</span> <span class="ss">:states</span><span class="p">]</span>
+<span class="n">enemy_features</span> <span class="o">=</span> <span class="p">[</span><span class="ss">:enemy</span><span class="p">,</span> <span class="ss">:states</span><span class="p">]</span>
+
+<span class="no">Taroxd</span><span class="o">::</span><span class="no">ParamEx</span><span class="p">.</span><span class="nf">constants</span><span class="p">(</span><span class="kp">false</span><span class="p">).</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="nb">name</span><span class="o">|</span>
+  <span class="n">const</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">ParamEx</span><span class="p">.</span><span class="nf">const_get</span> <span class="nb">name</span>
+  <span class="nb">name</span> <span class="o">=</span> <span class="nb">name</span><span class="p">.</span><span class="nf">downcase</span>
+  <span class="no">Game_Actor</span><span class="p">.</span><span class="nf">send</span> <span class="ss">:define_method</span><span class="p">,</span> <span class="nb">name</span> <span class="k">do</span>
+    <span class="n">taroxd_paramex</span><span class="p">(</span><span class="vi">@level</span><span class="p">,</span> <span class="n">actor_features</span><span class="p">,</span> <span class="n">const</span><span class="p">)</span>
+  <span class="k">end</span>
+  <span class="no">Game_Enemy</span><span class="p">.</span><span class="nf">send</span> <span class="ss">:define_method</span><span class="p">,</span> <span class="nb">name</span> <span class="k">do</span>
+    <span class="n">taroxd_paramex</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">enemy_features</span><span class="p">,</span> <span class="n">const</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>

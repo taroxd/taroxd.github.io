@@ -1,0 +1,86 @@
+---
+title: 额外战斗行动
+---
+<div class="language-ruby highlighter-rouge"><pre class="highlight"><code><span class="sd ge">#</span> <span class="sd">@taroxd metadata 1.0</span>
+<span class="sd ge">#</span> <span class="sd">@id</span> <span class="c1">extra_action</span></a>
+<span class="sd ge">#</span> <span class="sd">@require</span> <a href="/rgss/taroxd_core.html">taroxd_core</a>
+<span class="sd ge">#</span> <span class="sd">@display</span> <span class="c1">额外战斗行动</span></a>
+<span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1"></span></a>
+<span class="c1">#    在战斗公式或事件指令-脚本中输入</span>
+<span class="c1">#      battler.extra_skill(skill_id, target_index)</span>
+<span class="c1">#    即可产生一次额外的行动（对应 skill_id 的技能）。</span>
+<span class="c1">#    target_index 省略时，目标默认为 battler 上次的目标。</span>
+<span class="c1">#</span>
+<span class="c1">#    battler.extra_item(item_id, target_index)</span>
+<span class="c1">#      与 extra_skill 相同。行动内容为对应 item_id 的物品。</span>
+<span class="c1">#</span>
+<span class="c1">#    battler.extra_action(skill_id, target_index)</span>
+<span class="c1">#      与 extra_skill 相同。</span>
+<span class="c1">#</span>
+<span class="c1">#    注意，额外的行动也是有消耗的（包括 MP、物品等）</span>
+<span class="c1">#    当消耗不满足，或者因为其他原因无法行动时，额外行动无效。</span>
+
+
+<span class="k">class</span> <span class="nc">Taroxd</span><span class="o">::</span><span class="no">ExtraAction</span> <span class="o">&lt;</span> <span class="no">Game_Action</span>
+
+  <span class="c1"># 默认目标。-2: 上次目标, -1: 随机</span>
+  <span class="no">DEFAULT_TARGET_INDEX</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span>
+
+  <span class="k">class</span> <span class="o">&lt;&lt;</span> <span class="nb">self</span>
+
+    <span class="k">def</span> <span class="nf">new</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span>
+      <span class="k">super</span><span class="p">.</span><span class="nf">tap</span> <span class="p">{</span> <span class="o">|</span><span class="n">action</span><span class="o">|</span> <span class="vi">@actions</span><span class="p">.</span><span class="nf">push</span> <span class="n">action</span> <span class="p">}</span>
+    <span class="k">end</span>
+
+    <span class="c1"># 获取最后生成的 action 对象并移除这个对象。</span>
+    <span class="c1"># 如果没有 action，返回 nil。</span>
+    <span class="k">def</span> <span class="nf">current!</span>
+      <span class="vi">@actions</span><span class="p">.</span><span class="nf">pop</span>
+    <span class="k">end</span>
+
+    <span class="k">def</span> <span class="nf">clear</span>
+      <span class="vi">@actions</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">target_index</span><span class="p">)</span>
+    <span class="k">super</span><span class="p">(</span><span class="n">subject</span><span class="p">)</span>
+    <span class="vi">@target_index</span> <span class="o">=</span> <span class="n">target_index</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">make_targets</span>
+    <span class="vi">@target_index</span> <span class="o">=</span> <span class="vi">@subject</span><span class="p">.</span><span class="nf">last_target_index</span> <span class="k">if</span> <span class="vi">@target_index</span> <span class="o">==</span> <span class="o">-</span><span class="mi">2</span>
+    <span class="k">super</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Game_Battler</span> <span class="o">&lt;</span> <span class="no">Game_BattlerBase</span>
+  
+  <span class="no">ExtraAction</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">ExtraAction</span>
+
+  <span class="k">def</span> <span class="nf">extra_skill</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">target_index</span> <span class="o">=</span> <span class="no">ExtraAction</span><span class="o">::</span><span class="no">DEFAULT_TARGET_INDEX</span><span class="p">)</span>
+    <span class="no">ExtraAction</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="n">target_index</span><span class="p">).</span><span class="nf">set_skill</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="kp">alias_method</span> <span class="ss">:extra_action</span><span class="p">,</span> <span class="ss">:extra_skill</span>
+
+  <span class="k">def</span> <span class="nf">extra_item</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">target_index</span> <span class="o">=</span> <span class="no">ExtraAction</span><span class="o">::</span><span class="no">DEFAULT_TARGET_INDEX</span><span class="p">)</span>
+    <span class="no">ExtraAction</span><span class="p">.</span><span class="nf">new</span><span class="p">(</span><span class="nb">self</span><span class="p">,</span> <span class="n">target_index</span><span class="p">).</span><span class="nf">set_item</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Scene_Battle</span> <span class="o">&lt;</span> <span class="no">Scene_Base</span>
+
+  <span class="n">def_before</span> <span class="ss">:battle_start</span><span class="p">,</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">ExtraAction</span><span class="p">.</span><span class="nf">method</span><span class="p">(</span><span class="ss">:clear</span><span class="p">)</span>
+
+  <span class="n">def_before</span> <span class="ss">:process_forced_action</span> <span class="k">do</span>
+    <span class="n">action</span> <span class="o">=</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">ExtraAction</span><span class="p">.</span><span class="nf">current!</span>
+    <span class="k">return</span> <span class="k">unless</span> <span class="n">action</span>
+    <span class="n">last_subject</span> <span class="o">=</span> <span class="vi">@subject</span>
+    <span class="vi">@subject</span> <span class="o">=</span> <span class="n">action</span><span class="p">.</span><span class="nf">subject</span>
+    <span class="vi">@subject</span><span class="p">.</span><span class="nf">actions</span><span class="p">.</span><span class="nf">unshift</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+    <span class="n">process_action</span>
+    <span class="vi">@subject</span> <span class="o">=</span> <span class="n">last_subject</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>
