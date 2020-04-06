@@ -65,6 +65,7 @@ taroxd 是一只平凡的大学狗～
     - 轻之国度
       [Web](https://www.lightnovel.cn/thread-960506-1-1.html)
       [1](https://www.lightnovel.cn/thread-969447-1-1.html)
+      [2](https://www.lightnovel.cn/thread-1021461-1-1.html)
     - epub
       [Web](https://taroxd.github.io/n8440fe/n8440fe.epub)
       [1](https://www.lightnovel.cn/thread-978268-1-1.html)
