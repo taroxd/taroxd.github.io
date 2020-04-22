@@ -69,9 +69,11 @@ taroxd 是一只平凡的大学狗～
     - epub
       [Web](https://taroxd.github.io/n8440fe/n8440fe.epub)
       [1](https://www.lightnovel.cn/thread-978268-1-1.html)
+      [2](https://www.lightnovel.cn/thread-1023156-1-1.html)
     - pdf
       [Web](https://taroxd.github.io/n8440fe/n8440fe.pdf)
       [1](https://www.lightnovel.cn/thread-978268-1-1.html)
+      [2](https://www.lightnovel.cn/thread-1023156-1-1.html)
 * 如何抓住饿肚子上司的胃～左迁之职是宫廷魔导师专属厨师～
     - 轻之国度
       [1](https://www.lightnovel.cn/thread-997098-1-1.html)
