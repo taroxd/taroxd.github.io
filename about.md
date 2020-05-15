@@ -49,11 +49,13 @@ taroxd 是一只平凡的大学狗～
       [6](https://www.lightnovel.cn/thread-975643-1-1.html)
       [7](https://www.lightnovel.cn/thread-989470-1-1.html)
       [8](https://www.lightnovel.cn/thread-1010962-1-1.html)
+      [9](https://www.lightnovel.cn/thread-1026790-1-1.html)
     - epub
       [1](https://www.lightnovel.cn/thread-980042-1-1.html)
       [2](https://www.lightnovel.cn/thread-986395-1-1.html)
       [3](https://www.lightnovel.cn/thread-1003306-1-1.html)
       [4](https://www.lightnovel.cn/thread-1012181-1-1.html)
+      [5](https://www.lightnovel.cn/thread-1020477-1-1.html)
     - pdf
       [名词表](https://taroxd.github.io/n2273dh/glossary.pdf)
 * 被卷入了勇者召唤事件却发现异世界很和平（漫画）
