@@ -42,7 +42,7 @@ title: Epub 阅读器简单评测
 </style>
 
 <script>
-(function() {
+;(function() {
     function toggle_tooltip() {
         for (const child of this.getElementsByClassName('epub-reader-tooltiptext')) {
             if (child.style.visibility === 'visible') {
