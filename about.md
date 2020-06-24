@@ -61,6 +61,12 @@ taroxd 是一只平凡的大学狗～
 * 被卷入了勇者召唤事件却发现异世界很和平（漫画）
     - pdf
       [9](https://taroxd.github.io/n2273dh/comic_09.pdf)
+      [12](https://taroxd.github.io/n2273dh/comic_12.pdf)
+      [13](https://taroxd.github.io/n2273dh/comic_13.pdf)
+      [14](https://taroxd.github.io/n2273dh/comic_14.pdf)
+      [15](https://taroxd.github.io/n2273dh/comic_15.pdf)
+      [16.1](https://taroxd.github.io/n2273dh/comic_16_1.pdf)
+      [16.2](https://taroxd.github.io/n2273dh/comic_16_2.pdf)
     - 动漫之家
       [链接](https://m.dmzj.com/info/46188.html)
 * 关于邻家的天使大人不知不觉把我惯成了废人这档子事（小说）
