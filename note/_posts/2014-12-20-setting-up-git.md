@@ -15,7 +15,7 @@ git config --global credential.helper wincred
 git config --global credential.modalprompt false
 # git config --global credential.helper store
 git config --global pull.rebase true
-git config --global branch.autosetuprebase always
+# git config --global branch.autosetuprebase always
 git config --global rebase.autoStash true
 # git config --global commit.gpgsign true
 ```
