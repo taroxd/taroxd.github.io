@@ -58,8 +58,8 @@ ffmpeg -i input.mp4 -itsoffset 1.0 -i input.mp4 -map 1:v -map 0:a -c:v libx265 -
 ffmpeg -i input.mp4 -itsoffset 1.0 -i input.mp4 -map 0:v -map 1:a -c:v libx265 -crf 28 -preset veryslow -c:a copy movie-audio-delayed.mp4
 
 # Submit to bilibili
-ffmpeg -y -i input.mp4 -c:v libx264 -pass 1 -fastfirstpass 0 -b:v 2990k -preset placebo -tune animation -vf format=yuv420p -psy-rd 0:0 -aq-strength 0.8 -aq-mode 2 -g 600 -bf 9 -b_strategy 2 -qcomp 0.75 -trellis 2 -subq 10 -refs 4 -8x8dct 1 -partitions all -qdiff 7 -me_method tesa -c:a copy -f mp4 NUL
-ffmpeg -y -i input.mp4 -c:v libx264 -pass 2 -b:v 2990k -preset placebo -tune animation -vf format=yuv420p -psy-rd 0:0 -aq-strength 0.8 -aq-mode 2 -g 600 -bf 9 -b_strategy 2 -qcomp 0.75 -trellis 2 -subq 10 -refs 4 -8x8dct 1 -partitions all -qdiff 7 -me_method tesa -c:a copy output.mp4
+ffmpeg -y -i input.mp4 -c:v libx264 -pass 1 -fastfirstpass 0 -b:v 2990k -preset placebo -tune animation -vf format=yuv420p -psy-rd 0:0 -aq-strength 0.8 -aq-mode 2 -g 540 -bf 9 -b_strategy 2 -qcomp 0.75 -trellis 2 -subq 10 -refs 4 -8x8dct 1 -partitions all -qdiff 7 -me_method tesa -c:a copy -f mp4 NUL
+ffmpeg -y -i input.mp4 -c:v libx264 -pass 2 -b:v 2990k -preset placebo -tune animation -vf format=yuv420p -psy-rd 0:0 -aq-strength 0.8 -aq-mode 2 -g 540 -bf 9 -b_strategy 2 -qcomp 0.75 -trellis 2 -subq 10 -refs 4 -8x8dct 1 -partitions all -qdiff 7 -me_method tesa -c:a copy output.mp4
 
 # Optimize PNG image
 optipng -i 0 -o 7 -zm 1-9 -strip all input.png
