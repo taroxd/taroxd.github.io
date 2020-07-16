@@ -23,6 +23,5 @@ git config --global rebase.autoStash true
 彻底删除文件：
 
 ```shell
-git filter-branch --index-filter 'git rm -r --cached --ignore-unmatch path/to/your/file' HEAD
-rm -r .git/refs/original/
+git filter-branch --force --index-filter "git rm -r --cached --ignore-unmatch path/to/your/file" --prune-empty --tag-name-filter cat -- --all
 ```
