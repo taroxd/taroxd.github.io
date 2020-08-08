@@ -9,6 +9,7 @@ git config --global user.name taroxd
 git config --global user.email taroxd@outlook.com
 git config --global core.excludesfile ~/.gitignore
 git config --global core.quotepath false
+git config --global core.autocrlf input
 # git config --global core.editor "subl --wait"
 git config --global push.default simple
 git config --global credential.helper wincred
