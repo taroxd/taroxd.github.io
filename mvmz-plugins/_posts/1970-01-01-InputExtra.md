@@ -5,6 +5,7 @@
 //=============================================================================
 
 /*:
+ * @target MZ
  * @plugindesc Extend Input with the full keyboard.
  * @author taroxd
  *

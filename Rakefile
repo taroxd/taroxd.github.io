@@ -4,4 +4,4 @@ module Taroxd
 end
 
 require_relative '_lib/rgss'
-require_relative '_lib/rpgmv'
+require_relative '_lib/mvmz'

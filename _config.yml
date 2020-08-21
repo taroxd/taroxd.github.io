@@ -39,7 +39,7 @@ defaults:
     values:
       layout: simple
   - scope:
-      path: rpgmv-plugins
+      path: mvmz-plugins
     values:
       layout: simple
 
@@ -47,8 +47,8 @@ links:
   local:
     - title: RGSS3 脚本素材
       url: /rgss/
-    - title: RPGMV 插件
-      url: /rpgmv-plugins/
+    - title: MV/MZ 插件
+      url: /mvmz-plugins/
     - title: 心得笔记
       url: /note/
     - title: 未分类

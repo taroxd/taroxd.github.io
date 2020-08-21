@@ -109,7 +109,7 @@ taroxd 是一只平凡的大学狗～
 
 #### 写过的 RPG Maker 脚本：
 * [RGSS3](/rgss/)
-* [RPGMV](/rpgmv-plugins/)
+* [MV/MZ](/mvmz-plugins/)
 
 #### 制作过的游戏：
 * [Glimmer/Fatal Guise（彼岸之光/致命伪装）](https://rpg.blue/thread-371221-1-1.html)

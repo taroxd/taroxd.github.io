@@ -16,6 +16,20 @@ REG add "%HCUSC%\RPGMV.Project\DefaultIcon" /ve /t REG_SZ /d "\"%~dp0RPGMV.exe\"
 REG add "%HCUSC%\RPGMV.Project\shell\open\command" /ve /t REG_SZ /d "\"%~dp0RPGMV.exe\" \"%%1\"" /f
 ```
 
+RPG Maker MZ 版：
+
+
+```
+@ECHO OFF
+
+@SET HCUSC=HKEY_CURRENT_USER\Software\Classes
+
+REG add "%HCUSC%\.rmmzproject" /ve /t REG_SZ /d "RPGMZ.Project" /f
+REG add "%HCUSC%\RPGMZ.Project" /ve /t REG_SZ /d "RPGMZ Project" /f
+REG add "%HCUSC%\RPGMZ.Project\DefaultIcon" /ve /t REG_SZ /d "\"%~dp0RPGMZ.exe\",1" /f
+REG add "%HCUSC%\RPGMZ.Project\shell\open\command" /ve /t REG_SZ /d "\"%~dp0RPGMZ.exe\" \"%%1\"" /f
+```
+
 而 RPG Maker VX Ace 依赖于 rtp 的安装，所以需要管理员权限。
 
 ```
