@@ -101,6 +101,7 @@ taroxd 是一只平凡的大学狗～
       [4](https://taroxd.github.io/s3168e_comic/0004.pdf)
       [5](https://taroxd.github.io/s3168e_comic/0005.pdf)
       [6](https://taroxd.github.io/s3168e_comic/0006.pdf)
+      [7](https://taroxd.github.io/s3168e_comic/0007.pdf)
     - 动漫之家
       [链接](https://manhua.dmzj.com/ruhezhuazhueduzishangsideweizuoqianzhizhishigongti)
 * [你们先走我断后 01.1](https://manhua.dmzj.com/nimenxianzouwoduanhou/87485.shtml)
