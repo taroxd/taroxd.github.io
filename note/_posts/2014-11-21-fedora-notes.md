@@ -73,4 +73,13 @@ sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
 # rpm -v --import https://download.sublimetext.com/sublimehq-rpm-pub.gpg
 # dnf config-manager --add-repo https://download.sublimetext.com/rpm/stable/x86_64/sublime-text.repo
 # dnf install sublime-text
+
+# NAT static IP address
+# vim /etc/sysconfig/network-scripts/ifcfg-eth0
+# BOOTPROTO=none
+# IPADDR=192.168.200.22
+# PREFIX=24
+# GATEWAY=192.168.200.1
+# DNS1=a.b.c.d
+# DNS2=a.b.c.d
 ```
