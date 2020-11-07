@@ -51,6 +51,8 @@ grub2-mkconfig -o /boot/efi/EFI/fedora/grub.cfg
 
 # Default to cli
 # systemctl set-default multi-user.target
+# systemctl set-default graphical.target
+
 
 # Disable SELinux
 sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
