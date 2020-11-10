@@ -90,10 +90,6 @@ taroxd 是一只平凡的大学狗～
       [1](https://www.lightnovel.us/detail/978268)
       [2](https://www.lightnovel.us/detail/1023156)
 * 如何抓住饿肚子上司的胃～左迁之职是宫廷魔导师专属厨师～
-    - 轻之国度
-      [1](https://www.lightnovel.us/detail/997098)
-      [2](https://www.lightnovel.us/detail/1011201)
-      [3](https://www.lightnovel.us/detail/1017147)
     - pdf
       [1](https://taroxd.github.io/s3168e_comic/0001.pdf)
       [2](https://taroxd.github.io/s3168e_comic/0002.pdf)
@@ -102,6 +98,7 @@ taroxd 是一只平凡的大学狗～
       [5](https://taroxd.github.io/s3168e_comic/0005.pdf)
       [6](https://taroxd.github.io/s3168e_comic/0006.pdf)
       [7](https://taroxd.github.io/s3168e_comic/0007.pdf)
+      [8](https://taroxd.github.io/s3168e_comic/0008.pdf)
     - 动漫之家
       [链接](https://manhua.dmzj.com/ruhezhuazhueduzishangsideweizuoqianzhizhishigongti)
 * [你们先走我断后 01.1](https://manhua.dmzj.com/nimenxianzouwoduanhou/87485.shtml)
