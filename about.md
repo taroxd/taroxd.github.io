@@ -8,7 +8,7 @@ permalink: /about/
 
 {{ site.description }}
 
-### Profile ![kanade](https://cloud.githubusercontent.com/assets/6070540/26785902/35fcb67a-4a37-11e7-9477-6dd357a51b1b.png)
+### Profile ![kanade]({{ "/assets/kanade.png" | prepend: site.baseurl }})
 
 taroxd 是一只平凡的大学狗～
 
