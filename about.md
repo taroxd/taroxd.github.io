@@ -50,12 +50,16 @@ taroxd 是一只平凡的大学狗～
       [7](https://www.lightnovel.us/detail/989470)
       [8](https://www.lightnovel.us/detail/1010962)
       [9](https://www.lightnovel.us/detail/1026790)
+      [10](https://www.lightnovel.us/detail/1050240)
     - epub
       [1](https://www.lightnovel.us/detail/980042)
       [2](https://www.lightnovel.us/detail/986395)
       [3](https://www.lightnovel.us/detail/1003306)
       [4](https://www.lightnovel.us/detail/1012181)
       [5](https://www.lightnovel.us/detail/1020477)
+      [6](https://www.lightnovel.us/detail/1030938)
+      [7](https://www.lightnovel.us/detail/1035396)
+      [8](https://www.lightnovel.us/detail/1044957)
     - pdf
       [名词表](https://taroxd.github.io/n2273dh/glossary.pdf)
 * 被卷入了勇者召唤事件却发现异世界很和平（漫画）
@@ -82,14 +86,17 @@ taroxd 是一只平凡的大学狗～
       [Web](https://www.lightnovel.us/detail/960506)
       [1](https://www.lightnovel.us/detail/969447)
       [2](https://www.lightnovel.us/detail/1021461)
+      [3](https://www.lightnovel.us/detail/1039513)
     - epub
       [Web](https://taroxd.github.io/n8440fe/n8440fe.epub)
       [1](https://www.lightnovel.us/detail/978268)
       [2](https://www.lightnovel.us/detail/1023156)
+      [3](https://www.lightnovel.us/detail/1041374)
     - pdf
       [Web](https://taroxd.github.io/n8440fe/n8440fe.pdf)
       [1](https://www.lightnovel.us/detail/978268)
       [2](https://www.lightnovel.us/detail/1023156)
+      [3](https://www.lightnovel.us/detail/1041374)
 * 如何抓住饿肚子上司的胃～左迁之职是宫廷魔导师专属厨师～
     - pdf
       [1](https://taroxd.github.io/s3168e_comic/0001.pdf)
