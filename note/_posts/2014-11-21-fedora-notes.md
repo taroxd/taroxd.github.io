@@ -15,7 +15,7 @@ dnf update
 
 dnf install http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
 
-dnf install gnome-tweak-tool gnome-shell-extension-window-list gnome-shell-extension-apps-menu gnome-terminal-nautilus vim ruby nodejs
+dnf install gnome-tweak-tool gnome-shell-extension-window-list gnome-shell-extension-apps-menu gnome-terminal-nautilus vim ruby nodejs proxychains
 
 dnf group install "Development Tools" "C Development Tools and Libraries"
 
