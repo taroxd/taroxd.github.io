@@ -19,6 +19,7 @@ git config --global pull.rebase true
 # git config --global branch.autosetuprebase always
 git config --global rebase.autoStash true
 # git config --global commit.gpgsign true
+# git config --global http.https://github.com.proxy socks5h://127.0.0.1:1080
 ```
 
 彻底删除文件：
