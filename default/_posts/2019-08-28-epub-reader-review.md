@@ -4,29 +4,29 @@ title: Epub 阅读器简单评测
 
 <style>
 .epub-reader-tooltip {
-    position: relative;
-    display: inline-block;
-    font-size: 0.8em;
-    vertical-align: super;
-    font-weight: bold;
-    color: #960014;
-    cursor: pointer;
+  position: relative;
+  display: inline-block;
+  font-size: 0.8em;
+  vertical-align: super;
+  font-weight: bold;
+  color: #960014;
+  cursor: pointer;
 }
 
 .epub-reader-tooltip .epub-reader-tooltiptext {
-    visibility: hidden;
-    width: 120px;
-    background-color: #424242;
-    color: #f2f2f2;
-    text-align: center;
-    border-radius: 6px;
-    padding: 5px 0;
-    opacity: 0;
-    position: absolute;
-    z-index: 1;
-    transition: opacity, 0.3s;
-    top: -4px;
-    left: 150%; 
+  visibility: hidden;
+  width: 120px;
+  background-color: #424242;
+  color: #f2f2f2;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  opacity: 0;
+  position: absolute;
+  z-index: 1;
+  transition: opacity, 0.3s;
+  top: -4px;
+  left: 150%; 
 }
 
 .epub-reader-tooltip .epub-reader-tooltiptext::after {
@@ -75,13 +75,13 @@ title: Epub 阅读器简单评测
 
 ## Windows
 
-### Calibre (4.2)
+### Calibre (5.14.0)
 
 * 【注音】A
 * 【注释】A
 * 【CSS】B?
 * 【排版】A。可调整边距、颜色。可用户自定义字体。由于支持用户样式表，实质上支持一切排版调整。
-* 【其他】不支持竖排的 epub（如果电子书是竖排的，那么无法完整显示一个章节）；支持大量其他电子书格式。
+* 【其他】支持大量其他电子书格式。初次打开一本书时较慢。
 
 总评：A。
 
