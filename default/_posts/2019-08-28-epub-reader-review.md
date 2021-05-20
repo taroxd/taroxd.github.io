@@ -20,7 +20,7 @@ title: Epub 阅读器简单评测
   color: #f2f2f2;
   text-align: center;
   border-radius: 6px;
-  padding: 5px 0;
+  padding: 5px;
   opacity: 0;
   position: absolute;
   z-index: 1;
