@@ -11,7 +11,7 @@ title: 属性修正的扩展
 
 <span class="no">Taroxd</span><span class="o">::</span><span class="no">ElementEffect</span> <span class="o">=</span> <span class="kp">true</span>
 
-<span class="k">class</span> <span class="nc">RPG</span><span class="o">::</span><span class="no">BaseItem</span>
+<span class="k">class</span> <span class="nc">RPG::BaseItem</span>
   <span class="c1"># 属性效果构成的 hash，属性ID =&gt; 效果</span>
   <span class="k">def</span> <span class="nf">element_effect</span>
     <span class="vi">@element_effect</span> <span class="o">||=</span> <span class="vi">@note</span><span class="p">.</span><span class="nf">scan</span><span class="p">(</span><span class="sr">/&lt;ELEMENT\s+(\d+)\s+(\d+(?:\.\d+)?)&gt;/i</span><span class="p">)</span>

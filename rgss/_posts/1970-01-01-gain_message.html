@@ -132,7 +132,7 @@ title: 得失物品提示
   <span class="k">end</span>
 <span class="k">end</span>
 
-<span class="k">class</span> <span class="nc">Taroxd</span><span class="o">::</span><span class="no">EventTranscompiler</span>
+<span class="k">class</span> <span class="nc">Taroxd::EventTranscompiler</span>
   <span class="k">def</span> <span class="nf">command_125</span>
     <span class="n">value</span> <span class="o">=</span> <span class="n">operate_value</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
     <span class="s2">"if GainMessage.enabled?
@@ -146,7 +146,7 @@ title: 得失物品提示
 
   <span class="c1"># database: :items, :weapons, :equips</span>
   <span class="k">def</span> <span class="nf">show_message_gain_item</span><span class="p">(</span><span class="n">database</span><span class="p">)</span>
-    <span class="n">item_number</span> <span class="o">=</span> <span class="n">database</span> <span class="o">==</span> <span class="ss">:item</span> <span class="p">?</span> <span class="p">:</span><span class="n">item_number</span> <span class="p">:</span> <span class="ss">:item_number_with_equip</span>
+    <span class="n">item_number</span> <span class="o">=</span> <span class="n">database</span> <span class="o">==</span> <span class="ss">:item</span> <span class="p">?</span> <span class="ss">:item_number</span> <span class="p">:</span> <span class="ss">:item_number_with_equip</span>
     <span class="n">value</span> <span class="o">=</span> <span class="n">operate_value</span><span class="p">(</span><span class="vi">@params</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="vi">@params</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
     <span class="n">item</span> <span class="o">=</span> <span class="s2">"$data_</span><span class="si">#{</span><span class="n">database</span><span class="si">}</span><span class="s2">[</span><span class="si">#{</span><span class="vi">@params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">]"</span>
     <span class="s2">"if GainMessage.enabled?

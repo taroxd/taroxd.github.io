@@ -8,7 +8,7 @@ title: 持有物品时习得技能
 <span class="sd ge">#</span> <span class="sd">@help</span> <span class="c1">在角色处备注 &lt;learn x by y&gt;，表示当持有道具 y 时习得技能 x</span></a>
 <span class="no">Taroxd</span><span class="o">::</span><span class="no">LearnSkillByItem</span> <span class="o">=</span> <span class="sr">/&lt;learn\s*(\d+)\s*by\s*(\d+)&gt;/i</span>
 
-<span class="k">class</span> <span class="nc">RPG</span><span class="o">::</span><span class="no">Actor</span> <span class="o">&lt;</span> <span class="no">RPG</span><span class="o">::</span><span class="no">BaseItem</span>
+<span class="k">class</span> <span class="nc">RPG::Actor</span> <span class="o">&lt;</span> <span class="no">RPG</span><span class="o">::</span><span class="no">BaseItem</span>
 
   <span class="c1"># 由 [技能id, 物品] 构成的数组</span>
   <span class="k">def</span> <span class="nf">learn_skill_by_item</span>

@@ -10,7 +10,7 @@ title: 删除部分 rescue
 <span class="k">end</span>
 
 <span class="k">if</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">RemoveRescue</span>
-  <span class="k">class</span> <span class="nc">RPG</span><span class="o">::</span><span class="no">UsableItem</span><span class="o">::</span><span class="no">Damage</span>
+  <span class="k">class</span> <span class="nc">RPG::UsableItem::Damage</span>
     <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
       <span class="p">[</span><span class="no">Kernel</span><span class="p">.</span><span class="nf">eval</span><span class="p">(</span><span class="vi">@formula</span><span class="p">),</span> <span class="mi">0</span><span class="p">].</span><span class="nf">max</span> <span class="o">*</span> <span class="n">sign</span>
     <span class="k">end</span>

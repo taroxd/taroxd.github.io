@@ -9,7 +9,7 @@ title: 按键事件
   <span class="nb">attr_accessor</span> <span class="ss">:event</span> <span class="c1"># 当前事件，作用类似于全局变量</span>
 <span class="k">end</span>
 
-<span class="k">class</span> <span class="nc">Taroxd</span><span class="o">::</span><span class="no">InputEvent</span><span class="o">::</span><span class="no">Base</span>
+<span class="k">class</span> <span class="nc">Taroxd::InputEvent::Base</span>
   <span class="c1"># 各属性与默认值列表</span>
   <span class="vi">@options</span> <span class="o">=</span> <span class="p">{}</span>
   <span class="vi">@option_blocks</span> <span class="o">=</span> <span class="p">{}</span>
@@ -116,7 +116,7 @@ title: 按键事件
   <span class="kp">alias_method</span> <span class="ss">:terminate</span><span class="p">,</span> <span class="ss">:result</span><span class="o">=</span>
 <span class="k">end</span>
 
-<span class="k">class</span> <span class="nc">Taroxd</span><span class="o">::</span><span class="no">InputEvent</span><span class="o">::</span><span class="no">Sprite</span> <span class="o">&lt;</span> <span class="no">Sprite</span>
+<span class="k">class</span> <span class="nc">Taroxd::InputEvent::Sprite</span> <span class="o">&lt;</span> <span class="no">Sprite</span>
 
   <span class="kp">include</span> <span class="no">Taroxd</span><span class="o">::</span><span class="no">DisposeBitmap</span>
 
