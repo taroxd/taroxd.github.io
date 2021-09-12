@@ -42,7 +42,7 @@ magick input.png -alpha set -size 32x32 xc: -geometry +32+32 -compose DstOut -co
 #   Every frame
 ffmpeg -i input.mp4 "output_%04d.png"
 #   With fixed fps
-ffmpeg -i input.mp4 -vf "select='between(t,10,20)',fps=30" "output_%04d.png"
+ffmpeg -i input.mp4 -vf "select='between(t,10,20)',fps=30,crop=1024:768:0:0" "output_%04d.png"
 
 # Merging video and audio
 #   Without re-encoding
