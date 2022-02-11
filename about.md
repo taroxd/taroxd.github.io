@@ -123,6 +123,8 @@ taroxd 是一只平凡的大学狗～
       [9](https://blog.taroxd.com/s3168e_comic/0009.pdf)
     - 动漫之家
       [链接](https://manhua.dmzj.com/ruhezhuazhueduzishangsideweizuoqianzhizhishigongti)
+* [童话般的你开始了恋爱猛攻](https://manhua.dmzj.com/tonghuabandenikaishiliaolianaimenggong)
+* [关于邻家的天使大人不知不觉把我惯成了废人这档子事（漫画）](https://manhua.dmzj.com/gyljdtsdrbzbjbwgclfrzjs)
 * [你们先走我断后 01.1](https://manhua.dmzj.com/nimenxianzouwoduanhou/87485.shtml)
 * [RPG Maker VX Ace 帮助文档](https://github.com/taroxd/RMVA-F1)
 * [RPG Maker MV 简体中文版](https://store.steampowered.com/app/363890/RPG_Maker_MV/)
