@@ -53,6 +53,8 @@ taroxd 是一只平凡的大学狗～
       [10](https://www.lightnovel.us/detail/1050240)
       [11](https://www.lightnovel.us/detail/1075288)
       [12](https://www.lightnovel.us/detail/1090657)
+    - 真白萌
+      [链接](https://masi.ro/n29)
     - epub
       [1](https://www.lightnovel.us/detail/980042)
       [2](https://www.lightnovel.us/detail/986395)
@@ -96,6 +98,8 @@ taroxd 是一只平凡的大学狗～
       [3](https://www.lightnovel.us/detail/1039513)
       [4](https://www.lightnovel.us/detail/1063437)
       [5](https://www.lightnovel.us/detail/1083383)
+    - 真白萌
+      [链接](https://masi.ro/n9)
     - epub
       [Web](https://blog.taroxd.com/n8440fe/n8440fe.epub)
       [1](https://www.lightnovel.us/detail/978268)
