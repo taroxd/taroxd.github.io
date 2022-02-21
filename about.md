@@ -87,7 +87,8 @@ taroxd 是一只平凡的大学狗～
       [20.2](https://blog.taroxd.com/n2273dh/comic_20_2.pdf)
       [21](https://blog.taroxd.com/n2273dh/comic_21.pdf)
       [22](https://blog.taroxd.com/n2273dh/comic_22.pdf)
-      [22](https://blog.taroxd.com/n2273dh/comic_23.pdf)
+      [23](https://blog.taroxd.com/n2273dh/comic_23.pdf)
+      [24](https://blog.taroxd.com/n2273dh/comic_24.pdf)
     - 动漫之家
       [链接](https://m.dmzj.com/info/46188.html)
 * 关于邻家的天使大人不知不觉把我惯成了废人这档子事（小说）
