@@ -99,6 +99,7 @@ taroxd 是一只平凡的大学狗～
       [3](https://www.lightnovel.us/detail/1039513)
       [4](https://www.lightnovel.us/detail/1063437)
       [5](https://www.lightnovel.us/detail/1083383)
+      [5.5](https://www.lightnovel.us/detail/1103406)
     - 真白萌
       [链接](https://masi.ro/n9)
     - epub
@@ -108,6 +109,7 @@ taroxd 是一只平凡的大学狗～
       [3](https://www.lightnovel.us/detail/1041374)
       [4](https://www.lightnovel.us/detail/1068953)
       [5](https://www.lightnovel.us/detail/1088218)
+      [5.5](https://www.lightnovel.us/detail/1103411)
     - pdf
       [Web](https://blog.taroxd.com/n8440fe/n8440fe.pdf)
       [1](https://www.lightnovel.us/detail/978268)
@@ -115,6 +117,7 @@ taroxd 是一只平凡的大学狗～
       [3](https://www.lightnovel.us/detail/1041374)
       [4](https://www.lightnovel.us/detail/1068953)
       [5](https://www.lightnovel.us/detail/1088218)
+      [5.5](https://www.lightnovel.us/detail/1103411)
 * 如何抓住饿肚子上司的胃～左迁之职是宫廷魔导师专属厨师～
     - pdf
       [1](https://blog.taroxd.com/s3168e_comic/0001.pdf)
