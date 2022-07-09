@@ -22,11 +22,11 @@ taroxd 是一只平凡的大学狗～
 
 #### 翻译过的作品：
 * 加速世界
-[14](https://www.lightnovel.us/detail/601101)
-[15](https://www.lightnovel.us/detail/693752)
-[16](https://www.lightnovel.us/detail/747686)
-[17](https://www.lightnovel.us/detail/780343)
-[18](https://www.lightnovel.us/detail/829740)
+  [14](https://www.lightnovel.us/detail/601101)
+  [15](https://www.lightnovel.us/detail/693752)
+  [16](https://www.lightnovel.us/detail/747686)
+  [17](https://www.lightnovel.us/detail/780343)
+  [18](https://www.lightnovel.us/detail/829740)
 * [桃音汐音的轻小说日记3](https://www.lightnovel.us/detail/740989)
 * 初恋Continue
   [1](https://www.lightnovel.us/detail/743827)
@@ -68,29 +68,8 @@ taroxd 是一只平凡的大学狗～
       [10](https://www.lightnovel.us/detail/1090588)
       [11](https://www.lightnovel.us/detail/1091264)
     - pdf
-      [名词表](https://blog.taroxd.com/n2273dh/glossary.pdf)
-* 被卷入了勇者召唤事件却发现异世界很和平（漫画）
-    - pdf
-      [9](https://blog.taroxd.com/n2273dh/comic_09.pdf)
-      [12](https://blog.taroxd.com/n2273dh/comic_12.pdf)
-      [13](https://blog.taroxd.com/n2273dh/comic_13.pdf)
-      [番外篇1](https://blog.taroxd.com/n2273dh/comic_ex_1.pdf)
-      [14](https://blog.taroxd.com/n2273dh/comic_14.pdf)
-      [15](https://blog.taroxd.com/n2273dh/comic_15.pdf)
-      [16.1](https://blog.taroxd.com/n2273dh/comic_16_1.pdf)
-      [16.2](https://blog.taroxd.com/n2273dh/comic_16_2.pdf)
-      [17.1](https://blog.taroxd.com/n2273dh/comic_17_1.pdf)
-      [17.2](https://blog.taroxd.com/n2273dh/comic_17_2.pdf)
-      [18](https://blog.taroxd.com/n2273dh/comic_18.pdf)
-      [19](https://blog.taroxd.com/n2273dh/comic_19.pdf)
-      [20.1](https://blog.taroxd.com/n2273dh/comic_20_1.pdf)
-      [20.2](https://blog.taroxd.com/n2273dh/comic_20_2.pdf)
-      [21](https://blog.taroxd.com/n2273dh/comic_21.pdf)
-      [22](https://blog.taroxd.com/n2273dh/comic_22.pdf)
-      [23](https://blog.taroxd.com/n2273dh/comic_23.pdf)
-      [24](https://blog.taroxd.com/n2273dh/comic_24.pdf)
-    - 动漫之家
-      [链接](https://m.dmzj.com/info/46188.html)
+      [名词表](https://taroxd.cn/public/n2273dh_glossary.pdf)
+* [被卷入了勇者召唤事件却发现异世界很和平（漫画）](https://m.dmzj.com/info/46188.html)
 * 关于邻家的天使大人不知不觉把我惯成了废人这档子事（小说）
     - 轻之国度
       [Web](https://www.lightnovel.us/detail/960506)
@@ -118,19 +97,7 @@ taroxd 是一只平凡的大学狗～
       [4](https://www.lightnovel.us/detail/1068953)
       [5](https://www.lightnovel.us/detail/1088218)
       [5.5](https://www.lightnovel.us/detail/1103411)
-* 如何抓住饿肚子上司的胃～左迁之职是宫廷魔导师专属厨师～
-    - pdf
-      [1](https://blog.taroxd.com/s3168e_comic/0001.pdf)
-      [2](https://blog.taroxd.com/s3168e_comic/0002.pdf)
-      [3](https://blog.taroxd.com/s3168e_comic/0003.pdf)
-      [4](https://blog.taroxd.com/s3168e_comic/0004.pdf)
-      [5](https://blog.taroxd.com/s3168e_comic/0005.pdf)
-      [6](https://blog.taroxd.com/s3168e_comic/0006.pdf)
-      [7](https://blog.taroxd.com/s3168e_comic/0007.pdf)
-      [8](https://blog.taroxd.com/s3168e_comic/0008.pdf)
-      [9](https://blog.taroxd.com/s3168e_comic/0009.pdf)
-    - 动漫之家
-      [链接](https://manhua.dmzj.com/ruhezhuazhueduzishangsideweizuoqianzhizhishigongti)
+* [如何抓住饿肚子上司的胃～左迁之职是宫廷魔导师专属厨师～](https://manhua.dmzj.com/ruhezhuazhueduzishangsideweizuoqianzhizhishigongti)
 * [童话般的你开始了恋爱猛攻](https://manhua.dmzj.com/tonghuabandenikaishiliaolianaimenggong)
 * [关于邻家的天使大人不知不觉把我惯成了废人这档子事（漫画）](https://manhua.dmzj.com/gyljdtsdrbzbjbwgclfrzjs)
 * [你们先走我断后 01.1](https://manhua.dmzj.com/nimenxianzouwoduanhou/87485.shtml)
