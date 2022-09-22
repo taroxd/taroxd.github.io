@@ -53,6 +53,7 @@ taroxd 是一只平凡的大学狗～
       [10](https://www.lightnovel.us/detail/1050240)
       [11](https://www.lightnovel.us/detail/1075288)
       [12](https://www.lightnovel.us/detail/1090657)
+      [13](https://www.lightnovel.us/detail/1111788)
     - 真白萌
       [链接](https://masi.ro/n29)
     - epub
@@ -67,6 +68,7 @@ taroxd 是一只平凡的大学狗～
       [9](https://www.lightnovel.us/detail/1052879)
       [10](https://www.lightnovel.us/detail/1090588)
       [11](https://www.lightnovel.us/detail/1091264)
+      [12](https://www.lightnovel.us/detail/1099367)
     - pdf
       [名词表](https://taroxd.cn/public/n2273dh_glossary.pdf)
 * [被卷入了勇者召唤事件却发现异世界很和平（漫画）](https://m.dmzj.com/info/46188.html)
