@@ -10,7 +10,7 @@ permalink: /about/
 
 ### Profile ![kanade]({{ "/assets/kanade.png" | prepend: site.baseurl }})
 
-taroxd 是一只平凡的大学狗～
+taroxd 是一只平凡的社畜～
 
 喜欢玩代码。喜欢轻小说、动漫、Galgame、音游。
 
@@ -69,6 +69,7 @@ taroxd 是一只平凡的大学狗～
       [10](https://www.lightnovel.us/detail/1090588)
       [11](https://www.lightnovel.us/detail/1091264)
       [12](https://www.lightnovel.us/detail/1099367)
+      [13](https://www.lightnovel.us/detail/1117017)
     - pdf
       [名词表](https://taroxd.cn/public/n2273dh_glossary.pdf)
 * [被卷入了勇者召唤事件却发现异世界很和平（漫画）](https://m.dmzj.com/info/46188.html)
