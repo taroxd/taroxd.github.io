@@ -54,6 +54,7 @@ taroxd 是一只平凡的社畜～
       [11](https://www.lightnovel.us/detail/1075288)
       [12](https://www.lightnovel.us/detail/1090657)
       [13](https://www.lightnovel.us/detail/1111788)
+      [14](https://www.lightnovel.us/detail/1130716)
     - 真白萌
       [链接](https://masi.ro/n29)
     - epub
