@@ -50,8 +50,8 @@ ffmpeg -i input.mp4 -i audio.m4a -c copy output.mp4
 #   With re-encoding
 ffmpeg -i input.mp4 -i audio.wav -c:v copy -c:a aac output.mp4
 
-# Cutting video
-ffmpeg -i input.mp4 -c copy -ss 00:11:22 -to 00:33:44 output.mp4
+# Cutting, cropping and scaling video
+ffmpeg -i input.mp4 -c copy -ss 00:11:22 -to 00:33:44 -vf "crop=1920:1080:0:0,scale=1024:720" output.mp4
 
 # Delay video or audio with re-encoding
 ffmpeg -i input.mp4 -itsoffset 1.0 -i input.mp4 -map 1:v -map 0:a -c:v libx265 -crf 28 -preset veryslow -c:a copy movie-video-delayed.mp4
