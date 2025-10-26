@@ -31,6 +31,7 @@ magick input.png -filter box -resize 50% output.png
 
 # Composition
 magick destination.png source.png -geometry +32+32 -compose Over -composite output.png
+magick input1.png input2.png -composite input3.png -composite output.png
 
 # Removing alpha channel
 magick input.png -alpha off output.png
