@@ -55,6 +55,7 @@ taroxd 是一只平凡的社畜～
       [12](https://www.lightnovel.fun/detail/1090657)
       [13](https://www.lightnovel.fun/detail/1111788)
       [14](https://www.lightnovel.fun/detail/1130716)
+      [15](https://www.lightnovel.fun/detail/1143486)
     - 真白萌
       [链接](https://masi.ro/n29)
     - epub
@@ -77,12 +78,24 @@ taroxd 是一只平凡的社畜～
 * 关于邻家的天使大人不知不觉把我惯成了废人这档子事（小说）
     - 轻之国度
       [Web](https://www.lightnovel.fun/detail/960506)
+      [1](https://www.lightnovel.fun/detail/969447)
+      [2](https://www.lightnovel.fun/detail/1021461)
+      [3](https://www.lightnovel.fun/detail/1039513)
+      [4](https://www.lightnovel.fun/detail/1063437)
+      [5](https://www.lightnovel.fun/detail/1083383)
+      [5.5](https://www.lightnovel.fun/detail/1103406)
     - 真白萌
       [链接](https://masi.ro/n9)
     - epub
       [Web](https://blog.taroxd.com/n8440fe/n8440fe.epub)
     - pdf
       [Web](https://blog.taroxd.com/n8440fe/n8440fe.pdf)
+      [1](https://www.lightnovel.fun/detail/978268)
+      [2](https://www.lightnovel.fun/detail/1023156)
+      [3](https://www.lightnovel.fun/detail/1041374)
+      [4](https://www.lightnovel.fun/detail/1068953)
+      [5](https://www.lightnovel.fun/detail/1088218)
+      [5.5](https://www.lightnovel.fun/detail/1103411)
 * [如何抓住饿肚子上司的胃～左迁之职是宫廷魔导师专属厨师～](https://manhua.dmzj.com/ruhezhuazhueduzishangsideweizuoqianzhizhishigongti)
 * [童话般的你开始了恋爱猛攻](https://manhua.dmzj.com/tonghuabandenikaishiliaolianaimenggong)
 * [关于邻家的天使大人不知不觉把我惯成了废人这档子事（漫画）](https://manhua.dmzj.com/gyljdtsdrbzbjbwgclfrzjs)
