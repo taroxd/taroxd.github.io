@@ -6,19 +6,21 @@
 
 /*:
  * @target MZ
- * @plugindesc 新远景图加载完成后再替换旧远景图，避免切换时画面闪烁。
+ * @plugindesc Keeps the old parallax visible until the new one is loaded.
  * @author taroxd
  *
  * @help ParallaxFix.js
  *
- * 使用“更改远景图”事件指令或 $gameMap.changeParallax 时，
- * RPG Maker MZ 会在新图片仍处于加载状态时更新远景图精灵。
- * 此时图片宽高为 0，可能使远景图短暂消失。
+ * When an event command or $gameMap.changeParallax changes the parallax,
+ * RPG Maker MZ updates the parallax sprite while the new image is still
+ * loading. Its width and height are zero at that point, which can make the
+ * parallax disappear briefly.
  *
- * 本插件会继续显示旧远景图，直到新远景图加载完成后再进行替换。
- * 快速连续切换远景图时，已经过期的加载请求不会覆盖最新远景图。
+ * This plugin keeps the old parallax visible until the new image finishes
+ * loading. When parallaxes are changed repeatedly in quick succession,
+ * obsolete load requests cannot overwrite the latest parallax.
  *
- * 本插件没有插件参数和插件命令。
+ * This plugin has no parameters or plugin commands.
  */
 
 (() => {

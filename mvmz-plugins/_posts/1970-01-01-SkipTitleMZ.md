@@ -17,18 +17,18 @@
  * @help This plugin does not provide plugin commands.
  */
 
-;(() => {
-    const parameters = PluginManager.parameters('SkipTitle')
-    const testOnly = parameters['Test Only'] !== 'false'
-    const enable = !testOnly || Utils.isOptionValid("test")
+(() => {
+    const parameters = PluginManager.parameters('SkipTitleMZ');
+    const testOnly = parameters['Test Only'] !== 'false';
+    const enable = !testOnly || Utils.isOptionValid('test');
 
     if (enable) {
         Scene_Boot.prototype.startNormalGame = function() {
-            this.checkPlayerLocation()
-            DataManager.setupNewGame()
-            SceneManager.goto(Scene_Map)
-        }
+            this.checkPlayerLocation();
+            DataManager.setupNewGame();
+            SceneManager.goto(Scene_Map);
+        };
     }
-})()
+})();
 
 ```
