@@ -9,14 +9,6 @@
  * @plugindesc Shows a message when event commands change gold, items, weapons, or armors.
  * @author taroxd
  *
- * @param enabled
- * @text Enabled
- * @desc Enables gain/loss messages.
- * @type boolean
- * @on Enabled
- * @off Disabled
- * @default true
- *
  * @param itemFormat
  * @text Item Format
  * @desc Message format for items, weapons, and armors. Supports \action, \value, \icon, \name, and regular Show Text escape codes.
@@ -183,12 +175,6 @@
         return Number.isFinite(value) ? value : defaultValue;
     };
 
-    const booleanParameter = (name, defaultValue) => {
-        const text = parameters[name];
-        return text === undefined || text === "" ? defaultValue : text === "true";
-    };
-
-    const enabled = booleanParameter("enabled", true);
     const itemFormat = stringParameter("itemFormat", "\\action \\icon\\name * \\value");
     const goldFormat = stringParameter("goldFormat", "\\action \\icon\\value \\name");
     const actionGain = stringParameter("actionGain", "Got");
@@ -271,7 +257,7 @@
     };
 
     const showMessage = (interpreter, value, item) => {
-        if (!enabled || value === 0 || shouldSuppressMessage()) {
+        if (value === 0 || shouldSuppressMessage()) {
             return;
         }
         $gameMessage.setBackground(background);
@@ -282,7 +268,7 @@
     };
 
     const canStartMessage = () => {
-        return !enabled || suppressCount > 0 || !$gameMessage.isBusy();
+        return suppressCount > 0 || !$gameMessage.isBusy();
     };
 
     PluginManager.registerCommand(pluginName, "off", args => {
